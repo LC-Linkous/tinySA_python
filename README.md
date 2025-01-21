@@ -80,28 +80,28 @@ This is a partial list that is being expanded. All of these are included in this
 
 ### **actual_freq**
 * **Description:**  ???
-* **Original Usage:** actual_freq
+* **Original Usage:** `actual_freq`
 * **Library Function Call:**
 * **Example Return:** 3000000000
 * **Notes:**
 
 ### **agc**
 * **Description:**
-* **Original Usage:** agc 0..7|auto
+* **Original Usage:** `agc 0..7|auto`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 ### **attenuate**
 * **Description:** sets the internal attenuation
-* **Original Usage:** attenuate [auto|0-31]
+* **Original Usage:** `attenuate [auto|0-31]`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 ### **bulk**
 * **Description:** sent by tinySA when in auto refresh mode
-* **Original Usage:**
+* **Original Usage:** 
 * **Library Function Call:**
 * **Example Return:** format: "bulk\r\n{X}{Y}{Width}{Height} {Pixeldata}\r\n"
 * **Notes:** where all numbers are binary coded 2 bytes little endian. The pixeldata is encoded as 2 bytes per pixel           
@@ -109,7 +109,7 @@ This is a partial list that is being expanded. All of these are included in this
 
 ### **calc**
 * **Description:** sets or cancels one of the measurement modes
-* **Original Usage:** calc off|minh|maxh|maxd|aver4|aver16|quasip
+* **Original Usage:** `calc off|minh|maxh|maxd|aver4|aver16|quasip`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:** the commands are the same as those listed in the MEASURE menu
@@ -117,49 +117,49 @@ This is a partial list that is being expanded. All of these are included in this
 
 ### **caloutput**
 * **Description:** disables or sets the caloutput to a specified frequency in MHz
-* **Original Usage:** caloutput off|30|15|10|4|3|2|1
+* **Original Usage:** `caloutput off|30|15|10|4|3|2|1`
 * **Library Function :**
 * **Example Return:**
 * **Notes:**
 
 ### **capture**
-* **Description:**requests a screen dump to be sent in binary format of 320x240 pixels of each 2 bytes
-* **Original Usage:**
+* **Description:**requests a screen dump to be sent in binary format of  320x240 pixels of each 2 bytes
+* **Original Usage:** ``
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 ### **clearconfig**
 * **Description:** resets the configuration data to factory defaults
-* **Original Usage:**
+* **Original Usage:** ``
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:** Requires password '1234'
 
 ### **color**
 * **Description:** sets or dumps the colors used
-* **Original Usage:** color [{id} {rgb24}]
+* **Original Usage:** `color [{id} {rgb24}]`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 ### **correction**
 * **Description:** sets or dumps the frequency level correction table
-* **Original Usage:** correction [0..9 {frequency} {level}]
+* **Original Usage:** `correction [0..9 {frequency} {level}]`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 ### **dac**
 * **Description:** sets or dumps the dac value
-* **Original Usage:** dac [0..4095]
+* **Original Usage:** `dac [0..4095]`
 * **Library Function Call(s):**
 * **Example Return:**
 * **Notes:**
 
 ### **data**
 * **Description:**
-* **Original Usage:** data 0..2
+* **Original Usage:** `data 0..2`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**  0 = temp value, 1 = stored trace, 2 = measurement
@@ -167,21 +167,21 @@ This is a partial list that is being expanded. All of these are included in this
           
 ### **deviceid**
 * **Description:** sets of dumps a user settable number that can be use to identify a specific tinySA
-* **Original Usage:** deviceid [{number}]
+* **Original Usage:** `deviceid [{number}]`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 ### **direct**
 * **Description:** ??
-* **Original Usage:** direct {start|stop|on|off} {freq(Hz)}
+* **Original Usage:** `direct {start|stop|on|off} {freq(Hz)}`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 ### **ext_gain**
 * **Description:** sets the external attenuation/amplification
-* **Original Usage:**ext_gain -100..100
+* **Original Usage:** `ext_gain -100..100`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:** Works in both input and output mode
@@ -191,10 +191,8 @@ This is a partial list that is being expanded. All of these are included in this
 * **Description:**send by tinySA when in auto refresh mode
 * **Original Usage:**
 * **Library Function Call:**
-* **Example Return:**format: "fill\r\n{X}{Y}{Width}{Height}
-            {Color}\r\n"
-* **Notes:**where all numbers are binary coded 2
-            bytes little endian.
+* **Example Return:** `format: "fill\r\n{X}{Y}{Width}{Height} {Color}\r\n"`
+* **Notes:**where all numbers are binary coded 2 bytes little endian.
 
 ### **freq**
 * **Description:** Pauses the sweep and sets the measurement frequency.
@@ -225,30 +223,30 @@ This is a partial list that is being expanded. All of these are included in this
 * **Notes:** 
 
 
-**hop**
+### **hop**
 * **Description:**
-* **Original Usage:** hop {start(Hz)} {stop(Hz)} {step(Hz) | points} [outmask]
+* **Original Usage:** `hop {start(Hz)} {stop(Hz)} {step(Hz) | points}  [outmask]`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
-**if**
+### **if**
 * **Description:**sets the IF to automatic or a specific value
-* **Original Usage:**if ( 0 | 433M..435M )
+* **Original Usage:** `if ( 0 | 433M..435M )`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**where 0 means automatic
 
 
-**if1**
+### **if1**
 * **Description:**sets if to a specific value
-* **Original Usage:**if1 (975M..979M )
+* **Original Usage:** `if1 (975M..979M )`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**where 0 means automatic
 
 
-**info**
+### **info**
 * **Description:** displays various SW and HW information
 * **Original Usage:**
 * **Library Function Call:**
@@ -256,326 +254,303 @@ This is a partial list that is being expanded. All of these are included in this
 * **Notes:**
 
 
-**level**
+### **level**
 * **Description:** sets the output level
-* **Original Usage:** level -76..13
+* **Original Usage:** `level -76..13`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:** Not all values in the range are    available
 
-**levelchange**
+### **levelchange**
 * **Description:** sets the output level delta for low output mode level sweep
-* **Original Usage:** levelchange -70..+70
+* **Original Usage:** `levelchange -70..+70`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
-**leveloffset**
-* **Description:** sets or dumps the level calibration
-            data
-* **Original Usage:** leveloffset low|high|switch
-            [output] {error}
+### **leveloffset**
+* **Description:** sets or dumps the level calibration data
+* **Original Usage:** `leveloffset low|high|switch [output] {error}`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:** For the output corrections first ensure correct output levels at maximum output level. For the low output set the output to -50dBm and measure and correct the level with "leveloffset switch error" where For all output leveloffset commands measure the level with the leveloffset
 to zero and calculate error = measured level - specified level
 
 
-**load**
+### **load**
 * **Description:**loads a previously stored preset
-* **Original Usage:** load 0..4
+* **Original Usage:** `load 0..4`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:** where 0 is the startup preset
 
 
-**actual_freq**
+### **lna**
 * **Description:** toggle lna usage off/on
-* **Original Usage:** lna off|on   
+* **Original Usage:** `lna off|on  ` 
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
-**lna2**
+### **lna2**
 * **Description:**
-* **Original Usage:** lna2 0..7|auto
+* **Original Usage:** `lna2 0..7|auto`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
-**marker**
+### **marker**
 * **Description:** sets or dumps marker info
-* **Original Usage:**  marker {id} on|off|peak|{freq}| {index}
+* **Original Usage:**  `marker {id} on|off|peak|{freq}| {index}`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**  where id=1..4 index=0..num_points-1
 Merker levels will use the selected unit Marker peak will activate the marker (if not done already), position the marker on the strongest signal and display the marker info The frequency must be within the selected sweep range mode 
 
-**mode**
+### **mode**
 * **Description:** sets the mode of the tinySA
-* **Original Usage:** mode low|high input|output
+* **Original Usage:** `mode low|high input|output`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 
-**modulation**
-* **Description:**sets the modulation in output mode
-* **Original Usage:**modulation off|AM_1kHz|AM_10Hz|
-NFM|WFM|extern
+### **modulation**
+* **Description:** sets the modulation in output mode
+* **Original Usage:** `modulation off|AM_1kHz|AM_10Hz| NFM|WFM|extern`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 
-**output**
-* **Description:**sets the output on or off
-* **Original Usage:**output on|off
+### **output**
+* **Description:** sets the output on or off
+* **Original Usage:** `output on|off`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 
-**pause**
+### **pause**
 * **Description:** pauses the sweeping in either input or output mode
-* **Original Usage:** pause
+* **Original Usage:** `pause`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 
-**rbw**
-* **Description:** sets the rbw to either automatic or a
-            specific value
-* **Original Usage:** rbw auto|3..600
+### **rbw**
+* **Description:** sets the rbw to either automatic or a specific value
+* **Original Usage:** `rbw auto|3..600`
 * **Library Function Call:**
 * **Example Return:** 
-* **Notes:** the number specifies the target rbw in
-            kHz     
+* **Notes:** the number specifies the target rbw in kHz     
 
 
-**recall**
+### **recall**
 * **Description:**
-* **Original Usage:**
-* **Library Function Call:**
+* **Original Usage:** ``
+* **Library Function Call:** 
 * **Example Return:**
 * **Notes:** same as load
 
 
-**refresh**
+### **refresh**
 * **Description:** enables/disables the auto refresh mode
-* **Original Usage:** refresh on|off
+* **Original Usage:** `refresh on|off`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 
-**release**
+### **release**
 * **Description:** signals a removal of the touch
-* **Original Usage:** release
+* **Original Usage:** `release`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
  
-**reset**
+### **reset**
 * **Description:** resets the tinySA
-* **Original Usage:** reset
+* **Original Usage:** `reset`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 
-**resume**
-* **Description:** resumes the sweeping in either input
-            or output mode
-* **Original Usage:** resume
+### **resume**
+* **Description:** resumes the sweeping in either input or output mode
+* **Original Usage:** `resume`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
-**save**
+### **save**
 * **Description:** saves the current setting to a preset
-* **Original Usage:** save 0..4
+* **Original Usage:** `save 0..4`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:** where 0 is the startup preset
 
 
-**saveconfig**
+### **saveconfig**
 * **Description:** saves the device configuration data
-* **Original Usage:** saveconfig
+* **Original Usage:** `saveconfig`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
  
-**scan**
-* **Description:**performs a scan and optionally outputs
-            the measured data
-* **Original Usage:**scan {start(Hz)} {stop(Hz)}
-            [points] [outmask]
+### **scan**
+* **Description:**performs a scan and optionally outputs the measured data
+* **Original Usage:** `scan {start(Hz)} {stop(Hz)} [points] [outmask]`
 * **Library Function Call:**
 * **Example Return:**
-* **Notes:**where the outmask is a binary OR of
-            1=frequencies, 2=measured data,
-            4=stored data and points is maximum
-            290
+* **Notes:**where the outmask is a binary OR of 1=frequencies, 2=measured data, 4=stored data and points is maximum 290
 
 
-**scanraw**
-* **Description:**performs a scan of unlimited amount of
-            points and send the data in binary
-            form
-* **Original Usage:**scanraw {start(Hz)} {stop(Hz)}
-            [points]
+### **scanraw**
+* **Description:**performs a scan of unlimited amount of points and send the data in binary form
+* **Original Usage:** `scanraw {start(Hz)} {stop(Hz)} [points]`
 * **Library Function Call:**
 * **Example Return:**
-* **Notes:**The measured data is send as '{' ('x'
-            MSB LSB)*points '}' where the 16 bit
-            data is scaled by 32.
+* **Notes:**The measured data is send as '{' ('x' MSB LSB)*points '}' where the 16 bit data is scaled by 32.
 
    
-**sd_delete**
+### **sd_delete**
 * **Description:** delete a specific file on the sd card
-* **Original Usage:** sd_delete {filename}
+* **Original Usage:** `sd_delete {filename}`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 
-**sd_list**
-* **Description:**displays list of filenames with extension 
-            and sizes
+### **sd_list**
+* **Description:**displays list of filenames with extension and sizes
 * **Original Usage:**
-* **Library Function Call:**
+* **Library Function Call:** `sd_list`
 * **Example Return:** -0.bmp 307322
 * **Notes:**
   
-**sd_read**
+### **sd_read**
 * **Description:** read a specific file on the sd_card
-* **Original Usage:** sd_read {filename}
+* **Original Usage:** `sd_read {filename}`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 
-**selftest**
+### **selftest**
 * **Description:** performs one or all selftests
-* **Original Usage:** selftest 0 0..9
+* **Original Usage:** `selftest 0 0..9`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
   
     
-**spur**
+### **spur**
 * **Description:**enables or disables spur reduction
-* **Original Usage:**spur on|off
+* **Original Usage:** `spur on|off`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
  
 
-**status**
+### **status**
 * **Description:**displays the current device status (paused/resumed)
 * **Original Usage:**
-* **Library Function Call:**
-* **Example Return:**Resumed
+* **Library Function Call:** `status`
+* **Example Return:** Resumed
 * **Notes:**
 
-**sweep**
-* **Description:**set sweep boundaries or execute a
-            sweep
-* **Original Usage:**sweep [ ( start|stop|center|
-            span|cw {frequency} ) | ( {start(Hz)}
-            {stop(Hz)} [0..290] ) ]
+### **sweep**
+* **Description:**set sweep boundaries or execute a sweep
+* **Original Usage:** `sweep [(start|stop|center|span|cw {frequency}) | ({start(Hz)} {stop(Hz)} [0..290] ) ]`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:** sweep without arguments lists the current sweep settings, the frequencies specified should be within the permissible range. The sweep commands apply both to input and output modes
 
 
-**sweeptime**
+### **sweeptime**
 * **Description:** sets the sweeptime
-* **Original Usage:**sweep {time(Seconds)}
+* **Original Usage:** `sweep {time(Seconds)}`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**the time specified may end in a letter where  m=mili and u=micro
 
-**threads**
+### **threads**
 * **Description:** lists information of the threads in the tinySA
-* **Original Usage:**
+* **Original Usage:** ``
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 
-**touch**
+### **touch**
 * **Description:** sends the coordinates of a touch
-* **Original Usage:** touch {X coordinate} {Y coordinate}
+* **Original Usage:** `touch {X coordinate} {Y coordinate}`
 * **Library Function Call:**
 * **Example Return:**
-* **Notes:** The upper left corner of the screen is
-            "0 0"
+* **Notes:** The upper left corner of the screen is "0 0"
 
-**touchcal**
+### **touchcal**
 * **Description:**starts the touch calibration
 * **Original Usage:**
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
-**touchtest**
+### **touchtest**
 * **Description:**starts the touch test
 * **Original Usage:**
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
-**trace**
+### **trace**
 * **Description:**displays all or one trace  information or sets trace related information
-* **Original Usage:**trace [ {0..2} | dBm|dBmV|dBuV|
-            V|W |store|clear|subtract | (scale|
-            reflevel) auto|{level}
+* **Original Usage:** `trace [{0..2} | dBm|dBmV|dBuV| V|W |store|clear|subtract | (scale|reflevel) auto|{level}]`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
-**trigger**
+### **trigger**
 * **Description:**sets the trigger type or level
-* **Original Usage:**trigger auto|normal|single|{level(dBm)}
+* **Original Usage:** `trigger auto|normal|single|{level(dBm)}`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**the trigger level is always set in dBm
 
 
-**ultra**
+### **ultra**
 * **Description:** turn on/config tiny SA ultra mode
-* **Original Usage:** ultra off|on|auto|start|harm {freq}
+* **Original Usage:** `ultra off|on|auto|start|harm {freq}`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
-**vbat**
+### **vbat**
 * **Description:**displays the battery voltage
 * **Original Usage:**
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
-**vbat_offset**
+### **vbat_offset**
 * **Description:**displays or sets the battery offset value
-* **Original Usage:**vbat_offset [{0..4095}]
+* **Original Usage:** `vbat_offset [{0..4095}]`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
-**version**
+### **version**
 * **Description:** displays the version text
 * **Original Usage:**
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
-**wait**
+### **wait**
 * **Description:**  same as pause(?)
 * **Original Usage:**
 * **Library Function Call:**
@@ -583,9 +558,9 @@ NFM|WFM|extern
 * **Notes:**
 
 
-**zero**
+### **zero**
 * **Description:**
-* **Original Usage:** zero {level}\r\n174dBm
+* **Original Usage:** `zero {level}\r\n174dBm`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
