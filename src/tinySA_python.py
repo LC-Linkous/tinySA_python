@@ -7,7 +7,7 @@
 #   
 #
 #   Author(s): Lauren Linkous
-#   Last update: January 6, 2025
+#   Last update: January 20, 2025
 ##--------------------------------------------------------------------------------------------------\
 
 import serial
@@ -18,6 +18,25 @@ class TinySA():
         # serial port
         self.ser = None 
 
+        # message feedback
+        self.verboseBool = False
+
+######################################################################
+# Error and information printout
+# set/getVerbose()  - set how detailed the error printouts are
+# printMessage()  - deal with the bool in one place
+######################################################################
+
+    def setVerbose(self, verbose=False):
+        self.verboseBool = verbose
+
+    def getVerbose(self):
+        return self.verboseBool
+
+    def printMessage(self, msg):
+        if self.verboseBool == True:
+            print(msg)
+        
 
 ######################################################################
 # Serial management and message processing
@@ -28,8 +47,8 @@ class TinySA():
             self.ser = serial.Serial(port=port, timeout=timeout)
             return True
         except Exception as err:
-            print("ERROR: cannot open port at " + str(port))
-            print(err)
+            self.printMessage("ERROR: cannot open port at " + str(port))
+            self.printMessage(err)
             return False
 
     def disconnect(self):
@@ -43,7 +62,7 @@ class TinySA():
         msgbytes = self.cleanReturn(msgbytes)
 
         if printBool == True:
-            print(msgbytes)
+            print(msgbytes) #overrides verbose
 
         return msgbytes
 
@@ -66,8 +85,8 @@ class TinySA():
                     continue 
                 except Exception as err:
                     # otherwise, something else is wrong
-                    print("ERROR: exception thrown while reading serial")
-                    print(err)
+                    self.printMessage("ERROR: exception thrown while reading serial")
+                    self.printMessage(err)
                     return None
                 break
         return bytearray(complete)
@@ -110,7 +129,7 @@ class TinySA():
             writebyte = 'agc '+str(val)+'\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)     
         else:
-            print("ERROR: agc() takes vals [0 - 7]|auto")
+            self.printMessage("ERROR: agc() takes vals [0 - 7]|auto")
             msgbytes =  bytearray(b'ERROR')
         return msgbytes
 
@@ -126,7 +145,7 @@ class TinySA():
             writebyte = 'attenuate '+str(val)+'\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)           
         else:
-            print("ERROR: attenuate() takes vals [0 - 31]|auto")
+            self.printMessage("ERROR: attenuate() takes vals [0 - 31]|auto")
             msgbytes =  bytearray(b'')
         return msgbytes
 
@@ -137,7 +156,7 @@ class TinySA():
         # where all numbers are binary coded 2
         # bytes little endian. The Pixeldata is
         # encoded as 2 bytes per pixel
-        print("Function does not exist yet. error checking needed")
+        self.printMessage("Function does not exist yet. error checking needed")
         return None
     
     def calc(self):
@@ -151,7 +170,7 @@ class TinySA():
         accepted_vals =  ["off", "minh", "maxh", "maxd", 
                           "aver4", "aver16", "quasip"]
 
-        print("Function does not exist yet. error checking needed")
+        self.printMessage("Function does not exist yet. error checking needed")
         return None
 
     def caloutput(self, val):
@@ -166,7 +185,7 @@ class TinySA():
             writebyte = 'caloutput '+str(val)+'\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)           
         else:
-            print("ERROR: caloutput() takes vals 1|2|3|4|10|15|30|off")
+            self.printMessage("ERROR: caloutput() takes vals 1|2|3|4|10|15|30|off")
             msgbytes = bytearray(b'')
         return msgbytes
     
@@ -197,7 +216,7 @@ class TinySA():
         # usage: color [{id} {rgb24}]
         # example return:  
 
-        print("Function does not exist yet. error checking needed")
+        self.printMessage("Function does not exist yet. error checking needed")
         return None
 
     def correction(self):
@@ -206,7 +225,7 @@ class TinySA():
         # usage: correction low|lna|ultra|ultra_lna|direct|direct_lna|harm|harm_lna|out|out_direct|out_adf|out_ultra|off|on 0-19 frequency(Hz) value(dB)
         # example return:  
 
-        print("Function does not exist yet. error checking needed")
+        self.printMessage("Function does not exist yet. error checking needed")
         return None
 
     def dac(self, val=None):
@@ -221,9 +240,9 @@ class TinySA():
         elif (isinstance(val, int)) and (0<= val <=4095):
             writebyte = 'dac '+str(id)+'\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)   
-            print("dac set to " + str(id))
+            self.printMessage("dac set to " + str(id))
         else:
-            print("ERROR: dac() takes either None or integers")
+            self.printMessage("ERROR: dac() takes either None or integers")
             msgbytes = bytearray(b'')
         return msgbytes
 
@@ -240,7 +259,7 @@ class TinySA():
             writebyte = 'data '+str(val)+'\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)   
         else:
-            print("ERROR: data() takes vals [0-2]")
+            self.printMessage("ERROR: data() takes vals [0-2]")
             msgbytes =  bytearray(b'')
         return msgbytes
 
@@ -256,9 +275,9 @@ class TinySA():
         elif isinstance(id, int):
             writebyte = 'deviceid '+str(id)+'\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)   
-            print("device ID set to " + str(id))
+            self.printMessage("device ID set to " + str(id))
         else:
-            print("ERROR: deviceid() takes either None or integers")
+            self.printMessage("ERROR: deviceid() takes either None or integers")
             msgbytes =  bytearray(b'')
         return msgbytes
 
@@ -267,7 +286,7 @@ class TinySA():
         # usage: direct {start|stop|on|off} {freq(Hz)}
         # example return: ''
 
-        print("Function does not exist yet. error checking needed")
+        self.printMessage("Function does not exist yet. error checking needed")
         return None
 
     def ext_gain(self, val):
@@ -281,7 +300,7 @@ class TinySA():
             writebyte = 'ext_gain '+str(val)+'\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)       
         else:
-            print("ERROR: ext_gain() takes vals [-100 - 100]")
+            self.printMessage("ERROR: ext_gain() takes vals [-100 - 100]")
             msgbytes = bytearray(b'')
         return msgbytes
 
@@ -292,7 +311,7 @@ class TinySA():
         # where all numbers are binary coded 2
         # bytes little endian.
 
-        print("Function does not exist yet. error checking needed")
+        self.printMessage("Function does not exist yet. error checking needed")
         return None
 
     def freq(self, val):
@@ -308,7 +327,7 @@ class TinySA():
             writebyte = 'freq '+str(val)+'\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)       
         else:
-            print("ERROR: freq() takes integer vals [100 kHz - 5.3 GHz] as Hz for the tinySA Ultra")
+            self.printMessage("ERROR: freq() takes integer vals [100 kHz - 5.3 GHz] as Hz for the tinySA Ultra")
             msgbytes = bytearray(b'')
         return msgbytes
 
@@ -357,7 +376,7 @@ class TinySA():
         # usage: hop {start(Hz)} {stop(Hz)} {step(Hz) | points} [outmask]
         # example return: ''
 
-        print("Function does not exist yet. error checking needed")
+        self.printMessage("Function does not exist yet. error checking needed")
         return None
     
     def setIF(self, val=0):
@@ -371,7 +390,7 @@ class TinySA():
             writebyte = 'if '+str(val)+'\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)           
         else:
-            print("ERROR: if() takes vals [0 |433M...435M] in Hz as integers")
+            self.printMessage("ERROR: if() takes vals [0 |433M...435M] in Hz as integers")
             msgbytes = bytearray(b'')
         return msgbytes
 
@@ -385,7 +404,7 @@ class TinySA():
             writebyte = 'if1 '+str(val)+'\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)           
         else:
-            print("ERROR: if1() takes vals [0 |975M...979M] in Hz as integers")
+            self.printMessage("ERROR: if1() takes vals [0 |975M...979M] in Hz as integers")
             msgbytes = bytearray(b'')
         return msgbytes
 
@@ -413,14 +432,14 @@ class TinySA():
         # example return: ''
         #explicitly allowed vals
         
-        print("Function does not exist yet. error checking needed")
+        self.printMessage("Function does not exist yet. error checking needed")
         # accepted_vals = [-76, 13]
         # #check input
         # if val in accepted_vals:
         #     writebyte = 'level '+str(val)+'\r\n'
         #     msgbytes = self.tinySASerial(writebyte, printBool=False)   
         # else:
-        #     print("ERROR: level() takes vals [-76 - 13]")
+        #     self.printMessage("ERROR: level() takes vals [-76 - 13]")
         #     msgbytes =  bytearray(b'')
         # return msgbytes
 
@@ -438,7 +457,7 @@ class TinySA():
             writebyte = 'levelchange '+str(val)+'\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)           
         else:
-            print("ERROR: levelchange() takes vals [-70 - 70]")
+            self.printMessage("ERROR: levelchange() takes vals [-70 - 70]")
             msgbytes =  bytearray(b'')
         return msgbytes
 
@@ -455,7 +474,7 @@ class TinySA():
 
         # usage: leveloffset low|high|switch [output] {error}
 
-        print("Function does not exist yet. error checking needed")
+        self.printMessage("Function does not exist yet. error checking needed")
         return None
 
     def line(self):
@@ -463,7 +482,7 @@ class TinySA():
         # usage: line off|{level}\
         # example return: ''
         
-        print("Function does not exist yet. error checking needed")
+        self.printMessage("Function does not exist yet. error checking needed")
         return None
 
     def load(self, val=0):
@@ -478,7 +497,7 @@ class TinySA():
             writebyte = 'load '+str(val)+'\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)           
         else:
-            print("ERROR: load() takes vals [0 - 4]")
+            self.printMessage("ERROR: load() takes vals [0 - 4]")
             msgbytes = bytearray(b'')
         return msgbytes
 
@@ -494,7 +513,7 @@ class TinySA():
             writebyte = 'lna '+str(val)+'\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)           
         else:
-            print("ERROR: lna() takes vals [on|off]")
+            self.printMessage("ERROR: lna() takes vals [on|off]")
             msgbytes = bytearray(b'')
         return msgbytes
 
@@ -510,7 +529,7 @@ class TinySA():
             writebyte = 'lna2 '+str(val)+'\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)           
         else:
-            print("ERROR: lna2() takes vals [0 - 7]|auto")
+            self.printMessage("ERROR: lna2() takes vals [0 - 7]|auto")
             msgbytes = bytearray(b'')
         return msgbytes
 
@@ -527,7 +546,7 @@ class TinySA():
         # usage: marker {id} on|off|peak|{freq}|{index}
         # example return: ''
 
-        print("Function does not exist yet. error checking needed")
+        self.printMessage("Function does not exist yet. error checking needed")
         return None
     
     def mode(self):
@@ -538,7 +557,7 @@ class TinySA():
         #TODO: check documentation to see if there's any min/max vals 
         # with those settings
 
-        print("Function does not exist yet. error checking needed")
+        self.printMessage("Function does not exist yet. error checking needed")
         return None
 
     def modulation(self):
@@ -546,7 +565,7 @@ class TinySA():
         # usage: modulation off|AM_1kHz|AM_10Hz|NFM|WFM|extern
         # example return: ''
 
-        print("Function does not exist yet. error checking needed")
+        self.printMessage("Function does not exist yet. error checking needed")
         return None
 
     def nf(self):
@@ -570,7 +589,7 @@ class TinySA():
             writebyte = 'output '+str(val)+'\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)           
         else:
-            print("ERROR: output() takes vals [on|off]")
+            self.printMessage("ERROR: output() takes vals [on|off]")
             msgbytes = bytearray(b'')
         return msgbytes
 
@@ -597,7 +616,7 @@ class TinySA():
             writebyte = 'rbw '+str(val)+'\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)           
         else:
-            print("ERROR: rbw() takes vals [auto |0 - 600] in kHz as integers")
+            self.printMessage("ERROR: rbw() takes vals [auto |0 - 600] in kHz as integers")
             msgbytes = bytearray(b'')
         return msgbytes
 
@@ -613,7 +632,7 @@ class TinySA():
             writebyte = 'recall '+str(val)+'\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)           
         else:
-            print("ERROR: recall() takes vals [0 - 4]")
+            self.printMessage("ERROR: recall() takes vals [0 - 4]")
             msgbytes = bytearray(b'')
         return msgbytes
 
@@ -629,7 +648,7 @@ class TinySA():
             writebyte = 'refresh '+str(val)+'\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)           
         else:
-            print("ERROR: refresh() takes vals [on|off]")
+            self.printMessage("ERROR: refresh() takes vals [on|off]")
             msgbytes = bytearray(b'')
         return msgbytes
 
@@ -681,7 +700,7 @@ class TinySA():
             writebyte = 'save '+str(val)+'\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)           
         else:
-            print("ERROR: save() takes vals [0 - 4] as integers")
+            self.printMessage("ERROR: save() takes vals [0 - 4] as integers")
             msgbytes = bytearray(b'')
         return msgbytes
 
@@ -701,7 +720,7 @@ class TinySA():
             # where the outmask is a binary OR of:
             # 1=frequencies, 2=measured data,
             # 4=stored data and points is maximum is 290
-        print("Function does not exist yet. error checking needed")
+        self.printMessage("Function does not exist yet. error checking needed")
         return None
 
     def scanraw(self):
@@ -713,7 +732,7 @@ class TinySA():
             #  '{' ('x' MSB LSB)*points '}' 
             # where the 16 bit data is scaled by 32.
 
-        print("Function does not exist yet. error checking needed")
+        self.printMessage("Function does not exist yet. error checking needed")
         return None
     
     def sd_delete(self):
@@ -721,7 +740,7 @@ class TinySA():
         # usage: sd_delete {filename}
         # example return:
 
-        print("Function does not exist yet. error checking needed")
+        self.printMessage("Function does not exist yet. error checking needed")
         return None
     
     def sd_list(self):
@@ -739,7 +758,7 @@ class TinySA():
         # usage: sd_read {filename}
         # example return: 
 
-        print("Function does not exist yet. error checking needed")
+        self.printMessage("Function does not exist yet. error checking needed")
         return None
 
     def selftest(self, val = 0):
@@ -753,11 +772,11 @@ class TinySA():
         accepted_vals =  [0,1,2,3,4,5,6,7,8,9]
         #check input
         if (val in accepted_vals):
-            print("SELFTEST RUNNING. CONNECT CAL to RF")
+            self.printMessage("SELFTEST RUNNING. CONNECT CAL to RF")
             writebyte = 'selftest '+str(val)+'\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)           
         else:
-            print("ERROR: selftest() takes vals [0-9]")
+            self.printMessage("ERROR: selftest() takes vals [0-9]")
             msgbytes = bytearray(b'')
         return msgbytes
     
@@ -773,7 +792,7 @@ class TinySA():
             writebyte = 'spur '+str(val)+'\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)           
         else:
-            print("ERROR: spur() takes vals [on|off]")
+            self.printMessage("ERROR: spur() takes vals [on|off]")
             msgbytes = bytearray(b'')
         return msgbytes
     
@@ -797,7 +816,7 @@ class TinySA():
         # sweep [(start|stop|center|span|cw {frequency}) | 
         #   ({start(Hz)} {stop(Hz)} [0..290])]
 
-        print("Function does not exist yet. error checking needed")
+        self.printMessage("Function does not exist yet. error checking needed")
         return None
 
     def sweeptime(self):
@@ -805,7 +824,7 @@ class TinySA():
         # usage: sweep {time(Seconds)}the time
         # specified may end in a letter where
         # m=mili and u=micro
-        print("Function does not exist yet. error checking needed")
+        self.printMessage("Function does not exist yet. error checking needed")
         return None
 
     def threads(self):
@@ -831,7 +850,7 @@ class TinySA():
         # usage: touch {X coordinate} {Y coordinate}
         # example return:
 
-        print("Function does not exist yet. error checking needed")
+        self.printMessage("Function does not exist yet. error checking needed")
         return None
 
     def touchcal(self):
@@ -861,7 +880,7 @@ class TinySA():
         # dBm|dBmV|dBuV|V|W |store|clear|subtract | (scale|
         # reflevel) auto|{level}
         # example return: 
-        print("Function does not exist yet. error checking needed")
+        self.printMessage("Function does not exist yet. error checking needed")
         return None
 
     def trigger(self):
@@ -871,7 +890,7 @@ class TinySA():
         # the trigger level is always set in dBm
         # example return:  
 
-        print("Function does not exist yet. error checking needed")
+        self.printMessage("Function does not exist yet. error checking needed")
         return None
 
     def ultra(self):
@@ -879,7 +898,7 @@ class TinySA():
         # usage: ultra off|on|auto|start|harm {freq}
         # example return: bytearray(b'')
 
-        print("Function does not exist yet. error checking needed")
+        self.printMessage("Function does not exist yet. error checking needed")
         return None
 
     def usart_cfg(self):
@@ -912,9 +931,9 @@ class TinySA():
         elif (isinstance(val, int)) and (0<= val <=4095):
             writebyte = 'vbat_offset '+str(id)+'\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)   
-            print("vbat_offset set to " + str(id))
+            self.printMessage("vbat_offset set to " + str(id))
         else:
-            print("ERROR: vbat_offset() takes either None or [0 - 4095] integers")
+            self.printMessage("ERROR: vbat_offset() takes either None or [0 - 4095] integers")
             msgbytes = bytearray(b'')
         return msgbytes
 
@@ -941,7 +960,7 @@ class TinySA():
         # usage: zero {level}\r\n174dBm
         # example return:
 
-        print("Function does not exist yet. error checking needed")
+        self.printMessage("Function does not exist yet. error checking needed")
         return None
 
 
