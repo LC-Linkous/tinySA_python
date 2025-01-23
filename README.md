@@ -1,33 +1,36 @@
+
 # TinySA_Python
 A Non-GUI Python API class for the Tiny SA Ultra written to support several personal projects
-
 
 This uses official resources and documentation but is NOT endorsed by the official tinySA product
 
 # INPROGRESS
 
 ## Table of Contents
-* [The TinySA Ultra](#the-tinysa-ultra)
+* [The tinySA Ultra](#the-tinysa-ultra)
 * [Requirements](#requirements)
 * [Usage](#usage)
 * [Error Handling](#error-handling)
 * [Example Implementations](#example-implementations)
     * [Opening Serial Port](#opening-serial-port)
     * [Getting Device Info](#getting-device-info)
-    * [Setting TinySA Ultra Parameters](#setting-tinysa-ultra-parameters)
+    * [Setting tinySA Ultra Parameters](#setting-tinysa-ultra-parameters)
     * [Getting Data from Active Screen](#getting-data-from-active-screen)
     * [Plotting Data with Matplotlib](#plotting-data-with-matplotlib)
     * [Realtime Graphing](#realtime-graphing)
     * [Saving Screen Images](#saving-screen-image)
     * [Saving Data to CSV](#saving-data-to-csv)
-* [List tinySA Commands](#list-of-tinysa-commands)
+* [List of tinySA Commands and Their Library Commands](#list-of-tinysa-commands-and-their-library-commands)
+* [List of All Library Commands](#list-of-all-library-commands)
+* [Table of Command and Device Compatibility](#table-of-command-and-device-compatibility)
+* [Notes for Beginners](#notes-for-beginners)
+    * [Vocab Check](#vocab-check)
+    * [Calibration Setup](#calibration-setup)
 * [References](#references)
 * [Publications and Integration](#publications-and-integration)
 * [Licensing](#licensing)  
 
-
-## The TinySA Ultra
-
+## The tinySA Ultra
 
 
 ## Requirements
@@ -45,45 +48,88 @@ numpy
 These dependencies cover only the API. Additional dependencies should be installed to follow the included examples and tests. These can be installed with 'pip install -r test_requirements.txt':
 
 ```python
-matplotlib
 
 ```
 
-## Usage
+## Library Usage
+
+This library is currently only available as the tinySA class in 'tinySA_python.py' in this repository. It is very much under development and missing error checking and handling. 
+
+Several usage examples are provided in the [Example Implementations](#example-implementations) section, including working with the hardware and plotting results with matplotlib. 
+
+
 
 
 ## Error Handling
 
+Some error handling has been implemented for the individual functions. Most functions have a list of acceptable formats for input, which is included in the documentation and the 'libraryHelp' function. The 'tinySAHelp' function will get output from the current version of firmware running on the connected tinySA device.
+
+Detailed error messages can be returned by toggling 'verbose' on.
+
+From the [official wiki USB Interface page](#https://tinysa-org.translate.goog/wiki/pmwiki.php?n=Main.USBInterface&_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en-US):
+
+    There is limited error checking against incorrect parameters of incorrect mode
+
+    * Frequencies can be specified using an integer optionally postfixed with a the letter 'k' for kilo 'M' for Mega or 'G' for Giga. E.g. 0.1M (100kHz), 500k (0.5MHz) or 12000000 (12MHz)
+    * Levels are specified in dB(m) and can be specified using a floating point notation. E.g. 10 or 2.5
+    * Time is specified in seconds optionally postfixed with the letters 'm' for mili or 'u' for micro. E.g. 1 (1 second), 2.5 (2.5 seconds), 120m (120 milliseconds)
+
+
 ## Example Implementations
 
-### Opening Serial Port
+This library has been tested on Windows, but not yet on Unix systems. The primary difference should be the format of the serial port connection, but there may be smaller bugs in format that have not been detected yet. 
 
-### Getting Device Info
+### Finding the Serial Port
 
-### Setting TinySA Ultra Parameters
+### Connecting and Disconnecting
+ Show the process for initializing, opening the serial port, getting device info, and disconnecting
+
+
+### Toggle Error Messages
+
+### Device and Library Help
+
+
+### Setting tinySA Ultra Parameters
 
 ### Getting Data from Active Screen
-
-### Plotting Data with Matplotlib
-
-### Realtime Graphing
 
 ### Saving Screen Images
 
 ### Saving Data to CSV
 
+### Plotting Data with Matplotlib
 
-## List of tinySA Commands
+### Realtime Graphing
 
-This is a partial list that is being expanded. All of these are included in this API to some degree, but error checking may be incomplete
- 
+
+
+## List of tinySA Ultra Commands and Their Library Commands
+
+This list and the following list in the [List of All Library Commands](#list-of-all-library-commands) section have considerable overlap for documentation during development purposes.
+
+This section is sorted by the tinySA (Ultra) commands, and includes:
+* A brief description of what the command does
+* What the original usage looked like
+* The tinySA_Python function call, or calls if multiple options exist 
+* Example return, or example format of return
+* Any additional notes about the usage
+
+All of the listed commands are included in this API to some degree, but error checking may be incomplete.
+
+### **abort**
+* **Description:**  Enables the previous command abortion or aborts the previous command
+* **Original Usage:** `abort [off| on]`
+* **Library Function Call:**
+* **Example Return:** 
+* **Notes:** When used without parameters the previous command still running will be aborted. Abort must be enabled before usage using the "abort on" command. Additional error checking has been added with the 'verbose' option. 
 
 ### **actual_freq**
-* **Description:**  ???
-* **Original Usage:** `actual_freq`
+* **Description:**  sets or dump the frequency correction set by CORRECT FREQUENCY menu item
+* **Original Usage:** `actual_freq [{frequency in Hz}]`
 * **Library Function Call:**
 * **Example Return:** 3000000000
-* **Notes:**
+* **Notes:** might be freq in Hz. testing this currently.
 
 ### **agc**
 * **Description:**
@@ -112,8 +158,15 @@ This is a partial list that is being expanded. All of these are included in this
 * **Original Usage:** `calc off|minh|maxh|maxd|aver4|aver16|quasip`
 * **Library Function Call:**
 * **Example Return:**
-* **Notes:** the commands are the same as those listed in the MEASURE menu
-
+* **Notes:** 
+  * the commands are the same as those listed in the MEASURE menu
+  * [tinySA Calc Menu](#https://tinysa.org/wiki/pmwiki.php?n=Main.CALC):
+    * OFF disables any calculation 
+    * MIN HOLD sets the display to hold the minimum value measured. Reset the hold by selecting again. This setting is used to see stable signals that are within the noise 
+    * MAX HOLD sets the display to hold the maximum value measured. Reset the hold by selecting again. This setting can be used for many measurements such as showing the power envelope of a modulated signal. 
+    * MAX DECAY sets the display to hold the maximum value measured for a certain amount of scans after which the maximum will start to decay. The default number of scans to hold is 20. This default can be changed in the SETTINGS menu. This setting is used instead of MAX HOLD to reduce the impact of spurious signals 
+    * AVER 4 sets the averaging to new_measurement = old_measurement*3/4+measured_value/4. By default the averaging is linear power averaging 
+    * AVER 16 sets the averaging to new_measurement = old_measurement*15/16+measured_value/16. By default the averaging is linear power averaging 
 
 ### **caloutput**
 * **Description:** disables or sets the caloutput to a specified frequency in MHz
@@ -123,15 +176,15 @@ This is a partial list that is being expanded. All of these are included in this
 * **Notes:**
 
 ### **capture**
-* **Description:**requests a screen dump to be sent in binary format of  320x240 pixels of each 2 bytes
-* **Original Usage:** ``
+* **Description:** requests a screen dump to be sent in binary format of  320x240 pixels of each 2 bytes
+* **Original Usage:** `capture`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 ### **clearconfig**
 * **Description:** resets the configuration data to factory defaults
-* **Original Usage:** ``
+* **Original Usage:** `clearconfig`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:** Requires password '1234'
@@ -146,6 +199,7 @@ This is a partial list that is being expanded. All of these are included in this
 ### **correction**
 * **Description:** sets or dumps the frequency level correction table
 * **Original Usage:** `correction [0..9 {frequency} {level}]`
+* **Alternate Original:**  'correction  {table_name} [(0..9|0..19) {frequency} {level}]' 
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
@@ -158,7 +212,7 @@ This is a partial list that is being expanded. All of these are included in this
 * **Notes:**
 
 ### **data**
-* **Description:**
+* **Description:** dumps the trace data
 * **Original Usage:** `data 0..2`
 * **Library Function Call:**
 * **Example Return:**
@@ -166,7 +220,7 @@ This is a partial list that is being expanded. All of these are included in this
        
           
 ### **deviceid**
-* **Description:** sets of dumps a user settable number that can be use to identify a specific tinySA
+* **Description:** sets or dumps a user settable integer number ID that can be use to identify a specific tinySA connected to the PC
 * **Original Usage:** `deviceid [{number}]`
 * **Library Function Call:**
 * **Example Return:**
@@ -186,13 +240,12 @@ This is a partial list that is being expanded. All of these are included in this
 * **Example Return:**
 * **Notes:** Works in both input and output mode
 
-
 ### **fill**
-* **Description:**send by tinySA when in auto refresh mode
+* **Description:** sent by tinySA when in auto refresh mode
 * **Original Usage:**
 * **Library Function Call:**
 * **Example Return:** `format: "fill\r\n{X}{Y}{Width}{Height} {Color}\r\n"`
-* **Notes:**where all numbers are binary coded 2 bytes little endian.
+* **Notes:** All numbers returned are binary coded 2 bytes little endian.
 
 ### **freq**
 * **Description:** Pauses the sweep and sets the measurement frequency.
@@ -222,29 +275,26 @@ This is a partial list that is being expanded. All of these are included in this
 * **Example Return:**  
 * **Notes:** 
 
-
 ### **hop**
-* **Description:**
+* **Description:** Measures the input level at each of the indicated frequencies.
 * **Original Usage:** `hop {start(Hz)} {stop(Hz)} {step(Hz) | points}  [outmask]`
 * **Library Function Call:**
 * **Example Return:**
-* **Notes:**
+* **Notes:** Ultra only. From [tinysa-org](https://tinysa-org.translate.goog/wiki/pmwiki.php?n=Main.USBInterface&_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en-US): if the 3rd parameter is below 450 it is assumed to be points, otherwise as step frequency Outmask selects if the frequency (1) or level (2) is output. 
 
 ### **if**
-* **Description:**sets the IF to automatic or a specific value
+* **Description:** sets the intermediate frequency (IF) to automatic or a specific value
 * **Original Usage:** `if ( 0 | 433M..435M )`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**where 0 means automatic
 
-
 ### **if1**
-* **Description:**sets if to a specific value
+* **Description:**sets intermediate frequency (IF) to a specific value
 * **Original Usage:** `if1 (975M..979M )`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**where 0 means automatic
-
 
 ### **info**
 * **Description:** displays various SW and HW information
@@ -253,13 +303,12 @@ This is a partial list that is being expanded. All of these are included in this
 * **Example Return:**
 * **Notes:**
 
-
 ### **level**
 * **Description:** sets the output level
 * **Original Usage:** `level -76..13`
 * **Library Function Call:**
 * **Example Return:**
-* **Notes:** Not all values in the range are    available
+* **Notes:** Not all values in the range are available
 
 ### **levelchange**
 * **Description:** sets the output level delta for low output mode level sweep
@@ -273,9 +322,7 @@ This is a partial list that is being expanded. All of these are included in this
 * **Original Usage:** `leveloffset low|high|switch [output] {error}`
 * **Library Function Call:**
 * **Example Return:**
-* **Notes:** For the output corrections first ensure correct output levels at maximum output level. For the low output set the output to -50dBm and measure and correct the level with "leveloffset switch error" where For all output leveloffset commands measure the level with the leveloffset
-to zero and calculate error = measured level - specified level
-
+* **Notes:** For the output corrections first ensure correct output levels at maximum output level. For the low output set the output to -50dBm and measure and correct the level with "leveloffset switch error" where For all output leveloffset commands measure the level with the leveloffset to zero and calculate error = measured level - specified level
 
 ### **load**
 * **Description:**loads a previously stored preset
@@ -283,7 +330,6 @@ to zero and calculate error = measured level - specified level
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:** where 0 is the startup preset
-
 
 ### **lna**
 * **Description:** toggle lna usage off/on
@@ -307,6 +353,14 @@ to zero and calculate error = measured level - specified level
 * **Notes:**  where id=1..4 index=0..num_points-1
 Merker levels will use the selected unit Marker peak will activate the marker (if not done already), position the marker on the strongest signal and display the marker info The frequency must be within the selected sweep range mode 
 
+### **menu**
+* **Description:** The menu command can be used to activate any menu item
+* **Original Usage:** `menu {#} [{#} [{#} [{#}]]]`
+* **Library Function Call:**
+* **Example Return:**
+* **Notes:** where # is the menu entry number starting with 1 at the top.
+Example: menu 6 2 will toggle the waterfall option 
+
 ### **mode**
 * **Description:** sets the mode of the tinySA
 * **Original Usage:** `mode low|high input|output`
@@ -314,14 +368,12 @@ Merker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:**
 * **Notes:**
 
-
 ### **modulation**
 * **Description:** sets the modulation in output mode
-* **Original Usage:** `modulation off|AM_1kHz|AM_10Hz| NFM|WFM|extern`
+* **Original Usage:** `modulation off|AM_1kHz|AM_10Hz|NFM|WFM|extern`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
-
 
 ### **output**
 * **Description:** sets the output on or off
@@ -330,7 +382,6 @@ Merker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:**
 * **Notes:**
 
-
 ### **pause**
 * **Description:** pauses the sweeping in either input or output mode
 * **Original Usage:** `pause`
@@ -338,22 +389,19 @@ Merker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:**
 * **Notes:**
 
-
 ### **rbw**
 * **Description:** sets the rbw to either automatic or a specific value
 * **Original Usage:** `rbw auto|3..600`
 * **Library Function Call:**
 * **Example Return:** 
-* **Notes:** the number specifies the target rbw in kHz     
-
+* **Notes:** the number specifies the target rbw in kHz. Frequencies listed in official documentation: 3 kHz, 10 kHz, 30 kHz, 100 kHz, 300 kHz, 600 kHz     
 
 ### **recall**
-* **Description:**
-* **Original Usage:** ``
+* **Description:** loads a previously stored preset
+* **Original Usage:** ` recall 0..4`
 * **Library Function Call:** 
 * **Example Return:**
-* **Notes:** same as load
-
+* **Notes:** same as load.  0 is the startup preset 
 
 ### **refresh**
 * **Description:** enables/disables the auto refresh mode
@@ -362,7 +410,6 @@ Merker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:**
 * **Notes:**
 
-
 ### **release**
 * **Description:** signals a removal of the touch
 * **Original Usage:** `release`
@@ -370,13 +417,33 @@ Merker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:**
 * **Notes:**
 
- 
+### **remark**
+* **Description:** does nothing
+* **Original Usage:** `remark [use any text]`
+* **Library Function Call:**
+* **Example Return:**
+* **Notes:** ?? 
+
+### **repeat**
+* **Description:** sets the number of measurements that should be taken at every frequency
+* **Original Usage:** ` repeat 1..1000`
+* **Library Function Call:**
+* **Example Return:**
+* **Notes:** increasing the repeat reduces the noise per frequency, repeat 1 is the normal scanning mode. 
+
 ### **reset**
 * **Description:** resets the tinySA
 * **Original Usage:** `reset`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
+
+### **restart**
+* **Description:** restarts the  tinySA after the specified number of seconds
+* **Original Usage:** `restart {seconds}`
+* **Library Function Call:**
+* **Example Return:**
+* **Notes:** where 0 seconds stops the restarting process
 
 
 ### **resume**
@@ -393,7 +460,6 @@ Merker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:**
 * **Notes:** where 0 is the startup preset
 
-
 ### **saveconfig**
 * **Description:** saves the device configuration data
 * **Original Usage:** `saveconfig`
@@ -401,6 +467,7 @@ Merker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:**
 * **Notes:**
  
+
 ### **scan**
 * **Description:**performs a scan and optionally outputs the measured data
 * **Original Usage:** `scan {start(Hz)} {stop(Hz)} [points] [outmask]`
@@ -408,14 +475,16 @@ Merker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:**
 * **Notes:**where the outmask is a binary OR of 1=frequencies, 2=measured data, 4=stored data and points is maximum 290
 
-
 ### **scanraw**
 * **Description:**performs a scan of unlimited amount of points and send the data in binary form
-* **Original Usage:** `scanraw {start(Hz)} {stop(Hz)} [points]`
+* **Original Usage:** `scanraw {start(Hz)} {stop(Hz)} [points][option]`
 * **Library Function Call:**
 * **Example Return:**
-* **Notes:**The measured data is send as '{' ('x' MSB LSB)*points '}' where the 16 bit data is scaled by 32.
+* **Notes:** From Documentation 1: The measured data is send as '{' ('x' MSB LSB)*points '}' where the 16 bit data is scaled by 32.
 
+From Documentation 2: The measured data is the level in dBm and is send as '{' ('x' MSB LSB)*points '}'. To get the dBm level from the 16 bit data, divide by 32 and subtract 128 for the tinySA and 174 for the tinySA Ultra. The option, when present, can be either 0,1,2 or 3 being the sum of 1=unbuffered and 2=continuous 
+
+UNDERGROING TESTING
    
 ### **sd_delete**
 * **Description:** delete a specific file on the sd card
@@ -423,7 +492,6 @@ Merker levels will use the selected unit Marker peak will activate the marker (i
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
-
 
 ### **sd_list**
 * **Description:**displays list of filenames with extension and sizes
@@ -439,7 +507,6 @@ Merker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:**
 * **Notes:**
 
-
 ### **selftest**
 * **Description:** performs one or all selftests
 * **Original Usage:** `selftest 0 0..9`
@@ -449,7 +516,7 @@ Merker levels will use the selected unit Marker peak will activate the marker (i
   
     
 ### **spur**
-* **Description:**enables or disables spur reduction
+* **Description:** enables or disables spur reduction
 * **Original Usage:** `spur on|off`
 * **Library Function Call:**
 * **Example Return:**
@@ -464,12 +531,11 @@ Merker levels will use the selected unit Marker peak will activate the marker (i
 * **Notes:**
 
 ### **sweep**
-* **Description:**set sweep boundaries or execute a sweep
+* **Description:** set sweep boundaries or execute a sweep
 * **Original Usage:** `sweep [(start|stop|center|span|cw {frequency}) | ({start(Hz)} {stop(Hz)} [0..290] ) ]`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:** sweep without arguments lists the current sweep settings, the frequencies specified should be within the permissible range. The sweep commands apply both to input and output modes
-
 
 ### **sweeptime**
 * **Description:** sets the sweeptime
@@ -478,13 +544,27 @@ Merker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:**
 * **Notes:**the time specified may end in a letter where  m=mili and u=micro
 
+### **sweep_voltage**
+* **Description:** sets the sweep voltage. 
+* **Original Usage:** `sweep {0-3.3}`
+* **Library Function Call:**
+* **Example Return:**
+* **Notes:** Not sure if this should be included for manual override or not. testing needed.
+
+### **text**
+* **Description:** specifies the text entry for the active keypad 
+* **Original Usage:** `text keypadtext `
+* **Library Function Call:**
+* **Example Return:**
+* **Notes:** where keypadtext is the text used. Example: text 12M
+Currently does not work for entering file names 
+
 ### **threads**
 * **Description:** lists information of the threads in the tinySA
-* **Original Usage:** ``
+* **Original Usage:** `threads`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
-
 
 ### **touch**
 * **Description:** sends the coordinates of a touch
@@ -495,32 +575,31 @@ Merker levels will use the selected unit Marker peak will activate the marker (i
 
 ### **touchcal**
 * **Description:**starts the touch calibration
-* **Original Usage:**
+* **Original Usage:** `touchcal`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 ### **touchtest**
 * **Description:**starts the touch test
-* **Original Usage:**
+* **Original Usage:** `touchtest`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 ### **trace**
-* **Description:**displays all or one trace  information or sets trace related information
+* **Description:** displays all or one trace information or sets trace related information
 * **Original Usage:** `trace [{0..2} | dBm|dBmV|dBuV| V|W |store|clear|subtract | (scale|reflevel) auto|{level}]`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 ### **trigger**
-* **Description:**sets the trigger type or level
+* **Description:** sets the trigger type or level
 * **Original Usage:** `trigger auto|normal|single|{level(dBm)}`
 * **Library Function Call:**
 * **Example Return:**
-* **Notes:**the trigger level is always set in dBm
-
+* **Notes:** the trigger level is always set in dBm
 
 ### **ultra**
 * **Description:** turn on/config tiny SA ultra mode
@@ -529,34 +608,40 @@ Merker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:**
 * **Notes:**
 
+### **usart_cfg**
+* **Description:** returns port current baud rate
+* **Original Usage:** `usart_cfg`
+* **Library Function Call:**
+* **Example Return:**
+* **Notes:**  default is 115,200
+
 ### **vbat**
-* **Description:**displays the battery voltage
-* **Original Usage:**
+* **Description:** returns the current battery voltage
+* **Original Usage:** `vbat`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 ### **vbat_offset**
-* **Description:**displays or sets the battery offset value
+* **Description:** returns or sets the battery offset value
 * **Original Usage:** `vbat_offset [{0..4095}]`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 ### **version**
-* **Description:** displays the version text
-* **Original Usage:**
+* **Description:** returns the version text
+* **Original Usage:** `version`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 ### **wait**
-* **Description:**  same as pause(?)
-* **Original Usage:**
+* **Description:** wait for a single sweep to finish and pauses sweep or waits for specified number of seconds
+* **Original Usage:** `wait [{seconds}]`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
-
 
 ### **zero**
 * **Description:**
@@ -565,30 +650,68 @@ Merker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:**
 * **Notes:**
 
-
 ''' Full list of help commands
-commands: freq time dac nf saveconfig clearconfig zero sweep pause resume wait repeat status caloutput save recall trace trigger marker line usart_cfg vbat_offset color if if1 lna2 agc actual_freq freq_corr attenuate level sweeptime leveloffset levelchange modulation rbw mode spur lna direct ultra load ext_gain output deviceid correction calc menu text 
-remark
+commands: freq time dac nf saveconfig clearconfig zero sweep pause resume wait repeat status caloutput save recall trace trigger marker line usart_cfg vbat_offset color if if1 lna2 agc actual_freq freq_corr attenuate level sweeptime leveloffset levelchange modulation rbw mode spur lna direct ultra load ext_gain output deviceid correction calc menu text remark
 
-Other commands: version reset data frequencies scan hop 
-scanraw test touchcal touchtest usart capture refresh touch release vbat help info selftest sd_list sd_read sd_delete threads
+Other commands: version reset data frequencies scan hop scanraw test touchcal touchtest usart capture refresh touch release vbat help info selftest sd_list sd_read sd_delete threads
 '''
 
-The list of commands from 'help' that are still 'unknown' or dont appear to have an impact on the tinySA via this Python API:
+The list of commands from 'help' that are still 'unknown' or don’t appear to have an impact on the tinySA via this Python API:
 
 '''
-menu
-remark
-text
 usart
 
 '''
 
+## List of All Library Commands
+
+## Table of Command and Device Compatibility
+
+This library was developed with the tinySA Ultra, and there's some commands that might have been added/dropped between devices. This table is a record of CURRENT known compatibility. It is HIGHLY likely to NOT be complete. 
+
+If a last checked firmware version is known, that is included in the header in the parenthesis. 
+
+|  Device Command  | tinySA ()   | tinySA Ultra ()| tinySA Ultra + ()|
+|------------------|-------------|----------------|------------------|
+| | | | |
+| | | | |
+| | | | |
+| | | | |
+| | | | |
+| | | | |
+| | | | |
+| | | | |
+| | | | |
+| | | | |
+| | | | |
+| | | | |
+| | | | |
+| | | | |
+| | | | |
+| | | | |
+| | | | |
+| | | | |
+| | | | |
+| | | | |
+| | | | |
+| | | | |
+| | | | |
+| | | | |
+
+## Notes for Beginners
+
+### Vocab Check
+
+### Calibration Setup
 
 ## References
 
 * [tinySA HomePage](https://tinysa.org/wiki/)  https://www.tinysa.org/wiki/
-* [tinySA PC control](https://tinysa.org/wiki/pmwiki.php?n=Main.PCSW)  https://tinysa.org/wiki/pmwiki.php?n=Main.PCSW 
+    * [tinySA PC control](https://tinysa.org/wiki/pmwiki.php?n=Main.PCSW) 
+        * https://tinysa.org/wiki/pmwiki.php?n=Main.PCSW 
+    * [tinySA list of general pages](https://tinysa.org/wiki/pmwiki.php?n=Main.PageList) 
+        * https://tinysa.org/wiki/pmwiki.php?n=Main.PageList
+
 * [http://athome.kaashoek.com/tinySA/python/ ]( http://athome.kaashoek.com/tinySA/python/ )
 * [official pyserial](https://pypi.org/project/pyserial/) https://pypi.org/project/pyserial/
 * https://groups.io/g/tinysa/topic/tinysa_screen_capture_using/82218670
@@ -603,5 +726,6 @@ Other publications featuring the code in this repo will be added as they become 
 
 ## Licensing
 
-The code in this repository has been released under GPL-2.0, but licensing will be updated to match whatever the tinySA products and code are released under. 
+The code in this repository has been released under GPL-2.0, but licensing will be updated to match whatever the tinySA products and code are released under. This licensing does not take priority over the official releases.
+
 
