@@ -139,7 +139,6 @@ bytearray(b'deviceid 0\r')
 ```
 
 
-
 ### Connecting and Disconnecting
  Show the process for initializing, opening the serial port, getting device info, and disconnecting
 
@@ -200,9 +199,25 @@ tsa.setErrorByteReturn(False)
 ```
 
 ### Device and Library Help
+
+There are three options for help() with this library.
+
 ```python
+# the default help function
+# 1 = help for this library, other values call the tinySA help function 
+tsa.help(1)
+
+# calling the library help function directly
+tsa.libraryHelp()
+
+# calling the tinySA help directly
+tsa.tinySAHelp()
 
 ```
+
+All three return a bytearray in the format `bytearray(b'commands:......')`
+
+
 
 ### Setting tinySA Ultra Parameters
 ```python
@@ -230,9 +245,9 @@ tsa.setErrorByteReturn(False)
 ```
 
 
-## List of tinySA Ultra Commands and Their Library Commands
+## List of tinySA Ultra Commands and their Library Commands
 
-This list and the following list in the [List of All Library Commands](#list-of-all-library-commands) section have considerable overlap for documentation during development purposes.
+This list and the following list in the [Additional Library Commands](#additional-library-commands) section describe the functions in this library.
 
 This section is sorted by the tinySA (Ultra) commands, and includes:
 * A brief description of what the command does
@@ -911,7 +926,7 @@ usart
 
 '''
 
-## List of All Library Commands
+## Additional Library Commands
 
 ## Table of Command and Device Compatibility
 
