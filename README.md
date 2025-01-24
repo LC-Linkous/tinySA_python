@@ -81,27 +81,53 @@ This library has been tested on Windows, but not yet on Unix systems. The primar
 
 ### Finding the Serial Port
 
+
+```python
+
+```
+
+
 ### Connecting and Disconnecting
  Show the process for initializing, opening the serial port, getting device info, and disconnecting
 
+```python
+
+```
 
 ### Toggle Error Messages
+```python
+
+```
 
 ### Device and Library Help
+```python
 
+```
 
 ### Setting tinySA Ultra Parameters
+```python
 
+```
 ### Getting Data from Active Screen
+```python
 
+```
 ### Saving Screen Images
+```python
 
+```
 ### Saving Data to CSV
+```python
 
+```
 ### Plotting Data with Matplotlib
+```python
 
+```
 ### Realtime Graphing
+```python
 
+```
 
 
 ## List of tinySA Ultra Commands and Their Library Commands
@@ -137,6 +163,14 @@ Quick Link Table:
 
 
 ### **abort**
+
+| **Status**   | **Description**  | **Original Usage**    | **Library Function Call**   | **Example Return**  |
+|--------------|------------------|-----------------------|-----------------------------|---------------------|
+| NOT ON DEVELOPER'S DUT         | Sets the abortion enabled status (on/off) or aborts the previous command.| `abort [off|on]`       | `abort(val=None|"off"|"on")`       | ????                 |
+
+
+
+
 * **Status:** NOT ON DEVELOPER'S DUT
 * **Description:**  Sets the abortion enabled status (on/off) or aborts the previous command.
 * **Original Usage:** `abort [off|on]`
