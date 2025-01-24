@@ -287,7 +287,7 @@ Quick Link Table:
           
 ### **deviceid**
 * **Status:** Done
-* **Description:** sets or dumps a user settable integer number ID that can be use to identify a specific tinySA connected to the PC
+* **Description:** Sets or gets a user settable integer number ID that can be use to identify a specific tinySA connected to the PC
 * **Original Usage:** `deviceid [{number}]`
 * **Library Function Call:** `deviceid(id=None|{int number})`
 * **Example Return:** 'deviceid 0\r'
@@ -303,7 +303,7 @@ Quick Link Table:
 
 ### **ext_gain**
 * **Status:** Done
-* **Description:** sets the external attenuation/amplification
+* **Description:** Sets the external attenuation/amplification
 * **Original Usage:** `ext_gain -100..100`
 * **Library Function Call:** `ext_gain(val=-100...100)`
 * **Example Return:** no return
@@ -799,36 +799,36 @@ usart
 
 ## Table of Command and Device Compatibility
 
-This library was developed with the tinySA Ultra, and there's some commands that might have been added/dropped between devices. This table is a record of CURRENT known compatibility. It is HIGHLY likely to NOT be complete. 
+This library was developed with the tinySA Ultra, and there's some commands that might have been added/dropped between devices. This table is a record of CURRENT known compatibility with THIS library. It is HIGHLY likely to NOT be complete. 
 
 If a last checked firmware version is known, that is included in the header in the parenthesis. 
 
 |  Device Command  | tinySA ()   | tinySA Ultra ()| tinySA Ultra + ()|
 |------------------|-------------|----------------|------------------|
 | abort | |??| |
-| actual_freq| | Get only | |
+| actual_freq| | Get Only | |
 | agc| | Set | |
 | attenuate| | Set | |
 | bulk| | ??| |
 | calc| | Set | |
 | caloutput| | Set | |
-| capture| | | |
-| clearconfig| | | |
-| color| | | |
-| correction| | | |
-| dac| | | |
-| data| | | |
-| deviceid| | | |
-| direct| | | |
-| ext_gain| | | |
-| fill| | | |
-| freq| | | |
-| freq_corr| | | |
-| frequencies| | | |
-| help| | | |
-| hop| | | |
-| if| | | |
-| if1| | | |
+| capture| | Get| |
+| clearconfig| | Reset | |
+| color| | Set and Get | |
+| correction| |??| |
+| dac| |Set and Get | |
+| data| | Get | |
+| deviceid| Set and Get| | |
+| direct| |??| |
+| ext_gain| | Set | |
+| fill| |??| |
+| freq| |Set| |
+| freq_corr| |Get | |
+| frequencies| |Get | |
+| help| |Get | |
+| hop| No | ?? | |
+| if| | Set | |
+| if1| | Set | |
 | info| | | |
 | level| | | |
 | levelchange| | | |
