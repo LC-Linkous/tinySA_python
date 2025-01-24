@@ -154,12 +154,12 @@ tsa = tinySA()
 success = tsa.connect(port='COM10')
 
 # if port open, then get device information and disconnect
-if success == True:
+if success == False:
+    print("ERROR: could not connect to port")
+else:
     msg = tsa.info()
     print(msg)
     tsa.disconnect()
-else:
-    print("ERROR: could not connect to port")
 
 ```
 Example output for this method is as follows:
@@ -271,8 +271,10 @@ tsa = tinySA()
 # attempt to connect to previously discovered serial port
 success = tsa.connect(port='COM10')
 
-# if port open, then complete task(s) and disconnect
-if success == True:
+# if port closed, then return error message
+if success == False:
+    print("ERROR: could not connect to port")
+else: # port open, complete task(s) and disconnect
     # detailed messages turned on
     tsa.setVerbose(True) 
     # get the trace data
@@ -281,27 +283,27 @@ if success == True:
     # get the frequencies used by the last sweep
     freq_bytes = tsa.frequencies() 
     tsa.disconnect()
-else:
-    print("ERROR: could not connect to port")
 
-# processing after disconnect (just for this example)
-dataVals = byteArrayToNumArray(data_bytes)
-print(len(dataVals))  # length of 450 data points
+    # processing after disconnect (just for this example)
+    dataVals = byteArrayToNumArray(data_bytes)
+    print(len(dataVals))  # length of 450 data points
 
-freqVals = byteArrayToNumArray(freq_bytes)
-print(len(freqVals))  # length of 450 data points
+    freqVals = byteArrayToNumArray(freq_bytes)
+    print(len(freqVals))  # length of 450 data points
 
 
-# create the plot
-plt.plot(freqVals, dataVals)
+    # create the plot
+    plt.plot(freqVals, dataVals)
 
-# add labels and title
-plt.xlabel('Frequency (Hz)')
-plt.ylabel('Signal Strength (dB)')
-plt.title('Plot of Last Data Sweep')
+    # add labels and title
+    plt.xlabel('Frequency (Hz)')
+    plt.ylabel('Signal Strength (dB)')
+    plt.title('Plot of Last Data Sweep')
 
-# show the plot
-plt.show()
+    # show the plot
+    plt.show()
+
+
 ```
 
 
