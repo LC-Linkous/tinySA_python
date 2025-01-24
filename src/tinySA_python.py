@@ -4,7 +4,6 @@
 #   tinySA_python 
 #   './tinySA_python.py'
 #   UNOFFICIAL Python API based on the tinySA Ultra official documentation at https://www.tinysa.org/wiki/
-#   
 #
 #   Author(s): Lauren Linkous
 #   Last update: January 23, 2025
@@ -20,6 +19,7 @@ class tinySA():
 
         # message feedback
         self.verboseEnabled = False
+        self.returnErrorByte = False
 
         # other overrides
         self.ultraEnabled = False
@@ -51,6 +51,25 @@ class tinySA():
             print(msg)
 
 ######################################################################
+# Explicit error return
+# set/getErrorByteReturn()  - set how detailed the error printouts are
+# printMessage()  - deal with the bool in one place
+######################################################################
+
+    def setErrorByteReturn(self, errByte=False):
+        self.returnErrorByte = errByte
+
+    def getErrorByteReturn(self):
+        return self.returnErrorByte
+
+    def errorByteReturn(self):
+        if self.returnErrorByte == True:
+            return bytearray(b'ERROR')
+        else:
+            return bytearray(b'') # the default
+
+
+######################################################################
 # Direct error checking overrides
 #   These are used during DEBUG or when device state is already known
 #   Not reccomended unless you are sure of the device state
@@ -68,6 +87,10 @@ class tinySA():
 ######################################################################
 
     def connect(self, port, timeout=1):
+        # attempt connection to provided port. 
+        # returns:
+        # True if successful, False otherwise
+
         try:
             self.ser = serial.Serial(port=port, timeout=timeout)
             return True
@@ -77,6 +100,7 @@ class tinySA():
             return False
 
     def disconnect(self):
+        # closes the serial port
         self.ser.close()
 
     def tinySASerial(self, writebyte, printBool=False):
@@ -141,7 +165,6 @@ class tinySA():
             msgbytes = self.libraryHelp() 
         else:
             msgbytes = self.tinySAHelp()    
-        
         return msgbytes
 
     def libraryHelp(self):
@@ -229,7 +252,7 @@ class tinySA():
             self.printMessage("actual_freq set to " + str(val))
         else:
             self.printMessage("ERROR: actual_freq() takes either None or integers")
-            msgbytes = bytearray(b'')
+            msgbytes = self.errorByteReturn()
         return msgbytes
 
 
@@ -247,7 +270,7 @@ class tinySA():
             self.printMessage("agc() set with " + str(val))
         else:
             self.printMessage("ERROR: agc() takes vals [0 - 7]|\"auto\"")
-            msgbytes =  bytearray(b'ERROR')
+            msgbytes = self.errorByteReturn()
         return msgbytes
 
 
@@ -265,7 +288,7 @@ class tinySA():
             self.printMessage("attenuate() set with " + str(val))           
         else:
             self.printMessage("ERROR: attenuate() takes vals [0 - 31]|\"auto\"")
-            msgbytes =  bytearray(b'')
+            msgbytes = self.errorByteReturn()
         return msgbytes
     
 
@@ -300,7 +323,7 @@ class tinySA():
             self.printMessage("calc() set with " + str(val))
         else:
             self.printMessage("ERROR: calc() takes vals \"off\"|\"minh\"|\"maxh\"|\"maxd\"|\"aver4\"|\"aver16\"|\"quasip\"")
-            msgbytes =  bytearray(b'')
+            msgbytes = self.errorByteReturn()
         return msgbytes
 
 
@@ -318,7 +341,7 @@ class tinySA():
             self.printMessage("caloutput() set with " + str(val))        
         else:
             self.printMessage("ERROR: caloutput() takes vals 1|2|3|4|10|15|30|\"off\"")
-            msgbytes = bytearray(b'')
+            msgbytes = self.errorByteReturn()
         return msgbytes
     
     
@@ -367,7 +390,7 @@ class tinySA():
             self.printMessage("color() set with ID: " +str(ID) + " RGB: " + str(RGB))
         else:
             self.printMessage("ERROR: color() takes either None, or ID as int 0..31 and RGB as a hex value")
-            msgbytes = bytearray(b'')
+            msgbytes = self.errorByteReturn()
         return msgbytes
 
 
@@ -396,7 +419,7 @@ class tinySA():
             self.printMessage("dac set to " + str(id))
         else:
             self.printMessage("ERROR: dac() takes either None or integers")
-            msgbytes = bytearray(b'')
+            msgbytes = self.errorByteReturn()
         return msgbytes
 
 
@@ -420,7 +443,7 @@ class tinySA():
                 self.printMessage("returning measurement data") 
         else:
             self.printMessage("ERROR: data() takes vals [0-2]")
-            msgbytes =  bytearray(b'')
+            msgbytes = self.errorByteReturn()
         return msgbytes
 
 
@@ -439,7 +462,7 @@ class tinySA():
             self.printMessage("device ID set to " + str(id))
         else:
             self.printMessage("ERROR: deviceid() takes either None or integers")
-            msgbytes =  bytearray(b'')
+            msgbytes = self.errorByteReturn()
         return msgbytes
 
 
@@ -465,7 +488,7 @@ class tinySA():
             self.printMessage("ext_gain() set to " + str(val))       
         else:
             self.printMessage("ERROR: ext_gain() takes vals [-100 - 100]")
-            msgbytes = bytearray(b'')
+            msgbytes = self.errorByteReturn()
         return msgbytes
 
 
@@ -493,7 +516,7 @@ class tinySA():
             self.printMessage("freq() set to " + str(val))       
         else:
             self.printMessage("ERROR: freq() takes integer vals [100 kHz - 5.3 GHz] as Hz for the tinySA Ultra")
-            msgbytes = bytearray(b'')
+            msgbytes = self.errorByteReturn()
         return msgbytes
 
         return
@@ -547,7 +570,7 @@ class tinySA():
             self.printMessage("setIF() set to "  + str(val))       
         else:
             self.printMessage("ERROR: if() takes vals ['auto'|0|433M...435M] in Hz as integers")
-            msgbytes = bytearray(b'')
+            msgbytes = self.errorByteReturn()
         return msgbytes
 
 
@@ -567,7 +590,7 @@ class tinySA():
             self.printMessage("setIF() set to "  + str(val))          
         else:
             self.printMessage("ERROR: if1() takes vals ['auto'|0|975M...979M] in Hz as integers")
-            msgbytes = bytearray(b'')
+            msgbytes = self.errorByteReturn()
         return msgbytes
 
 
@@ -666,7 +689,7 @@ class tinySA():
             self.printMessage("load() called for preset # " + str(val))       
         else:
             self.printMessage("ERROR: load() takes vals [0 - 4]")
-            msgbytes = bytearray(b'')
+            msgbytes = self.errorByteReturn()
         return msgbytes
 
     def lna(self, val):
@@ -683,7 +706,7 @@ class tinySA():
             self.printMessage("lna() set to " + str(val))        
         else:
             self.printMessage("ERROR: lna() takes vals [on|off]")
-            msgbytes = bytearray(b'')
+            msgbytes = self.errorByteReturn()
         return msgbytes
 
     def lna2(self, val="auto"):
@@ -700,7 +723,7 @@ class tinySA():
             self.printMessage("lna2() set to " + str(val))      
         else:
             self.printMessage("ERROR: lna2() takes vals [0 - 7]|auto")
-            msgbytes = bytearray(b'')
+            msgbytes = self.errorByteReturn()
         return msgbytes
 
     def marker(self):
@@ -771,7 +794,7 @@ class tinySA():
             msgbytes = self.tinySASerial(writebyte, printBool=False)           
         else:
             self.printMessage("ERROR: output() takes vals [on|off]")
-            msgbytes = bytearray(b'')
+            msgbytes = self.errorByteReturn()
         return msgbytes
 
     def pause(self):
@@ -799,7 +822,7 @@ class tinySA():
             msgbytes = self.tinySASerial(writebyte, printBool=False)           
         else:
             self.printMessage("ERROR: rbw() takes vals [auto |0 - 600] in kHz as integers")
-            msgbytes = bytearray(b'')
+            msgbytes = self.errorByteReturn()
         return msgbytes
 
     def recall(self, val=0):
@@ -816,7 +839,7 @@ class tinySA():
             self.printMessage("recall() set to value " + str(val))           
         else:
             self.printMessage("ERROR: recall() takes vals [0 - 4]")
-            msgbytes = bytearray(b'')
+            msgbytes = self.errorByteReturn()
         return msgbytes
 
     def refresh(self, val):
@@ -833,7 +856,7 @@ class tinySA():
             self.printMessage("refresh() set to " + str(val))           
         else:
             self.printMessage("ERROR: refresh() takes vals [on|off]")
-            msgbytes = bytearray(b'')
+            msgbytes = self.errorByteReturn()
         return msgbytes
 
     def release(self):
@@ -910,7 +933,7 @@ class tinySA():
             msgbytes = self.tinySASerial(writebyte, printBool=False)           
         else:
             self.printMessage("ERROR: save() takes vals [0 - 4] as integers")
-            msgbytes = bytearray(b'')
+            msgbytes = self.errorByteReturn()
         return msgbytes
 
     def saveconfig(self):
@@ -986,7 +1009,7 @@ class tinySA():
             msgbytes = self.tinySASerial(writebyte, printBool=False)           
         else:
             self.printMessage("ERROR: selftest() takes vals [0-9]")
-            msgbytes = bytearray(b'')
+            msgbytes = self.errorByteReturn()
         return msgbytes
     
     def spur(self, val):
@@ -1002,7 +1025,7 @@ class tinySA():
             msgbytes = self.tinySASerial(writebyte, printBool=False)           
         else:
             self.printMessage("ERROR: spur() takes vals [on|off]")
-            msgbytes = bytearray(b'')
+            msgbytes = self.errorByteReturn()
         return msgbytes
     
     def status(self):
@@ -1161,7 +1184,7 @@ class tinySA():
             self.printMessage("vbat_offset set to " + str(id))
         else:
             self.printMessage("ERROR: vbat_offset() takes either None or [0 - 4095] integers")
-            msgbytes = bytearray(b'')
+            msgbytes = self.errorByteReturn()
         return msgbytes
 
     def version(self):

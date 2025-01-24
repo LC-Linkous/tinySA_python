@@ -81,10 +81,48 @@ This library has been tested on Windows, but not yet on Unix systems. The primar
 
 ### Finding the Serial Port
 
+There are several ways to list avilable serial ports.
+
+
+#### Windows:
+1)  Open _Device Manager_, scroll down to _Ports (COM & LPT)_, and epand the menu. There should be a _COM#_ port listing "USB Serial Device(COM #)". If your tinySA Ultra is set up to work with Serial, this will be it.
+
+
+2) This uses the pyserial library requirement  already installed for this library. It probably also works on Linux systems, but has not been tested yet.
 
 ```python
 
+import serial.tools.list_ports
+
+ports = serial.tools.list_ports.comports()
+
+for port, desc, hwid in ports:
+    print(f"Port: {port}, Description: {desc}, Hardware ID: {hwid}")
+
 ```
+
+Example output for this method (on Windows) is as follows:
+
+```python
+
+Port: COM4, Description: Standard Serial over Bluetooth link (COM4), Hardware ID: BTHENUM\{00001101-0000-1000-8000-00805F9B34FB}_LOCALMFG&0000\7&D0D1EE&0&000000000000_00000000
+Port: COM3, Description: Standard Serial over Bluetooth link (COM3), Hardware ID: BTHENUM\{00001101-0000-1000-8000-00805F9B34FB}_LOCALMFG&0002\7&D0D1EE&0&B8B3DC31CBA8_C00000000
+Port: COM10, Description: USB Serial Device (COM10), Hardware ID: USB VID:PID=0483:5740 SER=400 LOCATION=1-3
+
+```
+
+"COM10" is the port location of the tinySA Ultra that is used in the examples in this README.
+
+
+
+
+#### Linux
+TODO
+
+
+
+
+
 
 
 ### Connecting and Disconnecting
@@ -92,11 +130,58 @@ This library has been tested on Windows, but not yet on Unix systems. The primar
 
 ```python
 
-```
+# import the library class
+from src.tinySA_python import tinySA
 
-### Toggle Error Messages
+# create a new tinySA object    
+tsa = tinySA()
+
+# attempt to connect to previously discovered serial port
+success = tsa.connect(port='COM10')
+
+# if port open, then get device information and disconnect
+if success == True:
+    msg = tsa.info()
+    print(msg)
+    tsa.disconnect()
+else:
+    print("ERROR: could not connect to port")
+
+```
+Example output for this method is as follows:
+
 ```python
 
+bytearray(b'tinySA ULTRA\r\n2019-2024 Copyright @Erik Kaashoek\r\n2016-2020 Copyright @edy555\r\nSW licensed under GPL. See: https://github.com/erikkaashoek/tinySA\r\nVersion: tinySA4_v1.4-143-g864bb27\r\nBuild Time: Jan 10 2024 - 11:14:08\r\nKernel: 4.0.0\r\nCompiler: GCC 7.2.1 20170904 (release) [ARM/embedded-7-branch revision 255204]\r\nArchitecture: ARMv7E-M Core Variant: Cortex-M4F\r\nPort Info: Advanced kernel mode\r\nPlatform: STM32F303xC Analog & DSP\r')
+
+```
+
+This library returns strings as cleaned bytearrays. The command and first `\r\n` pair are removed from the front, and the `ch>` is removed from the en of thetinySA serial return.
+
+
+### Toggle Error Messages
+
+Currently, the following can be used to turn on or off returned error messages.
+
+
+1) the 'verbose' option. When enabled, detailed messages are printed out. 
+
+```python
+# detailed messages are ON
+tsa.setVerbose(True) 
+
+# detailed messages are OFF
+tsa.setVerbose(False) 
+```
+
+1) the 'errorByte' option. When enabled, if there is an error with the command or configuration, `b'ERROR'` is returned instead of the default `b''`. 
+
+```python
+# when an error occurs, b'ERROR' is returned
+tsa.setErrorByteReturn(True) 
+
+# when an error occurs, the default b'' might be returned
+tsa.setErrorByteReturn(False) 
 ```
 
 ### Device and Library Help
@@ -677,30 +762,30 @@ UNDERGROING TESTING
 ### **sweep_voltage**
 * **Status:** TODO: testing
 * **Description:** Sets the sweep voltage 
-* **Original Usage:** `sweep {0-3.3}`
-* **Library Function Call:**
+* **Original Usage:** `sweep_voltage {0-3.3}`
+* **Library Function Call:** `sweep_voltage()`
 * **Example Return:**
 * **Notes:** Not sure if this should be included for manual override or not. testing needed.
 
 ### **text**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:**  TODO:write func
 * **Description:** specifies the text entry for the active keypad 
 * **Original Usage:** `text keypadtext `
-* **Library Function Call:**
+* **Library Function Call:** `text()`
 * **Example Return:**
 * **Notes:** where keypadtext is the text used. Example: text 12M
 Currently does not work for entering file names 
 
 ### **threads**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** TODO: add printout
 * **Description:** lists information of the threads in the tinySA
 * **Original Usage:** `threads`
-* **Library Function Call:**
+* **Library Function Call:** `threads()`
 * **Example Return:**
 * **Notes:**
 
 ### **touch**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** TODO: error checking for screen
 * **Description:** sends the coordinates of a touch
 * **Original Usage:** `touch {X coordinate} {Y coordinate}`
 * **Library Function Call:**
@@ -708,23 +793,23 @@ Currently does not work for entering file names
 * **Notes:** The upper left corner of the screen is "0 0"
 
 ### **touchcal**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** TODO: error checking
 * **Description:** starts the touch calibration
 * **Original Usage:** `touchcal`
-* **Library Function Call:**
+* **Library Function Call:** `touchcal`
 * **Example Return:**
-* **Notes:**
+* **Notes:** is there a way to cancel this?
 
 ### **touchtest**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** TODO: error checking
 * **Description:** starts the touch test
 * **Original Usage:** `touchtest`
-* **Library Function Call:**
+* **Library Function Call:** `touchtest()`
 * **Example Return:**
 * **Notes:**
 
 ### **trace**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** TODO: error checking
 * **Description:** displays all or one trace information or sets trace related information
 * **Original Usage:** `trace [{0..2} | dBm|dBmV|dBuV| V|W |store|clear|subtract | (scale|reflevel) auto|{level}]`
 * **Library Function Call:**
@@ -732,7 +817,7 @@ Currently does not work for entering file names
 * **Notes:**
 
 ### **trigger**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** TODO: error checking
 * **Description:** sets the trigger type or level
 * **Original Usage:** `trigger auto|normal|single|{level(dBm)}`
 * **Library Function Call:**
@@ -740,7 +825,7 @@ Currently does not work for entering file names
 * **Notes:** the trigger level is always set in dBm
 
 ### **ultra**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** TODO: error checking
 * **Description:** turn on/config tiny SA ultra mode
 * **Original Usage:** `ultra off|on|auto|start|harm {freq}`
 * **Library Function Call:**
@@ -748,7 +833,7 @@ Currently does not work for entering file names
 * **Notes:**
 
 ### **usart_cfg**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** TODO: printout
 * **Description:** returns port current baud rate
 * **Original Usage:** `usart_cfg`
 * **Library Function Call:**
@@ -756,7 +841,7 @@ Currently does not work for entering file names
 * **Notes:**  default is 115,200
 
 ### **vbat**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** TODO: printout
 * **Description:** returns the current battery voltage
 * **Original Usage:** `vbat`
 * **Library Function Call:**
@@ -764,7 +849,7 @@ Currently does not work for entering file names
 * **Notes:**
 
 ### **vbat_offset**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** TODO: printout
 * **Description:** returns or sets the battery offset value
 * **Original Usage:** `vbat_offset [{0..4095}]`
 * **Library Function Call:**
@@ -772,7 +857,7 @@ Currently does not work for entering file names
 * **Notes:**
 
 ### **version**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** TODO: printout
 * **Description:** returns the version text
 * **Original Usage:** `version`
 * **Library Function Call:**
@@ -780,7 +865,7 @@ Currently does not work for entering file names
 * **Notes:**
 
 ### **wait**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** TODO: printout
 * **Description:** wait for a single sweep to finish and pauses sweep or waits for specified number of seconds
 * **Original Usage:** `wait [{seconds}]`
 * **Library Function Call:**
@@ -788,7 +873,7 @@ Currently does not work for entering file names
 * **Notes:**
 
 ### **zero**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** TODO: documentation
 * **Description:**
 * **Original Usage:** `zero {level}\r\n174dBm`
 * **Library Function Call:**
