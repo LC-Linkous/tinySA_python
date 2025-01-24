@@ -120,50 +120,50 @@ All of the listed commands are included in this API to some degree, but error ch
 ### **abort**
 * **Status:** NOT ON DEVELOPER'S DUT
 * **Description:**  Sets the abortion enabled status (on/off) or aborts the previous command.
-* **Original Usage:** `abort [off| on]`
-* **Library Function Call:** `abort(val=None)`
-* **Example Return:** 
+* **Original Usage:** `abort [off|on]`
+* **Library Function Call:** `abort(val=None|"off"|"on")` 
+* **Example Return:** ????
 * **Notes:** When used without parameters the previous command still running will be aborted. Abort must be enabled before usage using the "abort on" command. Additional error checking has been added with the 'verbose' option. 
 
 ### **actual_freq**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** Getting works, setting does not.
 * **Description:**  Gets the frequency correction set by CORRECT FREQUENCY menu in the expert menu settings
 * **Original Usage:** `actual_freq [{frequency in Hz}]`
-* **Library Function Call:** `actual_freq(val=None|int)`
+* **Library Function Call:** `actual_freq(val=None|Int)`
 * **Example Return:** 3000000000
-* **Notes:**  freq in Hz going by the returns. NOTE: should be able to set the value with this, according to documentation, but there may be a firmware mismatch.
+* **Notes:**  freq in Hz going by the returns. Should be able to set the value with this, according to documentation, but its probably a format issue in the library.
 
 ### **agc**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** Done
 * **Description:**  Enables/disables the build in Automatic Gain Control
 * **Original Usage:** `agc 0..7|auto`
-* **Library Function Call:**
-* **Example Return:**
+* **Library Function Call:** `agc(val="auto"|0..7)`
+* **Example Return:** no return
 * **Notes:**
 
 ### **attenuate**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** Done
 * **Description:** Sets the internal attenuation
 * **Original Usage:** `attenuate [auto|0-31]`
-* **Library Function Call:**
-* **Example Return:**
+* **Library Function Call:** `attenuate(val="auto"|0..31)`
+* **Example Return:** no return
 * **Notes:**
 
 ### **bulk**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** sent by tinySA when in auto refresh mode
-* **Original Usage:** 
-* **Library Function Call:**
+* **Status:** Needs more work before this is a stand alone func. 
+* **Description:** Sent by tinySA when in auto refresh mode
+* **Original Usage:** `????`
+* **Library Function Call:** `bulk()`
 * **Example Return:** format: "bulk\r\n{X}{Y}{Width}{Height} {Pixeldata}\r\n"
 * **Notes:** where all numbers are binary coded 2 bytes little endian. The pixeldata is encoded as 2 bytes per pixel           
             
 
 ### **calc**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** sets or cancels one of the measurement modes
+* **Status:** Done
+* **Description:** Sets or cancels one of the measurement modes
 * **Original Usage:** `calc off|minh|maxh|maxd|aver4|aver16|quasip`
-* **Library Function Call:**
-* **Example Return:**
+* **Library Function Call:** `calc(val="off"|"minh"|"maxh"|"maxd"|"aver4"|"aver16"|"quasip")`
+* **Example Return:** no return
 * **Notes:** 
   * the commands are the same as those listed in the MEASURE menu
   * [tinySA Calc Menu](#https://tinysa.org/wiki/pmwiki.php?n=Main.CALC):
@@ -175,11 +175,11 @@ All of the listed commands are included in this API to some degree, but error ch
     * AVER 16 sets the averaging to new_measurement = old_measurement*15/16+measured_value/16. By default the averaging is linear power averaging 
 
 ### **caloutput**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** disables or sets the caloutput to a specified frequency in MHz
+* **Status:** Done
+* **Description:** Disables or sets the caloutput to a specified frequency in MHz
 * **Original Usage:** `caloutput off|30|15|10|4|3|2|1`
-* **Library Function :**
-* **Example Return:**
+* **Library Function :**  `caloutput(val="off"|30|15|10|4|3|2|1)`
+* **Example Return:** no return
 * **Notes:**
 
 ### **capture**

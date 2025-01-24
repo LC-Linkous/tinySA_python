@@ -1,25 +1,38 @@
 #! /usr/bin/python3
 
 ##------------------------------------------------------------------------------------------------\
-#   tinySA_python.py
+#   tinySA_python 
 #   './tinySA_python.py'
-#   UNOFFICIAL Python API based on the Tiny SA Ultra official documentation at https://www.tinysa.org/wiki/
+#   UNOFFICIAL Python API based on the tinySA Ultra official documentation at https://www.tinysa.org/wiki/
 #   
 #
 #   Author(s): Lauren Linkous
-#   Last update: January 20, 2025
+#   Last update: January 23, 2025
 ##--------------------------------------------------------------------------------------------------\
 
 import serial
 import numpy as np
 
-class TinySA():
+class tinySA():
     def __init__(self, parent=None):
         # serial port
         self.ser = None 
 
         # message feedback
-        self.verboseBool = False
+        self.verboseEnabled = False
+
+        # other overrides
+        self.ultraEnabled = False
+        self.abortEnabled = False
+
+
+        #configs that might need their own file eventually
+        self.minDeviceFreq = 100000  #100 kHz
+        self.maxDeviceFreq = 5300000000 #5.3 GHz
+        self.minDeviceBattery = 0   # ew. need an actual min
+        self.maxDeviceBattery = 4095
+
+
 
 ######################################################################
 # Error and information printout
@@ -28,15 +41,27 @@ class TinySA():
 ######################################################################
 
     def setVerbose(self, verbose=False):
-        self.verboseBool = verbose
+        self.verboseEnabled = verbose
 
     def getVerbose(self):
-        return self.verboseBool
+        return self.verboseEnabled
 
     def printMessage(self, msg):
-        if self.verboseBool == True:
+        if self.verboseEnabled == True:
             print(msg)
-        
+
+######################################################################
+# Direct error checking overrides
+#   These are used during DEBUG or when device state is already known
+#   Not reccomended unless you are sure of the device state
+######################################################################
+
+    def setUltraMode(self, ultraMode=False):
+        self.ultraEnabled = ultraMode
+
+    def setAbortMode(self, abortMode=False):
+        self.abortEnabled = abortMode
+
 
 ######################################################################
 # Serial management and message processing
@@ -62,7 +87,7 @@ class TinySA():
         msgbytes = self.cleanReturn(msgbytes)
 
         if printBool == True:
-            print(msgbytes) #overrides verbose
+            print(msgbytes) #overrides verbose for debug
 
         return msgbytes
 
@@ -104,21 +129,103 @@ class TinySA():
             data = data[:-4]  # Remove the last 4 bytes ('ch>')
         return data
 
+######################################################################
+# Device and library help
+######################################################################
+
+    def help(self):
+
+        #using the device help as the default for now
+        msgbytes = self.tinySAHelp() 
+        return msgbytes
+
+    def libraryHelp(self):
+        return
+
+    def tinySAHelp(self):
+        # dumps a list of the available commands
+        # usage: help
+        # example return: bytearray(b'commands: freq time dac 
+        # nf saveconfig clearconfig zero sweep pause resume wait
+        #  repeat status caloutput save recall trace trigger
+        #  marker line usart_cfg vbat_offset color if if1 lna2 
+        # agc actual_freq freq_corr attenuate level sweeptime
+        #  leveloffset levelchange modulation rbw mode spur 
+        # lna direct ultra load ext_gain output deviceid 
+        # correction calc menu text remark\r\nOther commands:
+        #  version reset data frequencies scan hop scanraw test 
+        # touchcal touchtest usart capture refresh touch release
+        #  vbat help info selftest sd_list sd_read sd_delete 
+        # threads\r')
+
+        writebyte = 'help\r\n'
+        msgbytes = self.tinySASerial(writebyte, printBool=False) 
+        return msgbytes
+
 
 ######################################################################
 # Serial command config, input error checking
 ######################################################################
 
-    def actual_freq(self):
-        # ?? It's not the max freq on the screen or center
-        # usage: actual_freq
-        # example return: bytearray(b'3000000000\r')
-        writebyte = 'actual_freq\r\n'
-        msgbytes = self.tinySASerial(writebyte, printBool=False)
+    def abort(self, val=None):
+        # Sets the abortion enabled status (on/off)
+        # usage: abort [off|on]
+        # example return: bytearray(b'')
+
+        self.printMessage("ABORT function not enabled in developer's DUT")
+        msgbytes = bytearray(b'')
         return msgbytes
 
+        # #explicitly allowed vals
+        # accepted_vals =  ["off", "on"]        
+
+        # #check input
+        # if (val in accepted_vals): #toggle state
+        #     writebyte = 'abort '+str(val)+'\r\n'
+        #     msgbytes = self.tinySASerial(writebyte, printBool=False) 
+        #     if val == "on":
+        #         self.printMessage("ABORT option ENABLED")
+        #         self.abortEnabled = True
+        #     elif val == "off":
+        #         self.printMessage("ABORT option DISABLED")
+        #         self.abortEnabled = False
+        # elif val == None: #action
+        #     if self.abortEnabled == True:
+        #         writebyte = 'abort\r\n'
+        #         msgbytes = self.tinySASerial(writebyte, printBool=False) 
+        #     else:
+        #         self.printMessage("ABORT option must be ENABLED before use")
+        #         msgbytes = bytearray(b'')
+        # else:
+        #     self.printMessage("ERROR: abort() takes NONE|\"off\"|\"on\" as arguments")
+        #     msgbytes = bytearray(b'')
+        # return msgbytes
+
+
+    def actual_freq(self, val=None):
+        # Gets the frequency correction set by CORRECT FREQUENCY 
+        #   menu in the expert menu settings
+        # usage: actual_freq [{frequency in Hz}]
+        # example return: bytearray(b'3000000000\r')
+
+        # NOTE: testing does not seem to be able to set the value from here.
+
+        if val == None:
+            #get the dac       
+            writebyte = 'actual_freq\r\n'
+            msgbytes = self.tinySASerial(writebyte, printBool=False)   
+        elif (isinstance(val, int)) and (self.minDeviceFreq <= val <=self.maxDeviceFreq ):
+            writebyte = 'actual_freq '+str(val)+'\r\n'
+            msgbytes = self.tinySASerial(writebyte, printBool=False)   
+            self.printMessage("actual_freq set to " + str(val))
+        else:
+            self.printMessage("ERROR: actual_freq() takes either None or integers")
+            msgbytes = bytearray(b'')
+        return msgbytes
+
+
     def agc(self, val='auto'):
-        # TODO: get documentation def of this function
+        # Enables/disables the build in Automatic Gain Control
         # usage: agc 0..7|auto
         # example return: bytearray(b'')
 
@@ -128,10 +235,12 @@ class TinySA():
         if (val == "auto") or (val in accepted_vals):
             writebyte = 'agc '+str(val)+'\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)     
+            self.printMessage("agc() set with " + str(val))
         else:
-            self.printMessage("ERROR: agc() takes vals [0 - 7]|auto")
+            self.printMessage("ERROR: agc() takes vals [0 - 7]|\"auto\"")
             msgbytes =  bytearray(b'ERROR')
         return msgbytes
+
 
     def attenuate(self, val='auto'):
         # sets the internal attenuation to automatic or a specific value
@@ -143,23 +252,28 @@ class TinySA():
         #check input
         if (val == "auto") or (val in accepted_vals):
             writebyte = 'attenuate '+str(val)+'\r\n'
-            msgbytes = self.tinySASerial(writebyte, printBool=False)           
+            msgbytes = self.tinySASerial(writebyte, printBool=False)
+            self.printMessage("attenuate() set with " + str(val))           
         else:
-            self.printMessage("ERROR: attenuate() takes vals [0 - 31]|auto")
+            self.printMessage("ERROR: attenuate() takes vals [0 - 31]|\"auto\"")
             msgbytes =  bytearray(b'')
         return msgbytes
+    
 
     def bulk(self):
-        # sent by tinySA when in auto refresh  mode
+        # sent by tinySA when in auto refresh mode
         # format: "bulk\r\n{X}{Y}{Width}{Height}
         # {Pixeldata}\r\n"
         # where all numbers are binary coded 2
         # bytes little endian. The Pixeldata is
         # encoded as 2 bytes per pixel
-        self.printMessage("Function does not exist yet. error checking needed")
-        return None
+
+        self.printMessage("BULK function not enabled in developer's DUT")
+        msgbytes = bytearray(b'')
+        return msgbytes
+
     
-    def calc(self):
+    def calc(self, val="off"):
         # sets or cancels one of the measurement modes
         # the commands are the same as those listed 
         # in the MEASURE menu
@@ -170,10 +284,18 @@ class TinySA():
         accepted_vals =  ["off", "minh", "maxh", "maxd", 
                           "aver4", "aver16", "quasip"]
 
-        self.printMessage("Function does not exist yet. error checking needed")
-        return None
+        #check input
+        if (val in accepted_vals):
+            writebyte = 'calc '+str(val)+'\r\n'
+            msgbytes = self.tinySASerial(writebyte, printBool=False)     
+            self.printMessage("calc() set with " + str(val))
+        else:
+            self.printMessage("ERROR: calc() takes vals \"off\"|\"minh\"|\"maxh\"|\"maxd\"|\"aver4\"|\"aver16\"|\"quasip\"")
+            msgbytes =  bytearray(b'')
+        return msgbytes
 
-    def caloutput(self, val):
+
+    def caloutput(self, val="off"):
         # disables or sets the caloutput to a specified frequency in MHz
         # usage: caloutput off|30|15|10|4|3|2|1
         # example return: bytearray(b'')
@@ -183,11 +305,13 @@ class TinySA():
         #check input
         if (val in accepted_vals):
             writebyte = 'caloutput '+str(val)+'\r\n'
-            msgbytes = self.tinySASerial(writebyte, printBool=False)           
+            msgbytes = self.tinySASerial(writebyte, printBool=False)   
+            self.printMessage("caloutput() set with " + str(val))        
         else:
-            self.printMessage("ERROR: caloutput() takes vals 1|2|3|4|10|15|30|off")
+            self.printMessage("ERROR: caloutput() takes vals 1|2|3|4|10|15|30|\"off\"")
             msgbytes = bytearray(b'')
         return msgbytes
+    
     
     def capture(self):
         # requests a screen dump to be sent in binary format 
@@ -348,26 +472,6 @@ class TinySA():
         # example return: bytearray(b'1500000000\r\n... \r\n3000000000\r')
 
         writebyte = 'frequencies\r\n'
-        msgbytes = self.tinySASerial(writebyte, printBool=False) 
-        return msgbytes
-
-    def help(self):
-        # dumps a list of the available commands
-        # usage: help
-        # example return: bytearray(b'commands: freq time dac 
-        # nf saveconfig clearconfig zero sweep pause resume wait
-        #  repeat status caloutput save recall trace trigger
-        #  marker line usart_cfg vbat_offset color if if1 lna2 
-        # agc actual_freq freq_corr attenuate level sweeptime
-        #  leveloffset levelchange modulation rbw mode spur 
-        # lna direct ultra load ext_gain output deviceid 
-        # correction calc menu text remark\r\nOther commands:
-        #  version reset data frequencies scan hop scanraw test 
-        # touchcal touchtest usart capture refresh touch release
-        #  vbat help info selftest sd_list sd_read sd_delete 
-        # threads\r')
-
-        writebyte = 'help\r\n'
         msgbytes = self.tinySASerial(writebyte, printBool=False) 
         return msgbytes
 
@@ -976,10 +1080,11 @@ class TinySA():
 
 if __name__ == "__main__":
     #individual function unit test
-    tsa = TinySA()
+    tsa = tinySA()
     success = tsa.connect(port='COM10') #ports depend on the OS
     if success == True:
-        msg = tsa.version()
+        tsa.setVerbose(True) #detailed messages
+        msg = tsa.caloutput()
         print(msg)
         tsa.disconnect()
     else:
