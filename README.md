@@ -122,6 +122,21 @@ TODO
 
 
 
+### Serial Message Return Format
+
+This library returns strings as cleaned bytearrays. The command and first `\r\n` pair are removed from the front, and the `ch>` is removed from the en of thetinySA serial return.
+
+The original message format:
+
+```python
+bytearray(b'deviceid\r\ndeviceid 0\r\nch>')
+```
+
+Cleaned version:
+
+```python
+bytearray(b'deviceid 0\r')
+```
 
 
 
@@ -156,7 +171,7 @@ bytearray(b'tinySA ULTRA\r\n2019-2024 Copyright @Erik Kaashoek\r\n2016-2020 Copy
 
 ```
 
-This library returns strings as cleaned bytearrays. The command and first `\r\n` pair are removed from the front, and the `ch>` is removed from the en of thetinySA serial return.
+
 
 
 ### Toggle Error Messages
