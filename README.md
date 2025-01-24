@@ -144,33 +144,24 @@ This section is sorted by the tinySA (Ultra) commands, and includes:
 All of the listed commands are included in this API to some degree, but error checking may be incomplete.
 
 Quick Link Table:
-|  |   |     |   |       |      |
-|-------|-------|-------|-------|-------|-------|
-| [abort](#abort)   | [actual_freq](#actual_freq)  | [agc](#agc)      | [attenuate](#attenuate)  | [bulk](#bulk)       | [calc](#calc)        |
-| [caloutput](#caloutput) | [capture](#capture)  | [clearconfig](#clearconfig) | [color](#color)   | [correction](#correction) | [dac](#dac)        |
-| [data](#data)     | [deviceid](#deviceid)       | [direct](#direct) | [ext_gain](#ext_gain)    | [fill](#fill)       | [freq](#freq)        |
-| [freq_corr](#freq_corr) | [frequencies](#frequencies) | [help](#help)    | [hop](#hop)            | [if](#if)           | [if1](#if1)          |
-| [info](#info)     | [level](#level)             | [levelchange](#levelchange) | [leveloffset](#leveloffset) | [load](#load)   | [lna](#lna)          |
-| [lna2](#lna2)     | [marker](#marker)           | [menu](#menu)     | [mode](#mode)           | [modulation](#modulation) | [output](#output)  |
-| [pause](#pause)   | [rbw](#rbw)                 | [recall](#recall) | [refresh](#refresh)     | [release](#release) | [remark](#remark)    |
-| [repeat](#repeat) | [reset](#reset)             | [restart](#restart) | [resume](#resume)      | [save](#save)       | [saveconfig](#saveconfig) |
-| [scan](#scan)     | [scanraw](#scanraw)         | [sd_delete](#sd_delete) | [sd_list](#sd_list)   | [sd_read](#sd_read) | [selftest](#selftest) |
-| [spur](#spur)     | [status](#status)           | [sweep](#sweep)   | [sweeptime](#sweeptime) | [sweep_voltage](#sweep_voltage) | [text](#text)   |
-| [threads](#threads) | [touch](#touch)             | [touchcal](#touchcal) | [touchtest](#touchtest) | [trace](#trace)     | [trigger](#trigger)  |
-| [ultra](#ultra)   | [usart_cfg](#usart_cfg)     | [vbat](#vbat)     | [vbat_offset](#vbat_offset) | [version](#version) | [wait](#wait)        |
-| [zero](#zero)     |        |     |        |        |       |
+|  |   |     |   |       |      |      |
+|-------|-------|-------|-------|-------|-------|-------|
+| [abort](#abort)   | [actual_freq](#actual_freq)  | [agc](#agc)      | [attenuate](#attenuate)  | [bulk](#bulk)       | [calc](#calc)        | [caloutput](#caloutput) |
+| [capture](#capture) | [clearconfig](#clearconfig) | [color](#color)   | [correction](#correction) | [dac](#dac)        | [data](#data)        | [deviceid](#deviceid)  |
+| [direct](#direct) | [ext_gain](#ext_gain)    | [fill](#fill)       | [freq](#freq)        | [freq_corr](#freq_corr) | [frequencies](#frequencies) | [help](#help)  |
+| [hop](#hop)            | [if](#if)           | [if1](#if1)          | [info](#info)     | [level](#level)             | [levelchange](#levelchange) | [leveloffset](#leveloffset) |
+| [load](#load)   | [lna](#lna)          | [lna2](#lna2)     | [marker](#marker)           | [menu](#menu)     | [mode](#mode)           | [modulation](#modulation) |
+| [output](#output)  | [pause](#pause)   | [rbw](#rbw)                 | [recall](#recall) | [refresh](#refresh)     | [release](#release) | [remark](#remark)    |
+| [repeat](#repeat) | [reset](#reset)             | [restart](#restart) | [resume](#resume)      | [save](#save)       | [saveconfig](#saveconfig) | [scan](#scan)     |
+| [scanraw](#scanraw)         | [sd_delete](#sd_delete) | [sd_list](#sd_list)   | [sd_read](#sd_read) | [selftest](#selftest) | [spur](#spur)     | [status](#status)           |
+| [sweep](#sweep)   | [sweeptime](#sweeptime) | [sweep_voltage](#sweep_voltage) | [text](#text)   | [threads](#threads) | [touch](#touch)             | [touchcal](#touchcal) |
+| [touchtest](#touchtest) | [trace](#trace)     | [trigger](#trigger)  | [ultra](#ultra)   | [usart_cfg](#usart_cfg)     | [vbat](#vbat)     | [vbat_offset](#vbat_offset) |
+| [version](#version) | [wait](#wait)        | [zero](#zero)     |                         |                     |                      |                        |
 
 
 
 ### **abort**
-
-| **Status**   | **Description**  | **Original Usage**    | **Library Function Call**   | **Example Return**  |
-|--------------|------------------|-----------------------|-----------------------------|---------------------|
-| NOT ON DEVELOPER'S DUT         | Sets the abortion enabled status (on/off) or aborts the previous command.| `abort [off|on]`       | `abort(val=None|"off"|"on")`       | ????                 |
-
-
-
-
+---
 * **Status:** NOT ON DEVELOPER'S DUT
 * **Description:**  Sets the abortion enabled status (on/off) or aborts the previous command.
 * **Original Usage:** `abort [off|on]`
