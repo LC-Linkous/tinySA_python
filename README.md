@@ -310,47 +310,50 @@ Quick Link Table:
 * **Notes:** Works in both input and output mode
 
 ### **fill**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** sent by tinySA when in auto refresh mode
+* **Status:** TODO
+* **Description:** Sent by tinySA when in auto refresh mode
 * **Original Usage:**
 * **Library Function Call:**
 * **Example Return:** `format: "fill\r\n{X}{Y}{Width}{Height} {Color}\r\n"`
-* **Notes:** All numbers returned are binary coded 2 bytes little endian.
+* **Notes:** All numbers returned are binary coded 2 bytes little endian. Similar to 'bulk'???
 
 ### **freq**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** Done
 * **Description:** Pauses the sweep and sets the measurement frequency.
 * **Original Usage:** `freq {frequency}`
-* **Library Function Call:** 
-* **Example Return:** 
+* **Library Function Call:** `freq()`
+* **Example Return:** no return
 * **Notes:**  
 
 ### **freq_corr**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** Done
 * **Description:** Gets the frequency correction.
-* **Original Usage:** (not specified, but inferred to be a command like `freq_corr`)
-* **Library Function Call:**  
-* **Example Return:** `0 ppb`
-* **Notes:** This command returns the frequency correction, typically in parts per billion (ppb).
+* **Original Usage:** `freq_corr`
+* **Library Function Call:**  `freq_corr()`
+* **Example Return:** `b'0 ppb\r'`
+* **Notes:** This command returns the frequency correction, in parts per billion (ppb).
 
 ### **frequencies**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** Dumps the frequencies used by the last sweep.
+* **Status:** Done
+* **Description:** Gets the frequencies used by the last sweep
 * **Original Usage:** `frequencies`
-* **Library Function Call:**  
-* **Example Return:** 
+* **Library Function Call:**  `frequencies()`
+* **Example Return:**  `b'1500000000\r\n... \r\n3000000000\r'`
 * **Notes:**  
 
 ### **help**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** Dumps a list of the available commands.
+* **Status:** TODO libraryHelp() 
+* **Description:** Gets a list of the available commands
 * **Original Usage:** `help`
-* **Library Function Call:**  
+* **Library Function Calls:**
+    * `help(val=0|1)` 
+    * `tinySAHelp()`
+    * `libraryHelp()` 
 * **Example Return:**  
-* **Notes:** 
+* **Notes:** 0 = tinySAHelp(), 1=libraryHelp(). Both functions can also be called directly. libraryHelp() has more information about this library and the inputs. 
 
 ### **hop**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** TODO. needs error checking added
 * **Description:** Measures the input level at each of the indicated frequencies.
 * **Original Usage:** `hop {start(Hz)} {stop(Hz)} {step(Hz) | points}  [outmask]`
 * **Library Function Call:**
@@ -358,20 +361,20 @@ Quick Link Table:
 * **Notes:** Ultra only. From [tinysa-org](https://tinysa-org.translate.goog/wiki/pmwiki.php?n=Main.USBInterface&_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en-US): if the 3rd parameter is below 450 it is assumed to be points, otherwise as step frequency Outmask selects if the frequency (1) or level (2) is output. 
 
 ### **if**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** sets the intermediate frequency (IF) to automatic or a specific value
-* **Original Usage:** `if ( 0 | 433M..435M )`
-* **Library Function Call:**
+* **Status:** Done
+* **Description:** Sets the intermediate frequency (IF) to automatic or a specific value
+* **Original Usage:** `if (0|433M..435M )`
+* **Library Function Call:** `setIF(val=0|433M..435M|'auto')`
 * **Example Return:**
-* **Notes:**where 0 means automatic
+* **Notes:** Val input of 0 is 'auto'. Added explicit 'auto' to match other library funcs.
 
 ### **if1**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:**sets intermediate frequency (IF) to a specific value
+* **Status:** Done
+* **Description:** Sets intermediate frequency (IF) to a specific value
 * **Original Usage:** `if1 (975M..979M )`
-* **Library Function Call:**
+* **Library Function Call:** `setIF1(val=0|975M..979M|'auto')`
 * **Example Return:**
-* **Notes:**where 0 means automatic
+* **Notes:** Val input of 0 is 'auto'. Added explicit 'auto' to match other library funcs.
 
 ### **info**
 * **Status:** NOT ON DEVELOPER'S DUT
