@@ -225,21 +225,117 @@ TODO when error checking is complete to show multiple examples
 
 ```
 ### Getting Data from Active Screen
+
+See other sections for the following examples:
+* [Saving Screen Images](#saving-screen-images)
+* [Plotting Data with Matplotlib](#plotting-data-with-matplotlib)
+
+This example shows several examples for common data requests:
+
 ```python
+
+# get current trace data on screen
+
+
+# get current battery level
+
+
+# 
+
+
+
 
 ```
 ### Saving Screen Images
-TODO when error checking is complete to show multiple examples
+ 
+ The `capture()` function can be used to capture the screen and output it to an image file. Note that the screen size varies by device, and the serial read
+
+ This example trunactes the last hex value, so a single padding `x00` value has been added. This will eventually be investigated, but it's not hurting the output right now.
+
 
 ```python
+# import the library class for the tinySA
+from src.tinySA_python import tinySA
+
+# imports FOR THE EXAMPLE
+import numpy as np
+from PIL import Image
+import struct
+
+def convert_data_to_image(data_bytes, width, height):
+    # this is not a particularly pretty example, and the data_bytes is sometimes a byte short (TODO:fix)
+
+    # calculate the expected data size
+    expected_size = width * height * 2  # 16 bits per pixel (RGB565), 2 bytes per pixel
+
+    # error checking - brute force, but fine while developing
+    if len(data_bytes) < expected_size:
+        print(f"Data size is too small. Expected {expected_size} bytes, got {len(data_bytes)} bytes.")
+        
+        # if the data size is off by 1 byte, add a padding byte
+        if len(data_bytes) == expected_size - 1:
+            print("Data size is 1 byte smaller than expected. Adding 1 byte of padding.")
+             # add a padding byte (0x00) to make the size match
+            data_bytes.append(0) 
+        else:
+            return
+
+    elif len(data_bytes) > expected_size:
+        # truncate the data to the expected size (in case it's larger than needed)
+        data_bytes = data_bytes[:expected_size]
+        print("Data is larger than the expected size. trunacting. check data.")
+
+    # unpack the byte array to get pixel values (RGB565 format)
+    num_pixels = width * height
+    # unpacking as unsigned shorts (2 bytes each)
+    x = struct.unpack(f">{num_pixels}H", data_bytes)  
+
+    # convert the RGB565 to RGBA
+    arr = np.array(x, dtype=np.uint32)
+    arr = 0xFF000000 + ((arr & 0xF800) >> 8) + ((arr & 0x07E0) << 5) + ((arr & 0x001F) << 19)
+
+    # reshape array to match the image dimensions. (height, width) format
+    arr = arr.reshape((height, width)) 
+
+    # create the image
+    img = Image.frombuffer('RGBA', (width, height), arr.tobytes(), 'raw', 'RGBA', 0, 1)
+
+    # save the image
+    img.save("capture_example.png")
+
+    # show the image
+    img.show()
+
+# create a new tinySA object    
+tsa = tinySA()
+# attempt to connect to previously discovered serial port
+success = tsa.connect(port='COM10')
+
+# if port closed, then return error message
+if success == False:
+    print("ERROR: could not connect to port")
+else: # port open, complete task(s) and disconnect
+    # detailed messages turned on
+    tsa.setVerbose(True) 
+    # get the trace data
+    data_bytes = tsa.capture() 
+    print(data_bytes)
+    tsa.disconnect()
+
+    # processing after disconnect (just for this example)
+    # test with 480x320 resolution for tinySA Ultra
+    convert_data_to_image(data_bytes, 480, 320)
 
 ```
-### Saving Data to CSV
-TODO when error checking is complete to show multiple examples
 
-```python
 
-```
+<p align="center">
+        <img src="media/capture_example.png" alt="Capture of On-screen Trace Data" height="350">
+</p>
+   <p align="center">Capture On-Screen Trace Data of a Frequency Sweep from 100 kHz to 800 kHz</p>
+
+
+
 ### Plotting Data with Matplotlib
 
 This example plots the last/current sweep of data from the tinySA device. 
@@ -416,11 +512,11 @@ Quick Link Table:
 
 ### **capture**
 * **Status:** Done
-* **Description:** Requests a screen dump to be sent in binary format of 320x240 pixels of each 2 bytes
+* **Description:** Requests a screen dump to be sent in binary format of HEIGHTxWIDTH pixels of each 2 bytes
 * **Original Usage:** `capture`
 * **Library Function Call:** `capture()`
 * **Example Return:** `format:'\x00\x00\x00\x00\x00\x00\x00\...x00\x00\x00'`
-* **Notes:**
+* **Notes:** tinySA original: 320x240, tinySA Ultra: 480x320 
 
 
 ### **clearconfig**
