@@ -9,19 +9,20 @@ This uses official resources and documentation but is NOT endorsed by the offici
 ## Table of Contents
 * [The tinySA Ultra](#the-tinysa-ultra)
 * [Requirements](#requirements)
-* [Usage](#usage)
+* [Library Usage](#library-usage)
 * [Error Handling](#error-handling)
 * [Example Implementations](#example-implementations)
-    * [Opening Serial Port](#opening-serial-port)
-    * [Getting Device Info](#getting-device-info)
-    * [Setting tinySA Ultra Parameters](#setting-tinysa-ultra-parameters)
+    * [Finding the Serial Port](#finding-the-serial-port)
+    * [Serial Message Return Format](#serial-message-return-format)
+    * [Connecting and Disconnecting the Device](#connecting-and-disconnecting-the-device)
+    * [Toggle Error Messages](#toggle-error-messages)
+     [Device and Library Help](#device-and-library-help)
+    * [Setting tinySA Parameters](#setting-tinysa-parameters)
     * [Getting Data from Active Screen](#getting-data-from-active-screen)
+    * [Saving Screen Images](#saving-screen-images)
     * [Plotting Data with Matplotlib](#plotting-data-with-matplotlib)
-    * [Realtime Graphing](#realtime-graphing)
-    * [Saving Screen Images](#saving-screen-image)
-    * [Saving Data to CSV](#saving-data-to-csv)
-* [List of tinySA Commands and Their Library Commands](#list-of-tinysa-commands-and-their-library-commands)
-* [List of All Library Commands](#list-of-all-library-commands)
+* [List of tinySA Commands and their Library Commands](#list-of-tinysa-commands-and-their-library-commands)
+* [Additional Library Commands](#additional-library-commands)
 * [Table of Command and Device Compatibility](#table-of-command-and-device-compatibility)
 * [Notes for Beginners](#notes-for-beginners)
     * [Vocab Check](#vocab-check)
@@ -31,7 +32,6 @@ This uses official resources and documentation but is NOT endorsed by the offici
 * [Licensing](#licensing)  
 
 ## The tinySA Ultra
-
 
 ## Requirements
 
@@ -48,6 +48,7 @@ numpy
 These dependencies cover only the API. Additional dependencies should be installed to follow the included examples and tests. These can be installed with 'pip install -r test_requirements.txt':
 
 ```python
+matplotlib
 
 ```
 
@@ -56,7 +57,6 @@ These dependencies cover only the API. Additional dependencies should be install
 This library is currently only available as the tinySA class in 'tinySA_python.py' in this repository. It is very much under development and missing error checking and handling. 
 
 Several usage examples are provided in the [Example Implementations](#example-implementations) section, including working with the hardware and plotting results with matplotlib. 
-
 
 
 
@@ -74,7 +74,6 @@ From the [official wiki USB Interface page](https://tinysa-org.translate.goog/wi
     * Levels are specified in dB(m) and can be specified using a floating point notation. E.g. 10 or 2.5
     * Time is specified in seconds optionally postfixed with the letters 'm' for mili or 'u' for micro. E.g. 1 (1 second), 2.5 (2.5 seconds), 120m (120 milliseconds)
 
-
 ## Example Implementations
 
 This library has been tested on Windows, but not yet on Unix systems. The primary difference should be the format of the serial port connection, but there may be smaller bugs in format that have not been detected yet. 
@@ -83,10 +82,8 @@ This library has been tested on Windows, but not yet on Unix systems. The primar
 
 There are several ways to list avilable serial ports.
 
-
 #### Windows:
-1)  Open _Device Manager_, scroll down to _Ports (COM & LPT)_, and epand the menu. There should be a _COM#_ port listing "USB Serial Device(COM #)". If your tinySA Ultra is set up to work with Serial, this will be it.
-
+1)  Open _Device Manager_, scroll down to _Ports (COM & LPT)_, and expand the menu. There should be a _COM#_ port listing "USB Serial Device(COM #)". If your tinySA Ultra is set up to work with Serial, this will be it.
 
 2) This uses the pyserial library requirement  already installed for this library. It probably also works on Linux systems, but has not been tested yet.
 
@@ -115,7 +112,6 @@ Port: COM10, Description: USB Serial Device (COM10), Hardware ID: USB VID:PID=04
 
 
 
-
 #### Linux
 
 ```python
@@ -124,10 +120,9 @@ TODO
 
 
 
-
 ### Serial Message Return Format
 
-This library returns strings as cleaned bytearrays. The command and first `\r\n` pair are removed from the front, and the `ch>` is removed from the en of thetinySA serial return.
+This library returns strings as cleaned bytearrays. The command and first `\r\n` pair are removed from the front, and the `ch>` is removed from the end of the tinySA serial return.
 
 The original message format:
 
@@ -141,8 +136,7 @@ Cleaned version:
 bytearray(b'deviceid 0\r')
 ```
 
-
-### Connecting and Disconnecting
+### Connecting and Disconnecting the Device
  Show the process for initializing, opening the serial port, getting device info, and disconnecting
 
 ```python
@@ -175,11 +169,9 @@ bytearray(b'tinySA ULTRA\r\n2019-2024 Copyright @Erik Kaashoek\r\n2016-2020 Copy
 
 
 
-
 ### Toggle Error Messages
 
 Currently, the following can be used to turn on or off returned error messages.
-
 
 1) the 'verbose' option. When enabled, detailed messages are printed out. 
 
@@ -220,8 +212,7 @@ tsa.tinySAHelp()
 
 All three return a bytearray in the format `bytearray(b'commands:......')`
 
-
-### Setting tinySA Ultra Parameters
+### Setting tinySA Parameters
 TODO when error checking is complete to show multiple examples
 
 ```python
@@ -285,13 +276,11 @@ else:
 ```
 
 
-
 ### Saving Screen Images
  
  The `capture()` function can be used to capture the screen and output it to an image file. Note that the screen size varies by device, and the serial read
 
- This example trunactes the last hex value, so a single padding `x00` value has been added. This will eventually be investigated, but it's not hurting the output right now.
-
+ This example truncates the last hex value, so a single padding `x00` value has been added. This will eventually be investigated, but it's not hurting the output right now.
 
 ```python
 # import the library class for the tinySA
@@ -368,12 +357,10 @@ else: # port open, complete task(s) and disconnect
 
 ```
 
-
 <p align="center">
         <img src="media/capture_example.png" alt="Capture of On-screen Trace Data" height="350">
 </p>
    <p align="center">Capture On-Screen Trace Data of a Frequency Sweep from 100 kHz to 800 kHz</p>
-
 
 
 ### Plotting Data with Matplotlib
@@ -383,14 +370,12 @@ This example plots the last/current sweep of data from the tinySA device.
 `byteArrayToNumArray(byteArr)` takes in the returned trace data and frequency 
 bytearrays and converts them to arrays that are then plotted using `matplotlib`
 
-
 ```python
 # import the library class for the tinySA
 from src.tinySA_python import tinySA
 
 # import matplotlib FOR THE EXAMPLE
 import matplotlib.pyplot as plt
-
 
 # functions used in this example
 def byteArrayToNumArray(byteArr, enc="utf-8"):
@@ -427,7 +412,6 @@ else: # port open, complete task(s) and disconnect
     freqVals = byteArrayToNumArray(freq_bytes)
     print(len(freqVals))  # length of 450 data points
 
-
     # create the plot
     plt.plot(freqVals, dataVals)
 
@@ -439,9 +423,7 @@ else: # port open, complete task(s) and disconnect
     # show the plot
     plt.show()
 
-
 ```
-
 
 <p align="center">
         <img src="media/example_plot_SA_data.png" alt="Plot of On-screen Trace Data" height="350">
@@ -449,15 +431,14 @@ else: # port open, complete task(s) and disconnect
    <p align="center">Plotted On-Screen Trace Data of a Frequency Sweep from 100 kHz to 800 kHz</p>
 
 
-
-## List of tinySA Ultra Commands and their Library Commands
+## List of tinySA Commands and their Library Commands
 
 This list and the following list in the [Additional Library Commands](#additional-library-commands) section describe the functions in this library.
 
 This section is sorted by the tinySA (Ultra) commands, and includes:
 * A brief description of what the command does
 * What the original usage looked like
-* The tinySA_Python function call, or calls if multiple options exist 
+* The tinySA_python function call, or calls if multiple options exist 
 * Example return, or example format of return
 * Any additional notes about the usage
 
@@ -478,15 +459,13 @@ Quick Link Table:
 | [touchcal](#touchcal) | [touchtest](#touchtest) | [trace](#trace)     | [trigger](#trigger)  | [ultra](#ultra)   | [usart_cfg](#usart_cfg)     | [vbat](#vbat)     |
 | [vbat_offset](#vbat_offset) | [version](#version) | [wait](#wait)        | [zero](#zero)     |                         |                     |                      |
 
-
 ### **abort**
 * **Status:** NOT ON DEVELOPER'S DUT
 * **Description:**  Sets the abortion enabled status (on/off) or aborts the previous command.
 * **Original Usage:** `abort [off|on]`
 * **Library Function Call:** `abort(val=None|"off"|"on")` 
 * **Example Return:** ????
-* **Notes:** When used without parameters the previous command still running will be aborted. Abort must be enabled before usage using the "abort on" command. Additional error checking has been added with the 'verbose' option. 
-
+* **Notes:** When used without parameters the previous command still running will be aborted. Abort must be enabled before using the "abort on" command. Additional error checking has been added with the 'verbose' option. 
 
 ### **actual_freq**
 * **Status:** Getting works, setting does not.
@@ -496,7 +475,6 @@ Quick Link Table:
 * **Example Return:** 3000000000
 * **Notes:**  freq in Hz going by the returns. Should be able to set the value with this, according to documentation, but its probably a format issue in the library.
 
-
 ### **agc**
 * **Status:** Done
 * **Description:**  Enables/disables the build in Automatic Gain Control
@@ -504,7 +482,6 @@ Quick Link Table:
 * **Library Function Call:** `agc(val="auto"|0..7)`
 * **Example Return:** no return
 * **Notes:**
-
 
 ### **attenuate**
 * **Status:** Done
@@ -514,14 +491,13 @@ Quick Link Table:
 * **Example Return:** no return
 * **Notes:**
 
-
 ### **bulk**
-* **Status:** Needs more work before this is a stand alone func. 
+* **Status:** Needs more work before this is a standalone func. 
 * **Description:** Sent by tinySA when in auto refresh mode
 * **Original Usage:** `????`
 * **Library Function Call:** `bulk()`
 * **Example Return:** `format: "bulk\r\n{X}{Y}{Width}{Height} {Pixeldata}\r\n"`
-* **Notes:** where all numbers are binary coded 2 bytes little endian. The pixeldata is encoded as 2 bytes per pixel           
+* **Notes:** where all numbers are binary coded 2 bytes little endian. The pixel data is encoded as 2 bytes per pixel           
             
 
 ### **calc**
@@ -536,10 +512,9 @@ Quick Link Table:
     * OFF disables any calculation 
     * MIN HOLD sets the display to hold the minimum value measured. Reset the hold by selecting again. This setting is used to see stable signals that are within the noise 
     * MAX HOLD sets the display to hold the maximum value measured. Reset the hold by selecting again. This setting can be used for many measurements such as showing the power envelope of a modulated signal. 
-    * MAX DECAY sets the display to hold the maximum value measured for a certain amount of scans after which the maximum will start to decay. The default number of scans to hold is 20. This default can be changed in the SETTINGS menu. This setting is used instead of MAX HOLD to reduce the impact of spurious signals 
+    * MAX DECAY sets the display to hold the maximum value measured for a certain number of scans after which the maximum will start to decay. The default number of scans to hold is 20. This default can be changed in the SETTINGS menu. This setting is used instead of MAX HOLD to reduce the impact of spurious signals 
     * AVER 4 sets the averaging to new_measurement = old_measurement*3/4+measured_value/4. By default the averaging is linear power averaging 
     * AVER 16 sets the averaging to new_measurement = old_measurement*15/16+measured_value/16. By default the averaging is linear power averaging 
-
 
 ### **caloutput**
 * **Status:** Done
@@ -549,7 +524,6 @@ Quick Link Table:
 * **Example Return:** no return
 * **Notes:**
 
-
 ### **capture**
 * **Status:** Done
 * **Description:** Requests a screen dump to be sent in binary format of HEIGHTxWIDTH pixels of each 2 bytes
@@ -558,7 +532,6 @@ Quick Link Table:
 * **Example Return:** `format:'\x00\x00\x00\x00\x00\x00\x00\...x00\x00\x00'`
 * **Notes:** tinySA original: 320x240, tinySA Ultra: 480x320 
 
-
 ### **clearconfig**
 * **Status:** Done
 * **Description:** Resets the configuration data to factory defaults
@@ -566,7 +539,6 @@ Quick Link Table:
 * **Library Function Call:** `clearconfig()`
 * **Example Return:** `b'Config and all cal data cleared. \r\nDo reset manually to take effect. Then do touch cal and save.\r'`
 * **Notes:** Requires password '1234'. Hardcoded.
-
 
 ### **color**
 * **Status:** Some error checking to be added
@@ -577,7 +549,6 @@ Quick Link Table:
 `0: 0x000000\r\n  1: 0xF8FCF8\r\n  2: 0x808080\r\n  3: 0xE0E4E0\r\n  4: 0x000000\r\n  5: 0xD0D0D0\r\n  6: 0xF8FC00\r\n  7: 0x40FC40\r\n  8: 0xF800F8\r\n  9: 0xF84040\r\n 10: 0x18E000\r\n 11: 0xF80000\r\n 12: 0x0000F8\r\n 13: 0xF8FCF8\r\n 14: 0x808080\r\n 15: 0x00FC00\r\n 16: 0x808080\r\n 17: 0x000000\r\n 18: 0xF8FCF8\r\n 19: 0x0000F8\r\n 20: 0xF88080\r\n 21: 0x00FC00\r\n 22: 0x888C88\r\n 23: 0xD8DCD8\r\n 24: 0x282828\r\n 25: 0xC0C4C0\r\n 26: 0xF8FCF8\r\n 27: 0x00FC00\r\n 28: 0x00FCF8\r\n 29: 0xF8FC00\r\n 30: 0x000000\r\n 31: 0x000000\r'`
 * **Notes:** the hex value currently must be passed in as a string. error checking for rgb24 format needs to be added
 
-
 ### **correction**
 * **Status:** TODO
 * **Description:** Sets or gets the frequency level correction table
@@ -586,7 +557,6 @@ Quick Link Table:
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
-
 
 ### **dac**
 * **Status:** Done
@@ -882,7 +852,6 @@ Example: menu 6 2 will toggle the waterfall option
 * **Example Return:**
 * **Notes:** where 0 seconds stops the restarting process
 
-
 ### **resume**
 * **Status:** Done
 * **Description:** Resumes the sweeping in either input or output mode
@@ -1117,7 +1086,6 @@ Currently does not work for entering file names
 
 
 
-
 ''' Full list of help commands
 commands: freq time dac nf saveconfig clearconfig zero sweep pause resume wait repeat status caloutput save recall trace trigger marker line usart_cfg vbat_offset color if if1 lna2 agc actual_freq freq_corr attenuate level sweeptime leveloffset levelchange modulation rbw mode spur lna direct ultra load ext_gain output deviceid correction calc menu text remark
 
@@ -1220,10 +1188,30 @@ If a last checked firmware version is known, that is included in the header in t
 | zero| | | |
 
 
-
 ## Notes for Beginners
 
+This is a brief section for anyone that might have jumped in with a bit too much ambition. It is highly suggested to _read the manual_. 
+
+Very useful, important documentation can be found at:
+
+* The [tinySA wiki](https://tinysa.org/wiki/pmwiki.php)
+* The getting started [first use](https://tinysa.org/wiki/pmwiki.php?n=Main.FirstUse) page
+* Frequently asked questions (FAQs) can be found on the [Wiki FAQs page](https://tinysa.org/wiki/pmwiki.php?n=Main.FAQ)
+
+
 ### Vocab Check
+
+Running list of acronyms that get tossed around with little to no explanation. Googling is recommended if you are not familiar with these terms as they're essential to understanding device usage.
+
+* **AGC** - Automatic Gain Control. This controls the overall dynamic range of the output when the input level(s) changes. 
+* **Baud** - Baud, or baud rate. The rate that information is transferred in a communication channel. A baud rate of 9600 means a max of 9600 bits per second is transmitted.
+* **dB** - dB (decibel) and dBm (decibel-milliwatts). dB (unitless) quantifies the ratio between two values, whereas dBm expresses the absolute power level (always relative to 1mW). 
+* **DUT** - Device Under Test. Used here to refer to the singular device used while initially writing the API. 
+* **IF** - Intermediate Frequency. A frequency to which a carrier wave is shifted as an intermediate step in transmission or reception - [Wikipedia](https://en.wikipedia.org/wiki/Intermediate_frequency)
+* **LNA** - Low Noise Amplifier. An electronic component that amplifies a very low-power signal without significantly degrading its signal-to-noise ratio - [Wikipedia](https://en.wikipedia.org/wiki/Low-noise_amplifier)
+* **RBW** - Resolution Bandwidth. Frequency span of the final filter (IF filter) that is applied to the input signal. Determines the fast-Fourier transform (FFT) bin size.
+
+ 
 
 ### Calibration Setup
 
@@ -1241,7 +1229,6 @@ If a last checked firmware version is known, that is included in the header in t
 * The firmware on github at https://github.com/erikkaashoek/tinySA
     * https://github.com/erikkaashoek/tinySA/blob/main/main.c
 
-
 ## Publications and Integration
 This API was written to support the work in:
 
@@ -1251,6 +1238,5 @@ Other publications featuring the code in this repo will be added as they become 
 
 ## Licensing
 
-The code in this repository has been released under GPL-2.0, but licensing will be updated to match whatever the tinySA products and code are released under. This licensing does not take priority over the official releases.
-
+The code in this repository has been released under GPL-2.0 for lack of better idea right now. This licensing does not take priority over the official releases and the decisions of the tinySA team.
 
