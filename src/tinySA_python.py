@@ -26,7 +26,8 @@ class tinySA():
         self.abortEnabled = False
 
 
-        #configs that might need their own file eventually
+        #select device vars - hardcoding for the Ultra for now
+        self.deviceType = "ultra"
         self.minDeviceFreq = 100000  #100 kHz
         self.maxDeviceFreq = 5300000000 #5.3 GHz
         self.minDeviceBattery = 0   # ew. need an actual min
@@ -80,6 +81,40 @@ class tinySA():
 
     def setAbortMode(self, abortMode=False):
         self.abortEnabled = abortMode
+
+
+######################################################################
+# Device Selection and Config Functions
+# TODO
+# This is a quick template. there's more options that need to 
+# be researched
+######################################################################
+
+    def setDevice(self, val="ultra"):
+        self.deviceType = val
+        if val == "original":
+            self.setDeviceOriginal()
+        elif val == "ultra":
+            self.setDeviceUltra()
+        elif val == "plus":
+            self.setDeviceUltraPlus()
+        else:
+            self.printMessage("ERROR: unrecognized device type")
+
+    def setDeviceOriginal(self):
+        # pull the device configs and set vals
+        self.printMessage("IN PROGRESS. device config not avilable yet")
+        return
+
+    def setDeviceUltra(self):
+        # pull the device configs and set vals
+        self.printMessage("IN PROGRESS. device config not avilable yet")
+        return
+
+    def setDeviceUltraPlus(self):
+        # pull the device configs and set vals
+        self.printMessage("IN PROGRESS. device config not avilable yet")
+        return
 
 
 ######################################################################
@@ -1214,9 +1249,6 @@ class tinySA():
         return None
 
 
-######################################################################
-# Advanced processing, functions
-######################################################################
 
 
 
@@ -1225,18 +1257,57 @@ class tinySA():
 ######################################################################
 
 if __name__ == "__main__":
-    #individual function unit test
-    import time
+    # unit testing
+    def byteArrayToNumArray(byteArr, enc="utf-8"):
+        # decode the bytearray to a string
+        decodedStr = byteArr.decode(enc)
+        # split the string by newline characters
+        stringVals = decodedStr.splitlines()
+        # convert each value to a float
+        floatVals = [float(val) for val in stringVals]
+        return floatVals
+
+
+
+    # create a new tinySA object    
     tsa = tinySA()
-    success = tsa.connect(port='COM10') #ports depend on the OS
+    # attempt to connect to previously discovered serial port
+    success = tsa.connect(port='COM10')
+
+    # # if port open, then complete task(s) and disconnect
+    # if success == True:
+    #     tsa.setVerbose(True) #detailed messages
+    #     msg = tsa.data() #dumps trace data
+    #     print(msg)
+    #     msg = tsa.frequencies() # gets frequencies used by the last sweep
+    #     tsa.disconnect()
+    # else:
+    #     print("ERROR: could not connect to port")
+
+
+    # if port open, then complete task(s) and disconnect
     if success == True:
-        tsa.setVerbose(True) #detailed messages
-        msg = tsa.level(0)
-        print(msg)
-
-
+        # detailed messages turned on
+        tsa.setVerbose(True) 
+        # get the trace data
+        data_bytes = tsa.data() 
+        print(data_bytes)
+        # get the frequencies used by the last sweep
+        freq_bytes = tsa.frequencies() 
         tsa.disconnect()
     else:
-        print("ERR")
+        print("ERROR: could not connect to port")
+
+
+    # processing after disconnect just for this example
+    dataVals = byteArrayToNumArray(data_bytes)
+    print(len(dataVals))
+
+
+    freqVals = byteArrayToNumArray(freq_bytes)
+    print(len(freqVals))
+
+    
+
 
 
