@@ -241,17 +241,75 @@ TODO when error checking is complete to show multiple examples
 
 ```
 ### Plotting Data with Matplotlib
-TODO when error checking is complete to show multiple examples
+
+This example plots the last/current sweep of data from the tinySA device. 
+`data()` gets the trace data. `frequencies()` gets the frequency values used. 
+`byteArrayToNumArray(byteArr)` takes in the returned trace data and frequency 
+bytearrays and converts them to arrays that are then plotted using `matplotlib`
+
 
 ```python
+# import the library class for the tinySA
+from src.tinySA_python import tinySA
 
+# import matplotlib FOR THE EXAMPLE
+import matplotlib.pyplot as plt
+
+
+# functions used in this example
+def byteArrayToNumArray(byteArr, enc="utf-8"):
+    # decode the bytearray to a string
+    decodedStr = byteArr.decode(enc)
+    # split the string by newline characters
+    stringVals = decodedStr.splitlines()
+    # convert each value to a float
+    floatVals = [float(val) for val in stringVals]
+    return floatVals
+
+# create a new tinySA object    
+tsa = tinySA()
+# attempt to connect to previously discovered serial port
+success = tsa.connect(port='COM10')
+
+# if port open, then complete task(s) and disconnect
+if success == True:
+    # detailed messages turned on
+    tsa.setVerbose(True) 
+    # get the trace data
+    data_bytes = tsa.data() 
+    print(data_bytes)
+    # get the frequencies used by the last sweep
+    freq_bytes = tsa.frequencies() 
+    tsa.disconnect()
+else:
+    print("ERROR: could not connect to port")
+
+# processing after disconnect (just for this example)
+dataVals = byteArrayToNumArray(data_bytes)
+print(len(dataVals))  # length of 450 data points
+
+freqVals = byteArrayToNumArray(freq_bytes)
+print(len(freqVals))  # length of 450 data points
+
+
+# create the plot
+plt.plot(freqVals, dataVals)
+
+# add labels and title
+plt.xlabel('Frequency (Hz)')
+plt.ylabel('Signal Strength (dB)')
+plt.title('Plot of Last Data Sweep')
+
+# show the plot
+plt.show()
 ```
-### Realtime Graphing
-TODO when error checking is complete to show multiple examples
 
-```python
 
-```
+<p align="center">
+        <img src="media/example_plot_SA_data.png" alt="Plot of On-screen Trace Data" height="350">
+</p>
+   <p align="center">Plotted On-Screen Trace Data of a Frequency Sweep from 100 kHz to 800 kHz</p>
+
 
 
 ## List of tinySA Ultra Commands and their Library Commands
@@ -406,7 +464,7 @@ Quick Link Table:
 * **Original Usage:** `data 0..2`
 * **Library Function Call:** `data(val=0|1|2)`
 * **Example Return:** `format bytearray(b'7.593750e+00\r\n-8.437500e+01\r\n-8.693750e+01\r\n...\r')`
-* **Notes:**  0 = temp value, 1 = stored trace, 2 = measurement
+* **Notes:**  0 = temp value, 1 = stored trace, 2 = measurement. strength in decibels (dB) 
        
           
 ### **deviceid**
