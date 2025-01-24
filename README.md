@@ -749,13 +749,13 @@ If a last checked firmware version is known, that is included in the header in t
 
 |  Device Command  | tinySA ()   | tinySA Ultra ()| tinySA Ultra + ()|
 |------------------|-------------|----------------|------------------|
-| abort | | | |
-| actual_freq| | | |
-| agc| | | |
-| attenuate| | | |
-| bulk| | | |
-| calc| | | |
-| caloutput| | | |
+| abort | |??| |
+| actual_freq| | Get only | |
+| agc| | Set | |
+| attenuate| | Set | |
+| bulk| | ??| |
+| calc| | Set | |
+| caloutput| | Set | |
 | capture| | | |
 | clearconfig| | | |
 | color| | | |
