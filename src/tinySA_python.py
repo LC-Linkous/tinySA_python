@@ -550,6 +550,7 @@ class tinySA():
             msgbytes = bytearray(b'')
         return msgbytes
 
+
     def SetIF1(self, val):
         # TODO: get official documentation blurb
         # usage: if1 {975M..979M}\r\n977.555902MHz
@@ -586,26 +587,28 @@ class tinySA():
 
         writebyte = 'info\r\n'
         msgbytes = self.tinySASerial(writebyte, printBool=False) 
+        self.printMessage("returning device info()")
         return msgbytes 
     
+ 
     def level(self, val):
         # sets the output level. Not all values in the range are available
         # usage: level -76..13
-        # example return: ''
-        #explicitly allowed vals
-        
-        self.printMessage("Function does not exist yet. error checking needed")
-        # accepted_vals = [-76, 13]
-        # #check input
-        # if val in accepted_vals:
-        #     writebyte = 'level '+str(val)+'\r\n'
-        #     msgbytes = self.tinySASerial(writebyte, printBool=False)   
-        # else:
-        #     self.printMessage("ERROR: level() takes vals [-76 - 13]")
-        #     msgbytes =  bytearray(b'')
-        # return msgbytes
+        # example return: b''
 
-        return None
+        # explicitly allowed vals
+        accepted_vals =  np.arange(-76, 14, 1) # max exclusive
+        #check input
+        if val in accepted_vals:
+            writebyte = 'level '+str(val)+'\r\n'
+            msgbytes = self.tinySASerial(writebyte, printBool=False)
+            self.printMessage("level() set to " + str(val))   
+        else:
+            self.printMessage("ERROR: level() takes vals [-76 to 13]")
+            self.printMessage("ERROR: value given: " + str(val))
+            msgbytes =  bytearray(b'ERROR')
+        return msgbytes
+
 
     def levelchange(self, val):
         # sets the output level delta for low output mode level sweep
@@ -617,10 +620,12 @@ class tinySA():
         #check input
         if (val in accepted_vals):
             writebyte = 'levelchange '+str(val)+'\r\n'
-            msgbytes = self.tinySASerial(writebyte, printBool=False)           
+            msgbytes = self.tinySASerial(writebyte, printBool=False)
+            self.printMessage("levelchange() set to " + str(val))           
         else:
             self.printMessage("ERROR: levelchange() takes vals [-70 - 70]")
-            msgbytes =  bytearray(b'')
+            self.printMessage("ERROR: value set to" + str(val))
+            msgbytes =  bytearray(b'ERROR')
         return msgbytes
 
     def leveloffset(self):
@@ -1138,12 +1143,15 @@ class tinySA():
 
 if __name__ == "__main__":
     #individual function unit test
+    import time
     tsa = tinySA()
     success = tsa.connect(port='COM10') #ports depend on the OS
     if success == True:
         tsa.setVerbose(True) #detailed messages
-        msg = tsa.freq_corr()
+        msg = tsa.level(0)
         print(msg)
+
+
         tsa.disconnect()
     else:
         print("ERR")

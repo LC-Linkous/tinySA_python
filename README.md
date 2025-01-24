@@ -150,13 +150,13 @@ Quick Link Table:
 | [capture](#capture) | [clearconfig](#clearconfig) | [color](#color)   | [correction](#correction) | [dac](#dac)        | [data](#data)        | [deviceid](#deviceid)  |
 | [direct](#direct) | [ext_gain](#ext_gain)    | [fill](#fill)       | [freq](#freq)        | [freq_corr](#freq_corr) | [frequencies](#frequencies) | [help](#help)  |
 | [hop](#hop)            | [if](#if)           | [if1](#if1)          | [info](#info)     | [level](#level)             | [levelchange](#levelchange) | [leveloffset](#leveloffset) |
-| [load](#load)   | [lna](#lna)          | [lna2](#lna2)     | [marker](#marker)           | [menu](#menu)     | [mode](#mode)           | [modulation](#modulation) |
-| [output](#output)  | [pause](#pause)   | [rbw](#rbw)                 | [recall](#recall) | [refresh](#refresh)     | [release](#release) | [remark](#remark)    |
-| [repeat](#repeat) | [reset](#reset)             | [restart](#restart) | [resume](#resume)      | [save](#save)       | [saveconfig](#saveconfig) | [scan](#scan)     |
-| [scanraw](#scanraw)         | [sd_delete](#sd_delete) | [sd_list](#sd_list)   | [sd_read](#sd_read) | [selftest](#selftest) | [spur](#spur)     | [status](#status)           |
-| [sweep](#sweep)   | [sweeptime](#sweeptime) | [sweep_voltage](#sweep_voltage) | [text](#text)   | [threads](#threads) | [touch](#touch)             | [touchcal](#touchcal) |
-| [touchtest](#touchtest) | [trace](#trace)     | [trigger](#trigger)  | [ultra](#ultra)   | [usart_cfg](#usart_cfg)     | [vbat](#vbat)     | [vbat_offset](#vbat_offset) |
-| [version](#version) | [wait](#wait)        | [zero](#zero)     |     |   |      |      |
+| [line](#line) | [load](#load)   | [lna](#lna)          | [lna2](#lna2)     | [marker](#marker)           | [menu](#menu)     | [mode](#mode)           |
+| [modulation](#modulation) | [output](#output)  | [pause](#pause)   | [rbw](#rbw)                 | [recall](#recall) | [refresh](#refresh)     | [release](#release) |
+| [remark](#remark)    | [repeat](#repeat) | [reset](#reset)             | [restart](#restart) | [resume](#resume)      | [save](#save)       | [saveconfig](#saveconfig) |
+| [scan](#scan)     | [scanraw](#scanraw)         | [sd_delete](#sd_delete) | [sd_list](#sd_list)   | [sd_read](#sd_read) | [selftest](#selftest) | [spur](#spur)     |
+| [status](#status)           | [sweep](#sweep)   | [sweeptime](#sweeptime) | [sweep_voltage](#sweep_voltage) | [text](#text)   | [threads](#threads) | [touch](#touch)             |
+| [touchcal](#touchcal) | [touchtest](#touchtest) | [trace](#trace)     | [trigger](#trigger)  | [ultra](#ultra)   | [usart_cfg](#usart_cfg)     | [vbat](#vbat)     |
+| [vbat_offset](#vbat_offset) | [version](#version) | [wait](#wait)        | [zero](#zero)     |                         |                     |                      |
 
 
 ### **abort**
@@ -377,36 +377,44 @@ Quick Link Table:
 * **Notes:** Val input of 0 is 'auto'. Added explicit 'auto' to match other library funcs.
 
 ### **info**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** displays various SW and HW information
-* **Original Usage:**
-* **Library Function Call:**
-* **Example Return:**
+* **Status:** Done
+* **Description:** Displays various software/firmware and hardware information
+* **Original Usage:** `info`
+* **Library Function Call:** `info()`
+* **Example Return:** `b'tinySA ULTRA\r\n2019-2024 Copyright @Erik Kaashoek\r\n2016-2020 Copyright edy555\r\nSW licensed under GPL. See: https://github.com/erikkaashoek/tinySA\r\nVersion: tinySA4_v1.-143-g864bb27\r\nBuild Time: Jan 10 2024 - 11:14:08\r\nKernel: 4.0.0\r\nCompiler: GCC 7.2.1 20170904 (release) [ARM/embedded-7-branch revision 255204]\r\nArchitecture: ARMv7E-M Core Variant: Cortex-M4F\r\nPort Info: Advanced kernel mode\r\nPlatform:STM32F303xC Analog & DSP\r'`
 * **Notes:**
 
 ### **level**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** sets the output level
+* **Status:** Done
+* **Description:** Sets the output level
 * **Original Usage:** `level -76..13`
-* **Library Function Call:**
-* **Example Return:**
-* **Notes:** Not all values in the range are available
+* **Library Function Call:** `level(val=-76...13)`
+* **Example Return:** `b''`, `b'ERROR'`
+* **Notes:** Not all values in the range are available. Added a `b'ERROR'` return for when values are not available.
 
 ### **levelchange**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** sets the output level delta for low output mode level sweep
+* **Status:** Done
+* **Description:** Sets the output level delta for low output mode level sweep
 * **Original Usage:** `levelchange -70..+70`
-* **Library Function Call:**
-* **Example Return:**
-* **Notes:**
+* **Library Function Call:** `levelchange(val=-70...70)`
+* **Example Return:** `b''`, `b'ERROR'`
+* **Notes:** Added a `b'ERROR'` return for when values are not available.
 
 ### **leveloffset**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** sets or dumps the level calibration data
+* **Status:** TODO
+* **Description:** Sets or gets the level calibration data
 * **Original Usage:** `leveloffset low|high|switch [output] {error}`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:** For the output corrections first ensure correct output levels at maximum output level. For the low output set the output to -50dBm and measure and correct the level with "leveloffset switch error" where For all output leveloffset commands measure the level with the leveloffset to zero and calculate error = measured level - specified level
+
+### **line**
+* **Status:** TODO
+* **Description:** 
+* **Original Usage:**  `line off|{level}` 
+* **Library Function Call:**
+* **Example Return:**
+* **Notes:**  
 
 ### **load**
 * **Status:** NOT ON DEVELOPER'S DUT
@@ -818,7 +826,7 @@ If a last checked firmware version is known, that is included in the header in t
 | correction| |??| |
 | dac| |Set and Get | |
 | data| | Get | |
-| deviceid| Set and Get| | |
+| deviceid|| Set and Get | |
 | direct| |??| |
 | ext_gain| | Set | |
 | fill| |??| |
@@ -829,10 +837,11 @@ If a last checked firmware version is known, that is included in the header in t
 | hop| No | ?? | |
 | if| | Set | |
 | if1| | Set | |
-| info| | | |
-| level| | | |
-| levelchange| | | |
+| info| | Get| |
+| level| | Set | |
+| levelchange| | Set| |
 | leveloffset| | | |
+| line| | | |
 | load| | | |
 | lna| | | |
 | lna2| | | |
