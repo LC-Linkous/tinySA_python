@@ -66,7 +66,7 @@ Some error handling has been implemented for the individual functions. Most func
 
 Detailed error messages can be returned by toggling 'verbose' on.
 
-From the [official wiki USB Interface page](#https://tinysa-org.translate.goog/wiki/pmwiki.php?n=Main.USBInterface&_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en-US):
+From the [official wiki USB Interface page](https://tinysa-org.translate.goog/wiki/pmwiki.php?n=Main.USBInterface&_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en-US):
 
     There is limited error checking against incorrect parameters of incorrect mode
 
@@ -218,8 +218,9 @@ tsa.tinySAHelp()
 All three return a bytearray in the format `bytearray(b'commands:......')`
 
 
-
 ### Setting tinySA Ultra Parameters
+TODO when error checking is complete to show multiple examples
+
 ```python
 
 ```
@@ -228,18 +229,26 @@ All three return a bytearray in the format `bytearray(b'commands:......')`
 
 ```
 ### Saving Screen Images
+TODO when error checking is complete to show multiple examples
+
 ```python
 
 ```
 ### Saving Data to CSV
+TODO when error checking is complete to show multiple examples
+
 ```python
 
 ```
 ### Plotting Data with Matplotlib
+TODO when error checking is complete to show multiple examples
+
 ```python
 
 ```
 ### Realtime Graphing
+TODO when error checking is complete to show multiple examples
+
 ```python
 
 ```
