@@ -829,7 +829,8 @@ class tinySA():
         #check input
         if (val in accepted_vals):
             writebyte = 'refresh '+str(val)+'\r\n'
-            msgbytes = self.tinySASerial(writebyte, printBool=False)           
+            msgbytes = self.tinySASerial(writebyte, printBool=False)
+            self.printMessage("refresh() set to " + str(val))           
         else:
             self.printMessage("ERROR: refresh() takes vals [on|off]")
             msgbytes = bytearray(b'')
@@ -842,6 +843,7 @@ class tinySA():
 
         writebyte = 'release\r\n'
         msgbytes = self.tinySASerial(writebyte, printBool=False) 
+        self.printMessage("sending touch release signal")
         return msgbytes 
 
     def repeat(self):
@@ -849,8 +851,19 @@ class tinySA():
         # usage: repeat
         # example return: bytearray(b'')
 
+        writebyte = 'remark\r\n'
+        msgbytes = self.tinySASerial(writebyte, printBool=False) 
+        return msgbytes 
+
+
+    def repeat(self, val=1):
+        # Sets the number of (re)measurements that should be taken at every frequency
+        # usage: repeat
+        # example return: bytearray(b'')
+
         writebyte = 'repeat\r\n'
         msgbytes = self.tinySASerial(writebyte, printBool=False) 
+        self.printMessage("setting the repeat() measurement to " + str(val))
         return msgbytes 
 
     def reset(self):
@@ -859,8 +872,20 @@ class tinySA():
         # example return: throws error. raise SerialException
 
         writebyte = 'reset\r\n'
+        self.printMessage("sending reset() signal. Serial will disconnect...")
         msgbytes = self.tinySASerial(writebyte, printBool=False) 
-        return None 
+        return msgbytes 
+
+    def restart(self):
+        # restarts the  tinySA after the specified number of seconds
+        # usage: restart {seconds}
+        # example return: ''
+
+        writebyte = 'restart\r\n'
+        msgbytes = self.tinySASerial(writebyte, printBool=False) 
+        self.printMessage("restarting the device. Serial will disconnect...")
+        return msgbytes 
+
 
     def resume(self):
         # resumes the sweeping in either input or output mode
@@ -869,6 +894,7 @@ class tinySA():
 
         writebyte = 'resume\r\n'
         msgbytes = self.tinySASerial(writebyte, printBool=False) 
+        self.printMessage("resuming sweep")
         return msgbytes 
 
     def save(self, val=1):
@@ -1009,6 +1035,24 @@ class tinySA():
         # m=mili and u=micro
         self.printMessage("Function does not exist yet. error checking needed")
         return None
+
+    def sweep_voltage(self):
+        # sets the sweeptime
+        # usage: sweep {time(Seconds)}the time
+        # specified may end in a letter where
+        # m=mili and u=micro
+        self.printMessage("Function does not exist yet. error checking needed")
+        return None
+
+    def text(self):
+        # sets the sweeptime
+        # usage: sweep {time(Seconds)}the time
+        # specified may end in a letter where
+        # m=mili and u=micro
+        self.printMessage("Function does not exist yet. error checking needed")
+        return None
+
+
 
     def threads(self):
         # lists information of the threads in the tinySA

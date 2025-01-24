@@ -515,48 +515,48 @@ Example: menu 6 2 will toggle the waterfall option
 * **Notes:** Same functionality as `load()`. 0 is the startup preset.
 
 ### **refresh**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** enables/disables the auto refresh mode
+* **Status:** Done
+* **Description:** Enables or disables the auto refresh mode
 * **Original Usage:** `refresh on|off`
-* **Library Function Call:**
-* **Example Return:**
+* **Library Function Call:** `refresh(val="off"|"on")`
+* **Example Return:** no return
 * **Notes:**
 
 ### **release**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** signals a removal of the touch
+* **Status:** Done
+* **Description:** Triggers a signal for the removal/release of the touch screen
 * **Original Usage:** `release`
-* **Library Function Call:**
+* **Library Function Call:** `release()`
 * **Example Return:**
 * **Notes:**
 
 ### **remark**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** TODO
 * **Description:** does nothing
 * **Original Usage:** `remark [use any text]`
 * **Library Function Call:**
 * **Example Return:**
-* **Notes:** ?? 
+* **Notes:** ?? included due to documentation 
 
 ### **repeat**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** sets the number of measurements that should be taken at every frequency
+* **Status:** TODO: input error checking
+* **Description:** Sets the number of (re)measurements that should be taken at every frequency
 * **Original Usage:** ` repeat 1..1000`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:** increasing the repeat reduces the noise per frequency, repeat 1 is the normal scanning mode. 
 
 ### **reset**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** resets the tinySA
+* **Status:** Done
+* **Description:** Resets the tinySA
 * **Original Usage:** `reset`
-* **Library Function Call:**
+* **Library Function Call:** `reset()`
 * **Example Return:**
-* **Notes:**
+* **Notes:** Disconnects the serial.
 
 ### **restart**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** restarts the  tinySA after the specified number of seconds
+* **Status:** TODO: test and add input
+* **Description:** Restarts the  tinySA after the specified number of seconds
 * **Original Usage:** `restart {seconds}`
 * **Library Function Call:**
 * **Example Return:**
@@ -564,24 +564,24 @@ Example: menu 6 2 will toggle the waterfall option
 
 
 ### **resume**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** resumes the sweeping in either input or output mode
+* **Status:** Done
+* **Description:** Resumes the sweeping in either input or output mode
 * **Original Usage:** `resume`
-* **Library Function Call:**
+* **Library Function Call:** `resume()`
 * **Example Return:**
 * **Notes:**
 
 ### **save**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** saves the current setting to a preset
+* **Status:** TODO: printout
+* **Description:** Saves the current setting to a preset
 * **Original Usage:** `save 0..4`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:** where 0 is the startup preset
 
 ### **saveconfig**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** saves the device configuration data
+* **Status:** TODO: printout
+* **Description:** Saves the device configuration data
 * **Original Usage:** `saveconfig`
 * **Library Function Call:**
 * **Example Return:**
@@ -589,16 +589,16 @@ Example: menu 6 2 will toggle the waterfall option
  
 
 ### **scan**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:**performs a scan and optionally outputs the measured data
+* **Status:** TODO: error checking
+* **Description:** Performs a scan and optionally outputs the measured data
 * **Original Usage:** `scan {start(Hz)} {stop(Hz)} [points] [outmask]`
 * **Library Function Call:**
 * **Example Return:**
-* **Notes:**where the outmask is a binary OR of 1=frequencies, 2=measured data, 4=stored data and points is maximum 290
+* **Notes:** where the outmask is a binary OR of 1=frequencies, 2=measured data, 4=stored data and points is maximum 290
 
 ### **scanraw**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:**performs a scan of unlimited amount of points and send the data in binary form
+* **Status:** TODO: error checking
+* **Description:** Performs a scan of unlimited amount of points and send the data in binary form
 * **Original Usage:** `scanraw {start(Hz)} {stop(Hz)} [points][option]`
 * **Library Function Call:**
 * **Example Return:**
@@ -609,74 +609,74 @@ From Documentation 2: The measured data is the level in dBm and is send as '{' (
 UNDERGROING TESTING
    
 ### **sd_delete**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** delete a specific file on the sd card
+* **Status:** TODO
+* **Description:** Deletes a specific file on the sd card
 * **Original Usage:** `sd_delete {filename}`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 ### **sd_list**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:**displays list of filenames with extension and sizes
-* **Original Usage:**
-* **Library Function Call:** `sd_list`
+* **Status:** Done
+* **Description:** Displays list of filenames with extension and sizes
+* **Original Usage:** `sd_list`
+* **Library Function Call:** `sd_list()`
 * **Example Return:** -0.bmp 307322
 * **Notes:**
   
 ### **sd_read**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** read a specific file on the sd_card
+* **Status:**  TODO: error checking
+* **Description:** Reads a specific file on the sd card
 * **Original Usage:** `sd_read {filename}`
-* **Library Function Call:**
+* **Library Function Call:** `sd_read(filename)`
 * **Example Return:**
 * **Notes:**
 
 ### **selftest**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** TODO: error checking + printout
 * **Description:** performs one or all selftests
 * **Original Usage:** `selftest 0 0..9`
-* **Library Function Call:**
+* **Library Function Call:** `selftest(val=0..9)`
 * **Example Return:**
 * **Notes:**
   
     
 ### **spur**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** enables or disables spur reduction
+* **Status:** TODO: test format, add print
+* **Description:** Enables or disables spur reduction
 * **Original Usage:** `spur on|off`
-* **Library Function Call:**
+* **Library Function Call:** `spur(val="off"|"on")`
 * **Example Return:**
 * **Notes:**
  
 
 ### **status**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:**displays the current device status (paused/resumed)
-* **Original Usage:**
-* **Library Function Call:** `status`
+* **Status:** TODO: add printout
+* **Description:** Displays the current device status (paused/resumed)
+* **Original Usage:** `status`
+* **Library Function Call:** `status()`
 * **Example Return:** Resumed
 * **Notes:**
 
 ### **sweep**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** set sweep boundaries or execute a sweep
+* **Status:** TODO: input error checking
+* **Description:** Set sweep boundaries or execute a sweep
 * **Original Usage:** `sweep [(start|stop|center|span|cw {frequency}) | ({start(Hz)} {stop(Hz)} [0..290] ) ]`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:** sweep without arguments lists the current sweep settings, the frequencies specified should be within the permissible range. The sweep commands apply both to input and output modes
 
 ### **sweeptime**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** sets the sweeptime
+* **Status:** TODO: input error checking
+* **Description:** Sets the sweeptime
 * **Original Usage:** `sweep {time(Seconds)}`
 * **Library Function Call:**
 * **Example Return:**
-* **Notes:**the time specified may end in a letter where  m=mili and u=micro
+* **Notes:** the time specified may end in a letter where  m=mili and u=micro
 
 ### **sweep_voltage**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** sets the sweep voltage. 
+* **Status:** TODO: testing
+* **Description:** Sets the sweep voltage 
 * **Original Usage:** `sweep {0-3.3}`
 * **Library Function Call:**
 * **Example Return:**
@@ -815,9 +815,11 @@ usart
 
 ## Table of Command and Device Compatibility
 
-This library was developed with the tinySA Ultra, and there's some commands that might have been added/dropped between devices. This table is a record of CURRENT known compatibility with THIS library. It is HIGHLY likely to NOT be complete. 
+This library was developed with the tinySA Ultra, and there's some commands that might have been added/dropped between devices. This table is a record of CURRENT known compatibility with THIS library, and to what level the PC can interact with the device. It is HIGHLY likely to NOT be complete. 
 
 If a last checked firmware version is known, that is included in the header in the parenthesis. 
+
+?? is for an unfinished TODO list item, not an unknown. When a function is complete its compatibility is added.
 
 |  Device Command  | tinySA ()   | tinySA Ultra ()| tinySA Ultra + ()|
 |------------------|-------------|----------------|------------------|
@@ -848,19 +850,20 @@ If a last checked firmware version is known, that is included in the header in t
 | info| | Get| |
 | level| | Set | |
 | levelchange| | Set| |
-| leveloffset| | | |
-| line| | | |
-| load| | | |
-| lna| | | |
-| lna2| | | |
-| marker| | | |
-| menu| | | |
-| mode| | | |
-| modulation| | | |
-| output| | | |
-| pause| | | |
-| rbw| | | |
-| recall| | | |
+| leveloffset| | ??| |
+| line| | ??| |
+| load| |Load to Device| |
+| lna| | Set | |
+| lna2| |?? | |
+| marker| | ??| |
+| menu| |?? | |
+| mode| |??| |
+| modulation| | ??| |
+| nf| | ??| |
+| output| |?? | |
+| pause| | Set| |
+| rbw| | ??| |
+| recall| |Load to Device| |
 | refresh| | | |
 | release| | | |
 | remark| | | |
