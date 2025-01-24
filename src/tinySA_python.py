@@ -662,7 +662,8 @@ class tinySA():
         #check input
         if (val in accepted_vals):
             writebyte = 'load '+str(val)+'\r\n'
-            msgbytes = self.tinySASerial(writebyte, printBool=False)           
+            msgbytes = self.tinySASerial(writebyte, printBool=False)    
+            self.printMessage("load() called for preset # " + str(val))       
         else:
             self.printMessage("ERROR: load() takes vals [0 - 4]")
             msgbytes = bytearray(b'')
@@ -678,7 +679,8 @@ class tinySA():
         #check input
         if (val in accepted_vals):
             writebyte = 'lna '+str(val)+'\r\n'
-            msgbytes = self.tinySASerial(writebyte, printBool=False)           
+            msgbytes = self.tinySASerial(writebyte, printBool=False)   
+            self.printMessage("lna() set to " + str(val))        
         else:
             self.printMessage("ERROR: lna() takes vals [on|off]")
             msgbytes = bytearray(b'')
@@ -694,7 +696,8 @@ class tinySA():
         #check input
         if (val == "auto") or (val in accepted_vals):
             writebyte = 'lna2 '+str(val)+'\r\n'
-            msgbytes = self.tinySASerial(writebyte, printBool=False)           
+            msgbytes = self.tinySASerial(writebyte, printBool=False)     
+            self.printMessage("lna2() set to " + str(val))      
         else:
             self.printMessage("ERROR: lna2() takes vals [0 - 7]|auto")
             msgbytes = bytearray(b'')
@@ -715,7 +718,18 @@ class tinySA():
 
         self.printMessage("Function does not exist yet. error checking needed")
         return None
-    
+
+    def menu(self):
+        # The menu command can be used to activate any menu item
+        # usage: menu {#} [{#} [{#} [{#}]]]
+        # example return: ''
+
+        #TODO: check documentation to see if there's any min/max vals 
+        # with those settings
+
+        self.printMessage("Function does not exist yet. error checking needed")
+        return None
+
     def mode(self):
         # sets the mode of the tinySA
         # usage: mode low|high input|output
@@ -767,6 +781,7 @@ class tinySA():
 
         writebyte = 'pause\r\n'
         msgbytes = self.tinySASerial(writebyte, printBool=False) 
+        self.printMessage("pausing tinySA device")
         return msgbytes 
 
     def rbw(self, val="auto"):
@@ -797,7 +812,8 @@ class tinySA():
         #check input
         if (val in accepted_vals):
             writebyte = 'recall '+str(val)+'\r\n'
-            msgbytes = self.tinySASerial(writebyte, printBool=False)           
+            msgbytes = self.tinySASerial(writebyte, printBool=False)
+            self.printMessage("recall() set to value " + str(val))           
         else:
             self.printMessage("ERROR: recall() takes vals [0 - 4]")
             msgbytes = bytearray(b'')

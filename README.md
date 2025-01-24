@@ -417,94 +417,102 @@ Quick Link Table:
 * **Notes:**  
 
 ### **load**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:**loads a previously stored preset
+* **Status:** Done
+* **Description:** Loads a previously stored preset to the connected device
 * **Original Usage:** `load 0..4`
-* **Library Function Call:**
+* **Library Function Call:** `load(val=0|1|2|3|4)`
 * **Example Return:**
-* **Notes:** where 0 is the startup preset
+* **Notes:** 0 is the startup preset
 
 ### **lna**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** toggle lna usage off/on
-* **Original Usage:** `lna off|on  ` 
-* **Library Function Call:**
-* **Example Return:**
+* **Status:** Done
+* **Description:** Set lna usage off/on
+* **Original Usage:** `lna off|on` 
+* **Library Function Call:** `lna(val="off"|"on")`
+* **Example Return:** no return
 * **Notes:**
 
 ### **lna2**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:**
+* **Status:** TODO
+* **Description:** ??
 * **Original Usage:** `lna2 0..7|auto`
-* **Library Function Call:**
+* **Library Function Call:** `lna2(val="auto"|0..7)`
 * **Example Return:**
 * **Notes:**
 
 ### **marker**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** TODO
 * **Description:** sets or dumps marker info
 * **Original Usage:**  `marker {id} on|off|peak|{freq}| {index}`
-* **Library Function Call:**
+* **Library Function Call:** `marker()`
 * **Example Return:**
 * **Notes:**  where id=1..4 index=0..num_points-1
 Merker levels will use the selected unit Marker peak will activate the marker (if not done already), position the marker on the strongest signal and display the marker info The frequency must be within the selected sweep range mode 
 
 ### **menu**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** The menu command can be used to activate any menu item
+* **Status:** TODO
+* **Description:** The menu command can be used to activate any menu item based on the index of the menu item
 * **Original Usage:** `menu {#} [{#} [{#} [{#}]]]`
-* **Library Function Call:**
+* **Library Function Call:** `menu([])`
 * **Example Return:**
 * **Notes:** where # is the menu entry number starting with 1 at the top.
 Example: menu 6 2 will toggle the waterfall option 
 
 ### **mode**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** sets the mode of the tinySA
+* **Status:** TODO
+* **Description:** Sets the mode of the tinySA
 * **Original Usage:** `mode low|high input|output`
-* **Library Function Call:**
+* **Library Function Call:** `mode()`
 * **Example Return:**
-* **Notes:**
+* **Notes:** Check documentation on this to see if more options
 
 ### **modulation**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** sets the modulation in output mode
+* **Status:** TODO
+* **Description:** Set the modulation in output mode
 * **Original Usage:** `modulation off|AM_1kHz|AM_10Hz|NFM|WFM|extern`
-* **Library Function Call:**
+* **Library Function Call:** `modulation()`
 * **Example Return:**
 * **Notes:**
 
+### **nf**
+* **Status:** TODO
+* **Description:** ??
+* **Original Usage:** ` `
+* **Library Function Call:** ` `
+* **Example Return:**
+* **Notes:** Check documentation on this to see if more options
+
 ### **output**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** sets the output on or off
+* **Status:** TODO
+* **Description:** Sets the output on or off
 * **Original Usage:** `output on|off`
-* **Library Function Call:**
+* **Library Function Call:** `output(val="off"|"on")`
 * **Example Return:**
 * **Notes:**
 
 ### **pause**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** pauses the sweeping in either input or output mode
+* **Status:** Done
+* **Description:** Pauses the sweeping in either input or output mode
 * **Original Usage:** `pause`
-* **Library Function Call:**
-* **Example Return:**
+* **Library Function Call:** `pause()`
+* **Example Return:** no return
 * **Notes:**
 
 ### **rbw**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** TODO: error checking
 * **Description:** sets the rbw to either automatic or a specific value
 * **Original Usage:** `rbw auto|3..600`
-* **Library Function Call:**
+* **Library Function Call:** `rbw(val="auto"|3..600)`
 * **Example Return:** 
 * **Notes:** the number specifies the target rbw in kHz. Frequencies listed in official documentation: 3 kHz, 10 kHz, 30 kHz, 100 kHz, 300 kHz, 600 kHz     
 
 ### **recall**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** loads a previously stored preset
+* **Status:** Done
+* **Description:** Loads a previously stored preset from the device
 * **Original Usage:** ` recall 0..4`
-* **Library Function Call:** 
+* **Library Function Call:** `recal(val=0|1|2|3|4)`
 * **Example Return:**
-* **Notes:** same as load.  0 is the startup preset 
+* **Notes:** Same functionality as `load()`. 0 is the startup preset.
 
 ### **refresh**
 * **Status:** NOT ON DEVELOPER'S DUT
