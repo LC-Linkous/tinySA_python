@@ -117,6 +117,25 @@ This section is sorted by the tinySA (Ultra) commands, and includes:
 
 All of the listed commands are included in this API to some degree, but error checking may be incomplete.
 
+Quick Link Table:
+|  |   |     |   |       |      |
+|-------|-------|-------|-------|-------|-------|
+| [abort](#abort)   | [actual_freq](#actual_freq)  | [agc](#agc)      | [attenuate](#attenuate)  | [bulk](#bulk)       | [calc](#calc)        |
+| [caloutput](#caloutput) | [capture](#capture)  | [clearconfig](#clearconfig) | [color](#color)   | [correction](#correction) | [dac](#dac)        |
+| [data](#data)     | [deviceid](#deviceid)       | [direct](#direct) | [ext_gain](#ext_gain)    | [fill](#fill)       | [freq](#freq)        |
+| [freq_corr](#freq_corr) | [frequencies](#frequencies) | [help](#help)    | [hop](#hop)            | [if](#if)           | [if1](#if1)          |
+| [info](#info)     | [level](#level)             | [levelchange](#levelchange) | [leveloffset](#leveloffset) | [load](#load)   | [lna](#lna)          |
+| [lna2](#lna2)     | [marker](#marker)           | [menu](#menu)     | [mode](#mode)           | [modulation](#modulation) | [output](#output)  |
+| [pause](#pause)   | [rbw](#rbw)                 | [recall](#recall) | [refresh](#refresh)     | [release](#release) | [remark](#remark)    |
+| [repeat](#repeat) | [reset](#reset)             | [restart](#restart) | [resume](#resume)      | [save](#save)       | [saveconfig](#saveconfig) |
+| [scan](#scan)     | [scanraw](#scanraw)         | [sd_delete](#sd_delete) | [sd_list](#sd_list)   | [sd_read](#sd_read) | [selftest](#selftest) |
+| [spur](#spur)     | [status](#status)           | [sweep](#sweep)   | [sweeptime](#sweeptime) | [sweep_voltage](#sweep_voltage) | [text](#text)   |
+| [threads](#threads) | [touch](#touch)             | [touchcal](#touchcal) | [touchtest](#touchtest) | [trace](#trace)     | [trigger](#trigger)  |
+| [ultra](#ultra)   | [usart_cfg](#usart_cfg)     | [vbat](#vbat)     | [vbat_offset](#vbat_offset) | [version](#version) | [wait](#wait)        |
+| [zero](#zero)     |        |     |        |        |       |
+
+
+
 ### **abort**
 * **Status:** NOT ON DEVELOPER'S DUT
 * **Description:**  Sets the abortion enabled status (on/off) or aborts the previous command.
@@ -124,6 +143,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Library Function Call:** `abort(val=None|"off"|"on")` 
 * **Example Return:** ????
 * **Notes:** When used without parameters the previous command still running will be aborted. Abort must be enabled before usage using the "abort on" command. Additional error checking has been added with the 'verbose' option. 
+
 
 ### **actual_freq**
 * **Status:** Getting works, setting does not.
@@ -133,6 +153,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Example Return:** 3000000000
 * **Notes:**  freq in Hz going by the returns. Should be able to set the value with this, according to documentation, but its probably a format issue in the library.
 
+
 ### **agc**
 * **Status:** Done
 * **Description:**  Enables/disables the build in Automatic Gain Control
@@ -141,6 +162,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Example Return:** no return
 * **Notes:**
 
+
 ### **attenuate**
 * **Status:** Done
 * **Description:** Sets the internal attenuation
@@ -148,6 +170,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Library Function Call:** `attenuate(val="auto"|0..31)`
 * **Example Return:** no return
 * **Notes:**
+
 
 ### **bulk**
 * **Status:** Needs more work before this is a stand alone func. 
@@ -174,6 +197,7 @@ All of the listed commands are included in this API to some degree, but error ch
     * AVER 4 sets the averaging to new_measurement = old_measurement*3/4+measured_value/4. By default the averaging is linear power averaging 
     * AVER 16 sets the averaging to new_measurement = old_measurement*15/16+measured_value/16. By default the averaging is linear power averaging 
 
+
 ### **caloutput**
 * **Status:** Done
 * **Description:** Disables or sets the caloutput to a specified frequency in MHz
@@ -181,6 +205,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Library Function :**  `caloutput(val="off"|30|15|10|4|3|2|1)`
 * **Example Return:** no return
 * **Notes:**
+
 
 ### **capture**
 * **Status:** NOT ON DEVELOPER'S DUT
@@ -190,6 +215,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Example Return:**
 * **Notes:**
 
+
 ### **clearconfig**
 * **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** resets the configuration data to factory defaults
@@ -197,6 +223,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:** Requires password '1234'
+
 
 ### **color**
 * **Status:** NOT ON DEVELOPER'S DUT
@@ -206,6 +233,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Example Return:**
 * **Notes:**
 
+
 ### **correction**
 * **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** sets or dumps the frequency level correction table
@@ -214,6 +242,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
+
 
 ### **dac**
 * **Status:** NOT ON DEVELOPER'S DUT
