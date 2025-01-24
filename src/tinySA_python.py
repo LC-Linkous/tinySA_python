@@ -335,13 +335,29 @@ class tinySA():
         msgbytes = self.tinySASerial(writebyte, printBool=False) 
         return msgbytes
 
-    def color(self):
+    def color(self, ID=None, RGB='0xF8FCF8'):
         # sets or dumps the colors used
         # usage: color [{id} {rgb24}]
         # example return:  
 
-        self.printMessage("Function does not exist yet. error checking needed")
-        return None
+        #TODO. rgb24 check validity
+
+        # explicitly allowed vals
+        accepted_ID = np.arange(0, 31, 1) # max exclusive
+
+        if ID == None:
+            # get the color       
+            writebyte = 'color\r\n'
+            msgbytes = self.tinySASerial(writebyte, printBool=False)
+        elif (ID in accepted_ID): # and (int(RGB, 16)==True):
+            # set the color based on ID       
+            writebyte = 'color ' + str(ID) + ' ' + str(RGB) + '\r\n'
+            msgbytes = self.tinySASerial(writebyte, printBool=False)
+            self.printMessage("color() set with ID: " +str(ID) + " RGB: " + str(RGB))
+        else:
+            self.printMessage("ERROR: color() takes either None, or ID as int 0..31 and RGB as a hex value")
+            msgbytes = bytearray(b'')
+        return msgbytes
 
     def correction(self):
         # sets or dumps the frequency level orrection table
@@ -381,7 +397,13 @@ class tinySA():
         #check input
         if val in accepted_vals:
             writebyte = 'data '+str(val)+'\r\n'
-            msgbytes = self.tinySASerial(writebyte, printBool=False)   
+            msgbytes = self.tinySASerial(writebyte, printBool=False)  
+            if val == 0:
+                self.printMessage("returning temp value data") 
+            elif val == 1:
+                self.printMessage("returning stored trace data") 
+            elif val == 2:
+                self.printMessage("returning measurement data") 
         else:
             self.printMessage("ERROR: data() takes vals [0-2]")
             msgbytes =  bytearray(b'')
@@ -422,7 +444,8 @@ class tinySA():
         #check input
         if (isinstance(val, int)) and (-100<= val <=100):
             writebyte = 'ext_gain '+str(val)+'\r\n'
-            msgbytes = self.tinySASerial(writebyte, printBool=False)       
+            msgbytes = self.tinySASerial(writebyte, printBool=False)
+            self.printMessage("ext_gain() set to " + str(val))       
         else:
             self.printMessage("ERROR: ext_gain() takes vals [-100 - 100]")
             msgbytes = bytearray(b'')
@@ -1084,7 +1107,7 @@ if __name__ == "__main__":
     success = tsa.connect(port='COM10') #ports depend on the OS
     if success == True:
         tsa.setVerbose(True) #detailed messages
-        msg = tsa.caloutput()
+        msg = tsa.ext_gain(0)
         print(msg)
         tsa.disconnect()
     else:

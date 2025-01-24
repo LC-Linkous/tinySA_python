@@ -156,12 +156,10 @@ Quick Link Table:
 | [scanraw](#scanraw)         | [sd_delete](#sd_delete) | [sd_list](#sd_list)   | [sd_read](#sd_read) | [selftest](#selftest) | [spur](#spur)     | [status](#status)           |
 | [sweep](#sweep)   | [sweeptime](#sweeptime) | [sweep_voltage](#sweep_voltage) | [text](#text)   | [threads](#threads) | [touch](#touch)             | [touchcal](#touchcal) |
 | [touchtest](#touchtest) | [trace](#trace)     | [trigger](#trigger)  | [ultra](#ultra)   | [usart_cfg](#usart_cfg)     | [vbat](#vbat)     | [vbat_offset](#vbat_offset) |
-| [version](#version) | [wait](#wait)        | [zero](#zero)     |                         |                     |                      |                        |
-
+| [version](#version) | [wait](#wait)        | [zero](#zero)     |     |   |      |      |
 
 
 ### **abort**
----
 * **Status:** NOT ON DEVELOPER'S DUT
 * **Description:**  Sets the abortion enabled status (on/off) or aborts the previous command.
 * **Original Usage:** `abort [off|on]`
@@ -202,7 +200,7 @@ Quick Link Table:
 * **Description:** Sent by tinySA when in auto refresh mode
 * **Original Usage:** `????`
 * **Library Function Call:** `bulk()`
-* **Example Return:** format: "bulk\r\n{X}{Y}{Width}{Height} {Pixeldata}\r\n"
+* **Example Return:** `format: "bulk\r\n{X}{Y}{Width}{Height} {Pixeldata}\r\n"`
 * **Notes:** where all numbers are binary coded 2 bytes little endian. The pixeldata is encoded as 2 bytes per pixel           
             
 
@@ -233,35 +231,36 @@ Quick Link Table:
 
 
 ### **capture**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** requests a screen dump to be sent in binary format of  320x240 pixels of each 2 bytes
+* **Status:** Done
+* **Description:** Requests a screen dump to be sent in binary format of 320x240 pixels of each 2 bytes
 * **Original Usage:** `capture`
-* **Library Function Call:**
-* **Example Return:**
+* **Library Function Call:** `capture()`
+* **Example Return:** `format:'\x00\x00\x00\x00\x00\x00\x00\...x00\x00\x00'`
 * **Notes:**
 
 
 ### **clearconfig**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** resets the configuration data to factory defaults
+* **Status:** Done
+* **Description:** Resets the configuration data to factory defaults
 * **Original Usage:** `clearconfig`
-* **Library Function Call:**
-* **Example Return:**
-* **Notes:** Requires password '1234'
+* **Library Function Call:** `clearconfig()`
+* **Example Return:** `b'Config and all cal data cleared. \r\nDo reset manually to take effect. Then do touch cal and save.\r'`
+* **Notes:** Requires password '1234'. Hardcoded.
 
 
 ### **color**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** sets or dumps the colors used
+* **Status:** Some error checking to be added
+* **Description:** Sets or gets the colors used
 * **Original Usage:** `color [{id} {rgb24}]`
-* **Library Function Call:**
-* **Example Return:**
-* **Notes:**
+* **Library Function Call:** `color(ID=None|0..31, RGB=None(default:'0xF8FCF8')|'0x000000'..'0xFFFFFF')`
+* **Example Return:** If ID='None' used:  
+`0: 0x000000\r\n  1: 0xF8FCF8\r\n  2: 0x808080\r\n  3: 0xE0E4E0\r\n  4: 0x000000\r\n  5: 0xD0D0D0\r\n  6: 0xF8FC00\r\n  7: 0x40FC40\r\n  8: 0xF800F8\r\n  9: 0xF84040\r\n 10: 0x18E000\r\n 11: 0xF80000\r\n 12: 0x0000F8\r\n 13: 0xF8FCF8\r\n 14: 0x808080\r\n 15: 0x00FC00\r\n 16: 0x808080\r\n 17: 0x000000\r\n 18: 0xF8FCF8\r\n 19: 0x0000F8\r\n 20: 0xF88080\r\n 21: 0x00FC00\r\n 22: 0x888C88\r\n 23: 0xD8DCD8\r\n 24: 0x282828\r\n 25: 0xC0C4C0\r\n 26: 0xF8FCF8\r\n 27: 0x00FC00\r\n 28: 0x00FCF8\r\n 29: 0xF8FC00\r\n 30: 0x000000\r\n 31: 0x000000\r'`
+* **Notes:** the hex value currently must be passed in as a string. error checking for rgb24 format needs to be added
 
 
 ### **correction**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** sets or dumps the frequency level correction table
+* **Status:** TODO
+* **Description:** Sets or gets the frequency level correction table
 * **Original Usage:** `correction [0..9 {frequency} {level}]`
 * **Alternate Original:**  'correction  {table_name} [(0..9|0..19) {frequency} {level}]' 
 * **Library Function Call:**
@@ -270,44 +269,44 @@ Quick Link Table:
 
 
 ### **dac**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** sets or dumps the dac value
+* **Status:** Done
+* **Description:** Sets or gets the dac value
 * **Original Usage:** `dac [0..4095]`
-* **Library Function Call(s):**
-* **Example Return:**
+* **Library Function Call(s):** `dac(val=None|0..4095)`
+* **Example Return:** `b'usage: dac {value(0-4095)}\r\ncurrent value: 1922\r'`
 * **Notes:**
 
 ### **data**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:** dumps the trace data
+* **Status:** Done
+* **Description:** Gets the trace data
 * **Original Usage:** `data 0..2`
-* **Library Function Call:**
-* **Example Return:**
+* **Library Function Call:** `data(val=0|1|2)`
+* **Example Return:** `format bytearray(b'7.593750e+00\r\n-8.437500e+01\r\n-8.693750e+01\r\n...\r')`
 * **Notes:**  0 = temp value, 1 = stored trace, 2 = measurement
        
           
 ### **deviceid**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** Done
 * **Description:** sets or dumps a user settable integer number ID that can be use to identify a specific tinySA connected to the PC
 * **Original Usage:** `deviceid [{number}]`
-* **Library Function Call:**
-* **Example Return:**
+* **Library Function Call:** `deviceid(id=None|{int number})`
+* **Example Return:** 'deviceid 0\r'
 * **Notes:**
 
 ### **direct**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** TODO
 * **Description:** ??
 * **Original Usage:** `direct {start|stop|on|off} {freq(Hz)}`
-* **Library Function Call:**
+* **Library Function Call:** `direct()`
 * **Example Return:**
 * **Notes:**
 
 ### **ext_gain**
-* **Status:** NOT ON DEVELOPER'S DUT
+* **Status:** Done
 * **Description:** sets the external attenuation/amplification
 * **Original Usage:** `ext_gain -100..100`
-* **Library Function Call:**
-* **Example Return:**
+* **Library Function Call:** `ext_gain(val=-100...100)`
+* **Example Return:** no return
 * **Notes:** Works in both input and output mode
 
 ### **fill**
