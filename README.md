@@ -118,34 +118,39 @@ This section is sorted by the tinySA (Ultra) commands, and includes:
 All of the listed commands are included in this API to some degree, but error checking may be incomplete.
 
 ### **abort**
-* **Description:**  Enables the previous command abortion or aborts the previous command
+* **Status:** NOT ON DEVELOPER'S DUT
+* **Description:**  Sets the abortion enabled status (on/off) or aborts the previous command.
 * **Original Usage:** `abort [off| on]`
-* **Library Function Call:**
+* **Library Function Call:** `abort(val=None)`
 * **Example Return:** 
 * **Notes:** When used without parameters the previous command still running will be aborted. Abort must be enabled before usage using the "abort on" command. Additional error checking has been added with the 'verbose' option. 
 
 ### **actual_freq**
-* **Description:**  sets or dump the frequency correction set by CORRECT FREQUENCY menu item
+* **Status:** NOT ON DEVELOPER'S DUT
+* **Description:**  Gets the frequency correction set by CORRECT FREQUENCY menu in the expert menu settings
 * **Original Usage:** `actual_freq [{frequency in Hz}]`
-* **Library Function Call:**
+* **Library Function Call:** `actual_freq(val=None|int)`
 * **Example Return:** 3000000000
-* **Notes:** might be freq in Hz. testing this currently.
+* **Notes:**  freq in Hz going by the returns. NOTE: should be able to set the value with this, according to documentation, but there may be a firmware mismatch.
 
 ### **agc**
-* **Description:**
+* **Status:** NOT ON DEVELOPER'S DUT
+* **Description:**  Enables/disables the build in Automatic Gain Control
 * **Original Usage:** `agc 0..7|auto`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 ### **attenuate**
-* **Description:** sets the internal attenuation
+* **Status:** NOT ON DEVELOPER'S DUT
+* **Description:** Sets the internal attenuation
 * **Original Usage:** `attenuate [auto|0-31]`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 ### **bulk**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** sent by tinySA when in auto refresh mode
 * **Original Usage:** 
 * **Library Function Call:**
@@ -154,6 +159,7 @@ All of the listed commands are included in this API to some degree, but error ch
             
 
 ### **calc**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** sets or cancels one of the measurement modes
 * **Original Usage:** `calc off|minh|maxh|maxd|aver4|aver16|quasip`
 * **Library Function Call:**
@@ -169,6 +175,7 @@ All of the listed commands are included in this API to some degree, but error ch
     * AVER 16 sets the averaging to new_measurement = old_measurement*15/16+measured_value/16. By default the averaging is linear power averaging 
 
 ### **caloutput**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** disables or sets the caloutput to a specified frequency in MHz
 * **Original Usage:** `caloutput off|30|15|10|4|3|2|1`
 * **Library Function :**
@@ -176,6 +183,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Notes:**
 
 ### **capture**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** requests a screen dump to be sent in binary format of  320x240 pixels of each 2 bytes
 * **Original Usage:** `capture`
 * **Library Function Call:**
@@ -183,6 +191,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Notes:**
 
 ### **clearconfig**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** resets the configuration data to factory defaults
 * **Original Usage:** `clearconfig`
 * **Library Function Call:**
@@ -190,6 +199,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Notes:** Requires password '1234'
 
 ### **color**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** sets or dumps the colors used
 * **Original Usage:** `color [{id} {rgb24}]`
 * **Library Function Call:**
@@ -197,6 +207,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Notes:**
 
 ### **correction**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** sets or dumps the frequency level correction table
 * **Original Usage:** `correction [0..9 {frequency} {level}]`
 * **Alternate Original:**  'correction  {table_name} [(0..9|0..19) {frequency} {level}]' 
@@ -205,6 +216,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Notes:**
 
 ### **dac**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** sets or dumps the dac value
 * **Original Usage:** `dac [0..4095]`
 * **Library Function Call(s):**
@@ -212,6 +224,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Notes:**
 
 ### **data**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** dumps the trace data
 * **Original Usage:** `data 0..2`
 * **Library Function Call:**
@@ -220,6 +233,7 @@ All of the listed commands are included in this API to some degree, but error ch
        
           
 ### **deviceid**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** sets or dumps a user settable integer number ID that can be use to identify a specific tinySA connected to the PC
 * **Original Usage:** `deviceid [{number}]`
 * **Library Function Call:**
@@ -227,6 +241,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Notes:**
 
 ### **direct**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** ??
 * **Original Usage:** `direct {start|stop|on|off} {freq(Hz)}`
 * **Library Function Call:**
@@ -234,6 +249,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Notes:**
 
 ### **ext_gain**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** sets the external attenuation/amplification
 * **Original Usage:** `ext_gain -100..100`
 * **Library Function Call:**
@@ -241,6 +257,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Notes:** Works in both input and output mode
 
 ### **fill**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** sent by tinySA when in auto refresh mode
 * **Original Usage:**
 * **Library Function Call:**
@@ -248,6 +265,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Notes:** All numbers returned are binary coded 2 bytes little endian.
 
 ### **freq**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** Pauses the sweep and sets the measurement frequency.
 * **Original Usage:** `freq {frequency}`
 * **Library Function Call:** 
@@ -255,6 +273,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Notes:**  
 
 ### **freq_corr**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** Gets the frequency correction.
 * **Original Usage:** (not specified, but inferred to be a command like `freq_corr`)
 * **Library Function Call:**  
@@ -262,6 +281,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Notes:** This command returns the frequency correction, typically in parts per billion (ppb).
 
 ### **frequencies**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** Dumps the frequencies used by the last sweep.
 * **Original Usage:** `frequencies`
 * **Library Function Call:**  
@@ -269,6 +289,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Notes:**  
 
 ### **help**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** Dumps a list of the available commands.
 * **Original Usage:** `help`
 * **Library Function Call:**  
@@ -276,6 +297,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Notes:** 
 
 ### **hop**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** Measures the input level at each of the indicated frequencies.
 * **Original Usage:** `hop {start(Hz)} {stop(Hz)} {step(Hz) | points}  [outmask]`
 * **Library Function Call:**
@@ -283,6 +305,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Notes:** Ultra only. From [tinysa-org](https://tinysa-org.translate.goog/wiki/pmwiki.php?n=Main.USBInterface&_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en-US): if the 3rd parameter is below 450 it is assumed to be points, otherwise as step frequency Outmask selects if the frequency (1) or level (2) is output. 
 
 ### **if**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** sets the intermediate frequency (IF) to automatic or a specific value
 * **Original Usage:** `if ( 0 | 433M..435M )`
 * **Library Function Call:**
@@ -290,6 +313,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Notes:**where 0 means automatic
 
 ### **if1**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:**sets intermediate frequency (IF) to a specific value
 * **Original Usage:** `if1 (975M..979M )`
 * **Library Function Call:**
@@ -297,6 +321,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Notes:**where 0 means automatic
 
 ### **info**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** displays various SW and HW information
 * **Original Usage:**
 * **Library Function Call:**
@@ -304,6 +329,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Notes:**
 
 ### **level**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** sets the output level
 * **Original Usage:** `level -76..13`
 * **Library Function Call:**
@@ -311,6 +337,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Notes:** Not all values in the range are available
 
 ### **levelchange**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** sets the output level delta for low output mode level sweep
 * **Original Usage:** `levelchange -70..+70`
 * **Library Function Call:**
@@ -318,6 +345,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Notes:**
 
 ### **leveloffset**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** sets or dumps the level calibration data
 * **Original Usage:** `leveloffset low|high|switch [output] {error}`
 * **Library Function Call:**
@@ -325,6 +353,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Notes:** For the output corrections first ensure correct output levels at maximum output level. For the low output set the output to -50dBm and measure and correct the level with "leveloffset switch error" where For all output leveloffset commands measure the level with the leveloffset to zero and calculate error = measured level - specified level
 
 ### **load**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:**loads a previously stored preset
 * **Original Usage:** `load 0..4`
 * **Library Function Call:**
@@ -332,6 +361,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Notes:** where 0 is the startup preset
 
 ### **lna**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** toggle lna usage off/on
 * **Original Usage:** `lna off|on  ` 
 * **Library Function Call:**
@@ -339,6 +369,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Notes:**
 
 ### **lna2**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:**
 * **Original Usage:** `lna2 0..7|auto`
 * **Library Function Call:**
@@ -346,6 +377,7 @@ All of the listed commands are included in this API to some degree, but error ch
 * **Notes:**
 
 ### **marker**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** sets or dumps marker info
 * **Original Usage:**  `marker {id} on|off|peak|{freq}| {index}`
 * **Library Function Call:**
@@ -354,6 +386,7 @@ All of the listed commands are included in this API to some degree, but error ch
 Merker levels will use the selected unit Marker peak will activate the marker (if not done already), position the marker on the strongest signal and display the marker info The frequency must be within the selected sweep range mode 
 
 ### **menu**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** The menu command can be used to activate any menu item
 * **Original Usage:** `menu {#} [{#} [{#} [{#}]]]`
 * **Library Function Call:**
@@ -362,6 +395,7 @@ Merker levels will use the selected unit Marker peak will activate the marker (i
 Example: menu 6 2 will toggle the waterfall option 
 
 ### **mode**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** sets the mode of the tinySA
 * **Original Usage:** `mode low|high input|output`
 * **Library Function Call:**
@@ -369,6 +403,7 @@ Example: menu 6 2 will toggle the waterfall option
 * **Notes:**
 
 ### **modulation**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** sets the modulation in output mode
 * **Original Usage:** `modulation off|AM_1kHz|AM_10Hz|NFM|WFM|extern`
 * **Library Function Call:**
@@ -376,6 +411,7 @@ Example: menu 6 2 will toggle the waterfall option
 * **Notes:**
 
 ### **output**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** sets the output on or off
 * **Original Usage:** `output on|off`
 * **Library Function Call:**
@@ -383,6 +419,7 @@ Example: menu 6 2 will toggle the waterfall option
 * **Notes:**
 
 ### **pause**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** pauses the sweeping in either input or output mode
 * **Original Usage:** `pause`
 * **Library Function Call:**
@@ -390,6 +427,7 @@ Example: menu 6 2 will toggle the waterfall option
 * **Notes:**
 
 ### **rbw**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** sets the rbw to either automatic or a specific value
 * **Original Usage:** `rbw auto|3..600`
 * **Library Function Call:**
@@ -397,6 +435,7 @@ Example: menu 6 2 will toggle the waterfall option
 * **Notes:** the number specifies the target rbw in kHz. Frequencies listed in official documentation: 3 kHz, 10 kHz, 30 kHz, 100 kHz, 300 kHz, 600 kHz     
 
 ### **recall**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** loads a previously stored preset
 * **Original Usage:** ` recall 0..4`
 * **Library Function Call:** 
@@ -404,6 +443,7 @@ Example: menu 6 2 will toggle the waterfall option
 * **Notes:** same as load.  0 is the startup preset 
 
 ### **refresh**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** enables/disables the auto refresh mode
 * **Original Usage:** `refresh on|off`
 * **Library Function Call:**
@@ -411,6 +451,7 @@ Example: menu 6 2 will toggle the waterfall option
 * **Notes:**
 
 ### **release**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** signals a removal of the touch
 * **Original Usage:** `release`
 * **Library Function Call:**
@@ -418,6 +459,7 @@ Example: menu 6 2 will toggle the waterfall option
 * **Notes:**
 
 ### **remark**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** does nothing
 * **Original Usage:** `remark [use any text]`
 * **Library Function Call:**
@@ -425,6 +467,7 @@ Example: menu 6 2 will toggle the waterfall option
 * **Notes:** ?? 
 
 ### **repeat**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** sets the number of measurements that should be taken at every frequency
 * **Original Usage:** ` repeat 1..1000`
 * **Library Function Call:**
@@ -432,6 +475,7 @@ Example: menu 6 2 will toggle the waterfall option
 * **Notes:** increasing the repeat reduces the noise per frequency, repeat 1 is the normal scanning mode. 
 
 ### **reset**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** resets the tinySA
 * **Original Usage:** `reset`
 * **Library Function Call:**
@@ -439,6 +483,7 @@ Example: menu 6 2 will toggle the waterfall option
 * **Notes:**
 
 ### **restart**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** restarts the  tinySA after the specified number of seconds
 * **Original Usage:** `restart {seconds}`
 * **Library Function Call:**
@@ -447,6 +492,7 @@ Example: menu 6 2 will toggle the waterfall option
 
 
 ### **resume**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** resumes the sweeping in either input or output mode
 * **Original Usage:** `resume`
 * **Library Function Call:**
@@ -454,6 +500,7 @@ Example: menu 6 2 will toggle the waterfall option
 * **Notes:**
 
 ### **save**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** saves the current setting to a preset
 * **Original Usage:** `save 0..4`
 * **Library Function Call:**
@@ -461,6 +508,7 @@ Example: menu 6 2 will toggle the waterfall option
 * **Notes:** where 0 is the startup preset
 
 ### **saveconfig**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** saves the device configuration data
 * **Original Usage:** `saveconfig`
 * **Library Function Call:**
@@ -469,6 +517,7 @@ Example: menu 6 2 will toggle the waterfall option
  
 
 ### **scan**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:**performs a scan and optionally outputs the measured data
 * **Original Usage:** `scan {start(Hz)} {stop(Hz)} [points] [outmask]`
 * **Library Function Call:**
@@ -476,6 +525,7 @@ Example: menu 6 2 will toggle the waterfall option
 * **Notes:**where the outmask is a binary OR of 1=frequencies, 2=measured data, 4=stored data and points is maximum 290
 
 ### **scanraw**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:**performs a scan of unlimited amount of points and send the data in binary form
 * **Original Usage:** `scanraw {start(Hz)} {stop(Hz)} [points][option]`
 * **Library Function Call:**
@@ -487,6 +537,7 @@ From Documentation 2: The measured data is the level in dBm and is send as '{' (
 UNDERGROING TESTING
    
 ### **sd_delete**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** delete a specific file on the sd card
 * **Original Usage:** `sd_delete {filename}`
 * **Library Function Call:**
@@ -494,6 +545,7 @@ UNDERGROING TESTING
 * **Notes:**
 
 ### **sd_list**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:**displays list of filenames with extension and sizes
 * **Original Usage:**
 * **Library Function Call:** `sd_list`
@@ -501,6 +553,7 @@ UNDERGROING TESTING
 * **Notes:**
   
 ### **sd_read**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** read a specific file on the sd_card
 * **Original Usage:** `sd_read {filename}`
 * **Library Function Call:**
@@ -508,6 +561,7 @@ UNDERGROING TESTING
 * **Notes:**
 
 ### **selftest**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** performs one or all selftests
 * **Original Usage:** `selftest 0 0..9`
 * **Library Function Call:**
@@ -516,6 +570,7 @@ UNDERGROING TESTING
   
     
 ### **spur**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** enables or disables spur reduction
 * **Original Usage:** `spur on|off`
 * **Library Function Call:**
@@ -524,6 +579,7 @@ UNDERGROING TESTING
  
 
 ### **status**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:**displays the current device status (paused/resumed)
 * **Original Usage:**
 * **Library Function Call:** `status`
@@ -531,6 +587,7 @@ UNDERGROING TESTING
 * **Notes:**
 
 ### **sweep**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** set sweep boundaries or execute a sweep
 * **Original Usage:** `sweep [(start|stop|center|span|cw {frequency}) | ({start(Hz)} {stop(Hz)} [0..290] ) ]`
 * **Library Function Call:**
@@ -538,6 +595,7 @@ UNDERGROING TESTING
 * **Notes:** sweep without arguments lists the current sweep settings, the frequencies specified should be within the permissible range. The sweep commands apply both to input and output modes
 
 ### **sweeptime**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** sets the sweeptime
 * **Original Usage:** `sweep {time(Seconds)}`
 * **Library Function Call:**
@@ -545,6 +603,7 @@ UNDERGROING TESTING
 * **Notes:**the time specified may end in a letter where  m=mili and u=micro
 
 ### **sweep_voltage**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** sets the sweep voltage. 
 * **Original Usage:** `sweep {0-3.3}`
 * **Library Function Call:**
@@ -552,6 +611,7 @@ UNDERGROING TESTING
 * **Notes:** Not sure if this should be included for manual override or not. testing needed.
 
 ### **text**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** specifies the text entry for the active keypad 
 * **Original Usage:** `text keypadtext `
 * **Library Function Call:**
@@ -560,6 +620,7 @@ UNDERGROING TESTING
 Currently does not work for entering file names 
 
 ### **threads**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** lists information of the threads in the tinySA
 * **Original Usage:** `threads`
 * **Library Function Call:**
@@ -567,6 +628,7 @@ Currently does not work for entering file names
 * **Notes:**
 
 ### **touch**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** sends the coordinates of a touch
 * **Original Usage:** `touch {X coordinate} {Y coordinate}`
 * **Library Function Call:**
@@ -574,20 +636,23 @@ Currently does not work for entering file names
 * **Notes:** The upper left corner of the screen is "0 0"
 
 ### **touchcal**
-* **Description:**starts the touch calibration
+* **Status:** NOT ON DEVELOPER'S DUT
+* **Description:** starts the touch calibration
 * **Original Usage:** `touchcal`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 ### **touchtest**
-* **Description:**starts the touch test
+* **Status:** NOT ON DEVELOPER'S DUT
+* **Description:** starts the touch test
 * **Original Usage:** `touchtest`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
 
 ### **trace**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** displays all or one trace information or sets trace related information
 * **Original Usage:** `trace [{0..2} | dBm|dBmV|dBuV| V|W |store|clear|subtract | (scale|reflevel) auto|{level}]`
 * **Library Function Call:**
@@ -595,6 +660,7 @@ Currently does not work for entering file names
 * **Notes:**
 
 ### **trigger**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** sets the trigger type or level
 * **Original Usage:** `trigger auto|normal|single|{level(dBm)}`
 * **Library Function Call:**
@@ -602,6 +668,7 @@ Currently does not work for entering file names
 * **Notes:** the trigger level is always set in dBm
 
 ### **ultra**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** turn on/config tiny SA ultra mode
 * **Original Usage:** `ultra off|on|auto|start|harm {freq}`
 * **Library Function Call:**
@@ -609,6 +676,7 @@ Currently does not work for entering file names
 * **Notes:**
 
 ### **usart_cfg**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** returns port current baud rate
 * **Original Usage:** `usart_cfg`
 * **Library Function Call:**
@@ -616,6 +684,7 @@ Currently does not work for entering file names
 * **Notes:**  default is 115,200
 
 ### **vbat**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** returns the current battery voltage
 * **Original Usage:** `vbat`
 * **Library Function Call:**
@@ -623,6 +692,7 @@ Currently does not work for entering file names
 * **Notes:**
 
 ### **vbat_offset**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** returns or sets the battery offset value
 * **Original Usage:** `vbat_offset [{0..4095}]`
 * **Library Function Call:**
@@ -630,6 +700,7 @@ Currently does not work for entering file names
 * **Notes:**
 
 ### **version**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** returns the version text
 * **Original Usage:** `version`
 * **Library Function Call:**
@@ -637,6 +708,7 @@ Currently does not work for entering file names
 * **Notes:**
 
 ### **wait**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:** wait for a single sweep to finish and pauses sweep or waits for specified number of seconds
 * **Original Usage:** `wait [{seconds}]`
 * **Library Function Call:**
@@ -644,11 +716,15 @@ Currently does not work for entering file names
 * **Notes:**
 
 ### **zero**
+* **Status:** NOT ON DEVELOPER'S DUT
 * **Description:**
 * **Original Usage:** `zero {level}\r\n174dBm`
 * **Library Function Call:**
 * **Example Return:**
 * **Notes:**
+
+
+
 
 ''' Full list of help commands
 commands: freq time dac nf saveconfig clearconfig zero sweep pause resume wait repeat status caloutput save recall trace trigger marker line usart_cfg vbat_offset color if if1 lna2 agc actual_freq freq_corr attenuate level sweeptime leveloffset levelchange modulation rbw mode spur lna direct ultra load ext_gain output deviceid correction calc menu text remark
@@ -673,30 +749,81 @@ If a last checked firmware version is known, that is included in the header in t
 
 |  Device Command  | tinySA ()   | tinySA Ultra ()| tinySA Ultra + ()|
 |------------------|-------------|----------------|------------------|
-| | | | |
-| | | | |
-| | | | |
-| | | | |
-| | | | |
-| | | | |
-| | | | |
-| | | | |
-| | | | |
-| | | | |
-| | | | |
-| | | | |
-| | | | |
-| | | | |
-| | | | |
-| | | | |
-| | | | |
-| | | | |
-| | | | |
-| | | | |
-| | | | |
-| | | | |
-| | | | |
-| | | | |
+| abort | | | |
+| actual_freq| | | |
+| agc| | | |
+| attenuate| | | |
+| bulk| | | |
+| calc| | | |
+| caloutput| | | |
+| capture| | | |
+| clearconfig| | | |
+| color| | | |
+| correction| | | |
+| dac| | | |
+| data| | | |
+| deviceid| | | |
+| direct| | | |
+| ext_gain| | | |
+| fill| | | |
+| freq| | | |
+| freq_corr| | | |
+| frequencies| | | |
+| help| | | |
+| hop| | | |
+| if| | | |
+| if1| | | |
+| info| | | |
+| level| | | |
+| levelchange| | | |
+| leveloffset| | | |
+| load| | | |
+| lna| | | |
+| lna2| | | |
+| marker| | | |
+| menu| | | |
+| mode| | | |
+| modulation| | | |
+| output| | | |
+| pause| | | |
+| rbw| | | |
+| recall| | | |
+| refresh| | | |
+| release| | | |
+| remark| | | |
+| repeat| | | |
+| reset| | | |
+| restart| | | |
+| resume| | | |
+| save| | | |
+| saveconfig| | | |
+| scan| | | |
+| scanraw| | | |
+| sd_delete| | | |
+| sd_list| | | |
+| sd_read| | | |
+| selftest| | | |
+| spur| | | |
+| status| | | |
+| sweep| | | |
+| sweeptime| | | |
+| sweep_voltage| | | |
+| text| | | |
+| threads| | | |
+| touch| | | |
+| touchcal| | | |
+| touchtest| | | |
+| trace| | | |
+| trigger| | | |
+| ultra| | | |
+| usart_cfg| | | |
+| vbat| | | |
+| vbat_offset| | | |
+| version| | | |
+| wait| | | |
+| zero| | | |
+
+
 
 ## Notes for Beginners
 
@@ -715,7 +842,9 @@ If a last checked firmware version is known, that is included in the header in t
 * [http://athome.kaashoek.com/tinySA/python/ ]( http://athome.kaashoek.com/tinySA/python/ )
 * [official pyserial](https://pypi.org/project/pyserial/) https://pypi.org/project/pyserial/
 * https://groups.io/g/tinysa/topic/tinysa_screen_capture_using/82218670
-* 
+* The firmware on github at https://github.com/erikkaashoek/tinySA
+    * https://github.com/erikkaashoek/tinySA/blob/main/main.c
+
 
 ## Publications and Integration
 This API was written to support the work in:
