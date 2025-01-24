@@ -1258,31 +1258,21 @@ class tinySA():
 
 if __name__ == "__main__":
     # unit testing
-    def byteArrayToNumArray(byteArr, enc="utf-8"):
-        # decode the bytearray to a string
-        decodedStr = byteArr.decode(enc)
-        # split the string by newline characters
-        stringVals = decodedStr.splitlines()
-        # convert each value to a float
-        floatVals = [float(val) for val in stringVals]
-        return floatVals
-
-
 
     # create a new tinySA object    
     tsa = tinySA()
     # attempt to connect to previously discovered serial port
     success = tsa.connect(port='COM10')
 
-    # # if port open, then complete task(s) and disconnect
-    # if success == True:
-    #     tsa.setVerbose(True) #detailed messages
-    #     msg = tsa.data() #dumps trace data
-    #     print(msg)
-    #     msg = tsa.frequencies() # gets frequencies used by the last sweep
-    #     tsa.disconnect()
-    # else:
-    #     print("ERROR: could not connect to port")
+    # if port open, then complete task(s) and disconnect
+    if success == True:
+        tsa.setVerbose(True) #detailed messages
+        msg = tsa.data() #dumps trace data
+        print(msg)
+        msg = tsa.frequencies() # gets frequencies used by the last sweep
+        tsa.disconnect()
+    else:
+        print("ERROR: could not connect to port")
 
 
     # if port open, then complete task(s) and disconnect
@@ -1290,24 +1280,17 @@ if __name__ == "__main__":
         # detailed messages turned on
         tsa.setVerbose(True) 
         # get the trace data
-        data_bytes = tsa.data() 
-        print(data_bytes)
-        # get the frequencies used by the last sweep
-        freq_bytes = tsa.frequencies() 
+        msg = tsa.data() 
+        print(msg)
+        # disconnect serial
         tsa.disconnect()
     else:
         print("ERROR: could not connect to port")
 
 
-    # processing after disconnect just for this example
-    dataVals = byteArrayToNumArray(data_bytes)
-    print(len(dataVals))
-
-
-    freqVals = byteArrayToNumArray(freq_bytes)
-    print(len(freqVals))
-
-    
-
-
-
+    # print(msgbytes[0:10])
+    # print(msgbytes[-25:])
+    # hex_values = [f'{byte:02x}' for byte in msgbytes]
+    # print("HEX")
+    # print(len(hex_values))
+    # print(hex_values[-25:])

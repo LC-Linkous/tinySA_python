@@ -117,7 +117,10 @@ Port: COM10, Description: USB Serial Device (COM10), Hardware ID: USB VID:PID=04
 
 
 #### Linux
+
+```python
 TODO
+```
 
 
 
@@ -234,18 +237,55 @@ This example shows several examples for common data requests:
 
 ```python
 
-# get current trace data on screen
+# import the library class for the tinySA
+from src.tinySA_python import tinySA
 
+# create a new tinySA object    
+tsa = tinySA()
+# attempt to connect to previously discovered serial port
+success = tsa.connect(port='COM10')
 
-# get current battery level
+# if port open, then complete task(s) and disconnect
+if success == False:
+    print("ERROR: could not connect to port")
+else:
+    #detailed messages
+    tsa.setVerbose(True) #detailed messages
 
+    # get current trace data on screen
+    msg = tsa.data(val=2) 
+    print(msg)
 
-# 
+    # set current device ID
+    msg = tsa.deviceid(3) 
+    print(msg)
 
+    # get current device ID
+    msg = tsa.deviceid() 
+    print(msg)
+    
+    # get device information
+    msg = tsa.info() 
+    print(msg)
 
+    # pause sweeping
+    msg = tsa.pause() 
+    print(msg)
 
+    # resume sweeping
+    msg = tsa.resume() 
+    print(msg)
+
+    # get current battery voltage (mV)
+    msg = tsa.vbat() 
+    print(msg)
+
+    tsa.disconnect()
 
 ```
+
+
+
 ### Saving Screen Images
  
  The `capture()` function can be used to capture the screen and output it to an image file. Note that the screen size varies by device, and the serial read
@@ -727,7 +767,7 @@ Quick Link Table:
 * **Library Function Call:** `marker()`
 * **Example Return:**
 * **Notes:**  where id=1..4 index=0..num_points-1
-Merker levels will use the selected unit Marker peak will activate the marker (if not done already), position the marker on the strongest signal and display the marker info The frequency must be within the selected sweep range mode 
+Marker levels will use the selected unit Marker peak will activate the marker (if not done already), position the marker on the strongest signal and display the marker info The frequency must be within the selected sweep range mode 
 
 ### **menu**
 * **Status:** TODO
