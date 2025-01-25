@@ -459,13 +459,6 @@ Quick Link Table:
 | [touchcal](#touchcal) | [touchtest](#touchtest) | [trace](#trace)     | [trigger](#trigger)  | [ultra](#ultra)   | [usart_cfg](#usart_cfg)     | [vbat](#vbat)     |
 | [vbat_offset](#vbat_offset) | [version](#version) | [wait](#wait)        | [zero](#zero)     |                         |                     |                      |
 
-### **abort**
-* **Status:** NOT ON DEVELOPER'S DUT
-* **Description:**  Sets the abortion enabled status (on/off) or aborts the previous command.
-* **Original Usage:** `abort [off|on]`
-* **Library Function Call:** `abort(val=None|"off"|"on")` 
-* **Example Return:** ????
-* **Notes:** When used without parameters the previous command still running will be aborted. Abort must be enabled before using the "abort on" command. Additional error checking has been added with the 'verbose' option. 
 
 ### **actual_freq**
 * **Status:** Getting works, setting does not.
@@ -609,7 +602,7 @@ Quick Link Table:
 
 ### **freq**
 * **Status:** Done
-* **Description:** Pauses the sweep and sets the measurement frequency.
+* **Description:** Pauses the sweep and sets the measurement frequency in Hz.
 * **Original Usage:** `freq {frequency}`
 * **Library Function Call:** `freq()`
 * **Example Return:** empty bytearray
@@ -681,6 +674,8 @@ Quick Link Table:
 * **Library Function Call:** `level(val=-76...13)`
 * **Example Return:** empty bytearray
 * **Notes:** Not all values in the range are available.  
+
+
 ### **levelchange**
 * **Status:** Done
 * **Description:** Sets the output level delta for low output mode level sweep
@@ -719,15 +714,7 @@ Quick Link Table:
 * **Original Usage:** `lna off|on` 
 * **Library Function Call:** `lna(val="off"|"on")`
 * **Example Return:** empty bytearray
-* **Notes:**
-
-### **lna2**
-* **Status:** TODO
-* **Description:** ??
-* **Original Usage:** `lna2 0..7|auto`
-* **Library Function Call:** `lna2(val="auto"|0..7)`
-* **Example Return:** empty bytearray
-* **Notes:**
+* **Notes:** Should not be enabled when AGC is enabled - [tinySA wiki SETTINGS2](https://tinysa.org/wiki/pmwiki.php?n=Main.SETTINGS2)
 
 ### **marker**
 * **Status:** TODO
@@ -746,14 +733,19 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** empty bytearray
 * **Notes:** where # is the menu entry number starting with 1 at the top.
 Example: menu 6 2 will toggle the waterfall option 
+[tinySA Menu Tree](https://tinysa.org/wiki/pmwiki.php?n=TinySA4.MenuTree)
 
 ### **mode**
 * **Status:** TODO
 * **Description:** Sets the mode of the tinySA
 * **Original Usage:** `mode low|high input|output`
-* **Library Function Call:** `mode()`
+* **Library Function Call:** `mode(freq)`
 * **Example Return:** empty bytearray
-* **Notes:** Check documentation on this to see if more options
+* **Notes:** [tinySA Wiki MODE](https://tinysa.org/wiki/pmwiki.php?n=Main.MODE)
+* LOW INPUT activates the 0.1-350MHz input mode
+* HIGH INPUT activates the 240MHz-960MHz input mode
+* LOW OUTPUT activates the 0.1-350MHz output mode
+* HIGH OUTPUT activates the 240MHz-960MHz output mode 
 
 ### **modulation**
 * **Status:** TODO
@@ -772,7 +764,7 @@ Example: menu 6 2 will toggle the waterfall option
 * **Notes:** Check documentation on this to see if more options
 
 ### **output**
-* **Status:** TODO
+* **Status:** Done
 * **Description:** Sets the output on or off
 * **Original Usage:** `output on|off`
 * **Library Function Call:** `output(val="off"|"on")`
@@ -788,7 +780,7 @@ Example: menu 6 2 will toggle the waterfall option
 * **Notes:**
 
 ### **rbw**
-* **Status:** TODO: error checking
+* **Status:** Done
 * **Description:** sets the rbw to either automatic or a specific value
 * **Original Usage:** `rbw auto|3..600`
 * **Library Function Call:** `rbw(val="auto"|3..600)`
@@ -828,28 +820,20 @@ Example: menu 6 2 will toggle the waterfall option
 * **Notes:** ?? included due to documentation 
 
 ### **repeat**
-* **Status:** TODO: input error checking
+* **Status:** Done
 * **Description:** Sets the number of (re)measurements that should be taken at every frequency
 * **Original Usage:** ` repeat 1..1000`
-* **Library Function Call:**
+* **Library Function Call:** `repeat(val=1.1000)`
 * **Example Return:** empty bytearray
-* **Notes:** increasing the repeat reduces the noise per frequency, repeat 1 is the normal scanning mode. 
+* **Notes:** increasing the repeat reduces the noise per frequency, repeat 1 is the normal scanning mode. Has int(val) conversion.
 
 ### **reset**
 * **Status:** Done
 * **Description:** Resets the tinySA
 * **Original Usage:** `reset`
 * **Library Function Call:** `reset()`
-* **Example Return:** empty bytearray
+* **Example Return:** empty bytearray, serial error message. depends on the system.
 * **Notes:** Disconnects the serial.
-
-### **restart**
-* **Status:** TODO: test and add input
-* **Description:** Restarts the  tinySA after the specified number of seconds
-* **Original Usage:** `restart {seconds}`
-* **Library Function Call:**
-* **Example Return:** empty bytearray
-* **Notes:** where 0 seconds stops the restarting process
 
 ### **resume**
 * **Status:** Done
@@ -860,24 +844,23 @@ Example: menu 6 2 will toggle the waterfall option
 * **Notes:**
 
 ### **save**
-* **Status:** TODO: printout
+* **Status:** Done
 * **Description:** Saves the current setting to a preset
 * **Original Usage:** `save 0..4`
-* **Library Function Call:**
+* **Library Function Call:** `save(val=0..4)`
 * **Example Return:** empty bytearray
 * **Notes:** where 0 is the startup preset
 
 ### **saveconfig**
-* **Status:** TODO: printout
+* **Status:** Done
 * **Description:** Saves the device configuration data
 * **Original Usage:** `saveconfig`
-* **Library Function Call:**
+* **Library Function Call:** `saveconfig()`
 * **Example Return:** empty bytearray
 * **Notes:**
  
-
 ### **scan**
-* **Status:** TODO: error checking
+* **Status:** TODO
 * **Description:** Performs a scan and optionally outputs the measured data
 * **Original Usage:** `scan {start(Hz)} {stop(Hz)} [points] [outmask]`
 * **Library Function Call:**
@@ -885,7 +868,7 @@ Example: menu 6 2 will toggle the waterfall option
 * **Notes:** where the outmask is a binary OR of 1=frequencies, 2=measured data, 4=stored data and points is maximum 290
 
 ### **scanraw**
-* **Status:** TODO: error checking
+* **Status:** TODO
 * **Description:** Performs a scan of unlimited amount of points and send the data in binary form
 * **Original Usage:** `scanraw {start(Hz)} {stop(Hz)} [points][option]`
 * **Library Function Call:**
@@ -913,7 +896,7 @@ UNDERGROING TESTING
 * **Notes:**
   
 ### **sd_read**
-* **Status:**  TODO: error checking
+* **Status:**  TODO
 * **Description:** Reads a specific file on the sd card
 * **Original Usage:** `sd_read {filename}`
 * **Library Function Call:** `sd_read(filename)`
@@ -921,16 +904,16 @@ UNDERGROING TESTING
 * **Notes:**
 
 ### **selftest**
-* **Status:** TODO: error checking + printout
+* **Status:** Done
 * **Description:** performs one or all selftests
-* **Original Usage:** `selftest 0 0..9`
+* **Original Usage:** `selftest 0 0..9`, `selftest (1-3) [arg]`
 * **Library Function Call:** `selftest(val=0..9)`
 * **Example Return:** empty bytearray
-* **Notes:**
+* **Notes:** MUST have cable connected to RF and CAL
   
     
 ### **spur**
-* **Status:** TODO: test format, add print
+* **Status:** Done
 * **Description:** Enables or disables spur reduction
 * **Original Usage:** `spur on|off`
 * **Library Function Call:** `spur(val="off"|"on")`
@@ -939,15 +922,15 @@ UNDERGROING TESTING
  
 
 ### **status**
-* **Status:** TODO: add printout
+* **Status:** Done
 * **Description:** Displays the current device status (paused/resumed)
 * **Original Usage:** `status`
 * **Library Function Call:** `status()`
-* **Example Return:** `Resumed`
+* **Example Return:** `b'Resumed'`
 * **Notes:**
 
 ### **sweep**
-* **Status:** TODO: input error checking
+* **Status:** TODO
 * **Description:** Set sweep boundaries or execute a sweep
 * **Original Usage:** `sweep [(start|stop|center|span|cw {frequency}) | ({start(Hz)} {stop(Hz)} [0..290] ) ]`
 * **Library Function Call:**
@@ -955,40 +938,31 @@ UNDERGROING TESTING
 * **Notes:** sweep without arguments lists the current sweep settings, the frequencies specified should be within the permissible range. The sweep commands apply both to input and output modes
 
 ### **sweeptime**
-* **Status:** TODO: input error checking
+* **Status:** TODO
 * **Description:** Sets the sweeptime
 * **Original Usage:** `sweep {time(Seconds)}`
 * **Library Function Call:**
 * **Example Return:** empty bytearray
 * **Notes:** the time specified may end in a letter where  m=mili and u=micro
 
-### **sweep_voltage**
-* **Status:** TODO: testing
-* **Description:** Sets the sweep voltage 
-* **Original Usage:** `sweep_voltage {0-3.3}`
-* **Library Function Call:** `sweep_voltage()`
-* **Example Return:** empty bytearray
-* **Notes:** Not sure if this should be included for manual override or not. testing needed.
-
 ### **text**
-* **Status:**  TODO:write func
+* **Status:**  Done
 * **Description:** specifies the text entry for the active keypad 
 * **Original Usage:** `text keypadtext `
-* **Library Function Call:** `text()`
+* **Library Function Call:** `text(val="")`
 * **Example Return:** empty bytearray
-* **Notes:** where keypadtext is the text used. Example: text 12M
-Currently does not work for entering file names 
+* **Notes:** where keypadtext is the text used. Example: text 12M. Currently does not work for entering file names. 
 
 ### **threads**
-* **Status:** TODO: add printout
+* **Status:** Done
 * **Description:** lists information of the threads in the tinySA
 * **Original Usage:** `threads`
 * **Library Function Call:** `threads()`
-* **Example Return:** empty bytearray
+* **Example Return:** `b'stklimit|        |stk free|    addr|refs|prio|    state|        name\r\n20000200|2000054C|00000248|200016A8|   0| 128|  CURRENT|        main\r\n20001530|2000157C|0000008C|20001650|   0|   1|    READY|        idle\r\n200053D8|200056C4|00000250|200059B0|   0| 127|    READY|       sweep\r'`
 * **Notes:**
 
 ### **touch**
-* **Status:** TODO: error checking for screen
+* **Status:** Done
 * **Description:** sends the coordinates of a touch
 * **Original Usage:** `touch {X coordinate} {Y coordinate}`
 * **Library Function Call:**
@@ -996,7 +970,7 @@ Currently does not work for entering file names
 * **Notes:** The upper left corner of the screen is "0 0"
 
 ### **touchcal**
-* **Status:** TODO: error checking
+* **Status:** Done
 * **Description:** starts the touch calibration
 * **Original Usage:** `touchcal`
 * **Library Function Call:** `touchcal`
@@ -1004,15 +978,15 @@ Currently does not work for entering file names
 * **Notes:** is there a way to cancel this?
 
 ### **touchtest**
-* **Status:** TODO: error checking
+* **Status:** Done
 * **Description:** starts the touch test
 * **Original Usage:** `touchtest`
 * **Library Function Call:** `touchtest()`
 * **Example Return:** empty bytearray
-* **Notes:**
+* **Notes:** instructions on screen "touch panel, draw lines, press button to complete"
 
 ### **trace**
-* **Status:** TODO: error checking
+* **Status:** TODO
 * **Description:** displays all or one trace information or sets trace related information
 * **Original Usage:** `trace [{0..2} | dBm|dBmV|dBuV| V|W |store|clear|subtract | (scale|reflevel) auto|{level}]`
 * **Library Function Call:**
@@ -1020,7 +994,7 @@ Currently does not work for entering file names
 * **Notes:**
 
 ### **trigger**
-* **Status:** TODO: error checking
+* **Status:** TODO
 * **Description:** sets the trigger type or level
 * **Original Usage:** `trigger auto|normal|single|{level(dBm)}`
 * **Library Function Call:**
@@ -1098,6 +1072,44 @@ usart
 
 '''
 
+## List of Commands Removed from Library
+
+### **abort**
+* **Status:** REMOVED. NOT ON DEVELOPER'S DUT
+* **Description:**  Sets the abortion enabled status (on/off) or aborts the previous command.
+* **Original Usage:** `abort [off|on]`
+* **Library Function Call:** `abort(val=None|"off"|"on")` 
+* **Example Return:** ????
+* **Notes:** When used without parameters the previous command still running will be aborted. Abort must be enabled before using the "abort on" command. Additional error checking has been added with the 'verbose' option. 
+
+
+### **lna2**
+* **Status:** REMOVED until more documentation is confirmed
+* **Description:** ??
+* **Original Usage:** `lna2 0..7|auto`
+* **Library Function Call:** `lna2(val="auto"|0..7)`
+* **Example Return:** empty bytearray
+* **Notes:**
+
+### **restart**
+* **Status:** REMOVED. Not recognized by DUT.
+* **Description:** Restarts the  tinySA after the specified number of seconds
+* **Original Usage:** `restart {seconds}`
+* **Library Function Call:** `restart(val=0...)`
+* **Example Return:** empty bytearray
+* **Notes:** where 0 seconds stops the restarting process. has int(val) conversion until it's clear if float() causes issues.
+
+### **sweep_voltage**
+* **Status:** REMOVED
+* **Description:** Sets the sweep voltage 
+* **Original Usage:** `sweep_voltage {0-3.3}`
+* **Library Function Call:** `sweep_voltage()`
+* **Example Return:** empty bytearray
+* **Notes:** device does not recognize this
+
+
+
+
 ## Additional Library Commands
 
 ## Table of Command and Device Compatibility
@@ -1141,7 +1153,6 @@ If a last checked firmware version is known, that is included in the header in t
 | line| | ??| |
 | load| |Load to Device| |
 | lna| | Set | |
-| lna2| |?? | |
 | marker| | ??| |
 | menu| |?? | |
 | mode| |??| |
@@ -1156,25 +1167,23 @@ If a last checked firmware version is known, that is included in the header in t
 | remark| | | |
 | repeat| | | |
 | reset| | | |
-| restart| | | |
 | resume| | | |
 | save| | | |
 | saveconfig| | | |
 | scan| | | |
 | scanraw| | | |
 | sd_delete| | | |
-| sd_list| | | |
+| sd_list| |Get | |
 | sd_read| | | |
 | selftest| | | |
 | spur| | | |
 | status| | | |
 | sweep| | | |
 | sweeptime| | | |
-| sweep_voltage| | | |
-| text| | | |
-| threads| | | |
-| touch| | | |
-| touchcal| | | |
+| text| |Set| |
+| threads| |Get| |
+| touch| |??| |
+| touchcal| |??| |
 | touchtest| | | |
 | trace| | | |
 | trigger| | | |
