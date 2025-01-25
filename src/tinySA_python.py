@@ -1272,30 +1272,35 @@ class tinySA():
         # example return: bytearray(b'')
 
         # #explicitly allowed vals
-        # accepted_vals =  ["off", "on"]        
+        accepted_vals =  ["off", "on"] #, "auto", "start", "harm"]        
 
+        if val in accepted_vals:
+            writebyte = 'ultra ' + str(val) +'\r\n'
+            msgbytes = self.tinySASerial(writebyte, printBool=False) 
+            self.printMessage("configuring ultra() " + str(val))
+        else:
+            self.printMessage("ERROR: ultra() currently only takes on/off as args")
+            msgbytes = self.errorByteReturn()
 
-        writebyte = 'ultra\r\n'
-        msgbytes = self.tinySASerial(writebyte, printBool=False) 
-        self.printMessage("configuring ultra()")
         return msgbytes
 
     def usart_cfg(self):
         # gets the current serial config
         # usage: usart_cfg
         # example return: bytearray(b'Serial: 115200 baud\r')
-        self.printMessage("ERROR: caloutput() takes vals 1|2|3|4|10|15|30|\"off\"")
+        
         writebyte = 'usart_cfg\r\n'
         msgbytes = self.tinySASerial(writebyte, printBool=False) 
+        self.printMessage("usart_cfg() returning config vals")
         return msgbytes
 
     def vbat(self):
         # displays the battery voltage
         # usage: vbat
         # example return: bytearray(b'4132 mV\r')
-        self.printMessage("ERROR: caloutput() takes vals 1|2|3|4|10|15|30|\"off\"")
         writebyte = 'vbat\r\n'
         msgbytes = self.tinySASerial(writebyte, printBool=False) 
+        self.printMessage("returning current battery voltage")
         return msgbytes
 
     def vbat_offset(self, val=None):
@@ -1320,19 +1325,29 @@ class tinySA():
         # displays the version text
         # usage: version
         # example return: tinySA4_v1.4-143-g864bb27\r\nHW Version:V0.4.5.1.1
-        self.printMessage("ERROR: caloutput() takes vals 1|2|3|4|10|15|30|\"off\"")
+       
         writebyte = 'version\r\n'
         msgbytes = self.tinySASerial(writebyte, printBool=False) 
+        self.printMessage("getting device version information")
         return msgbytes
 
-    def wait(self):
+    def wait(self, val=0):
         # displays the version text
         # usage: wait
         # example return: bytearray(b'')
-        self.printMessage("ERROR: caloutput() takes vals 1|2|3|4|10|15|30|\"off\"")
-        writebyte = 'wait\r\n'
-        msgbytes = self.tinySASerial(writebyte, printBool=False) 
-        return msgbytes #returns '', but does display screen
+
+        if val == None:
+            writebyte = 'wait\r\n'
+            msgbytes = self.tinySASerial(writebyte, printBool=False) 
+            self.printMessage("device in wait() state. manually resume")
+        elif val>0:
+            writebyte = 'wait ' + str(val) + '\r\n'
+            msgbytes = self.tinySASerial(writebyte, printBool=False) 
+            self.printMessage("device wait() trigged for " + str(val) + " seconds.")
+        else:
+            self.printMessage("ERROR: wait() takes None or positive ints")
+            msgbytes = self.errorByteReturn()
+
 
     def zero(self):
         # TODO: get info on exactly what this is, does, and the format
@@ -1361,7 +1376,7 @@ if __name__ == "__main__":
     if success == True:
         tsa.setVerbose(True) #detailed messages
         tsa.setErrorByteReturn(True) #get explicit b'ERROR'
-        msg = tsa.ultra() 
+        msg = tsa.wait() 
         print(msg)
         
 

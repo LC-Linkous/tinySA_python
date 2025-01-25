@@ -22,6 +22,7 @@ This uses official resources and documentation but is NOT endorsed by the offici
     * [Saving Screen Images](#saving-screen-images)
     * [Plotting Data with Matplotlib](#plotting-data-with-matplotlib)
 * [List of tinySA Commands and their Library Commands](#list-of-tinysa-commands-and-their-library-commands)
+* [List of Commands Removed from Library](#list-of-commands-removed-from-library)
 * [Additional Library Commands](#additional-library-commands)
 * [Table of Command and Device Compatibility](#table-of-command-and-device-compatibility)
 * [Notes for Beginners](#notes-for-beginners)
@@ -965,7 +966,7 @@ UNDERGROING TESTING
 * **Status:** Done
 * **Description:** sends the coordinates of a touch
 * **Original Usage:** `touch {X coordinate} {Y coordinate}`
-* **Library Function Call:**
+* **Library Function Call:** `touch(x=0,y=0)`
 * **Example Return:** empty bytearray
 * **Notes:** The upper left corner of the screen is "0 0"
 
@@ -973,7 +974,7 @@ UNDERGROING TESTING
 * **Status:** Done
 * **Description:** starts the touch calibration
 * **Original Usage:** `touchcal`
-* **Library Function Call:** `touchcal`
+* **Library Function Call:** `touchcal()`
 * **Example Return:** empty bytearray
 * **Notes:** is there a way to cancel this?
 
@@ -1002,47 +1003,47 @@ UNDERGROING TESTING
 * **Notes:** the trigger level is always set in dBm
 
 ### **ultra**
-* **Status:** TODO: error checking
+* **Status:** Done
 * **Description:** turn on/config tiny SA ultra mode
 * **Original Usage:** `ultra off|on|auto|start|harm {freq}`
-* **Library Function Call:**
+* **Library Function Call:** `ultra(val="on"|"off")`
 * **Example Return:** empty bytearray
-* **Notes:**
+* **Notes:** limited input until more documentation found
 
 ### **usart_cfg**
-* **Status:** TODO: printout
-* **Description:** returns port current baud rate
+* **Status:** Done
+* **Description:** Get port current baud rate/ gets the current serial config
 * **Original Usage:** `usart_cfg`
-* **Library Function Call:**
-* **Example Return:** empty bytearray
+* **Library Function Call:** `usart_cfg()`
+* **Example Return:** `b'Serial: 115200 baud\r'`
 * **Notes:**  default is 115,200
 
 ### **vbat**
-* **Status:** TODO: printout
-* **Description:** returns the current battery voltage
+* **Status:** Done
+* **Description:** Get the current battery voltage
 * **Original Usage:** `vbat`
 * **Library Function Call:**
 * **Example Return:** empty bytearray
 * **Notes:**
 
 ### **vbat_offset**
-* **Status:** TODO: printout
-* **Description:** returns or sets the battery offset value
+* **Status:** Done
+* **Description:** Sets or gets the battery offset value
 * **Original Usage:** `vbat_offset [{0..4095}]`
-* **Library Function Call:**
-* **Example Return:** empty bytearray
+* **Library Function Call:** `vbat_offset(val=None|0..4095)`
+* **Example Return:** `b'300\r'`
 * **Notes:**
 
 ### **version**
-* **Status:** TODO: printout
+* **Status:** Done
 * **Description:** returns the version text
 * **Original Usage:** `version`
-* **Library Function Call:**
+* **Library Function Call:** `version()` 
 * **Example Return:** empty bytearray
 * **Notes:**
 
 ### **wait**
-* **Status:** TODO: printout
+* **Status:** Done
 * **Description:** wait for a single sweep to finish and pauses sweep or waits for specified number of seconds
 * **Original Usage:** `wait [{seconds}]`
 * **Library Function Call:**
