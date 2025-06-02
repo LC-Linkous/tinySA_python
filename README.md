@@ -1,13 +1,34 @@
 
-# TinySA_Python
-A Non-GUI Python API class for the Tiny SA Ultra written to support several personal projects
+# tinySA_python
+## AN UNOFFICIAL Python Library for the tinySA
 
-This uses official resources and documentation but is NOT endorsed by the official tinySA product
 
-# INPROGRESS
+# INPROGRESS. 
+## From June 1 2025 - June 7 2025 there are NO promises of the stability of this project. 
+## Several major feature changes + a documentation overhaul are happening.
+
+
+A Non-GUI Python API class for the tinySA series of devices. This repository uses official resources and documentation but is NOT endorsed by the official tinySA product or company. See the [references](#references) section for further reading. See the [official tinySA resources](https://www.tinysa.org/wiki/) for device features.
+
+Warning:
+* This was written using the tinySA Ultra, so it is currently device specific. This will change in the near future. 
+* configuration files are currently being added. until this is DONE, it's very likely there's a few bugs
+
+Currently integrated:
+* general commands and class structure
+
+Working on it:
+* tinySA Basic
+* tinySA Ultra ZS405
+* tinySA Ultra+ ZS406
+* tinySA Ultra+ ZS407
+* Config files to swap between the devices
+* An argparse option + some example scripts
+
+
 
 ## Table of Contents
-* [The tinySA Ultra](#the-tinysa-ultra)
+* [The tinySA Series of Devices](#the-tinysa-series-of-devices)
 * [Requirements](#requirements)
 * [Library Usage](#library-usage)
 * [Error Handling](#error-handling)
@@ -16,7 +37,7 @@ This uses official resources and documentation but is NOT endorsed by the offici
     * [Serial Message Return Format](#serial-message-return-format)
     * [Connecting and Disconnecting the Device](#connecting-and-disconnecting-the-device)
     * [Toggle Error Messages](#toggle-error-messages)
-     [Device and Library Help](#device-and-library-help)
+    * [Device and Library Help](#device-and-library-help)
     * [Setting tinySA Parameters](#setting-tinysa-parameters)
     * [Getting Data from Active Screen](#getting-data-from-active-screen)
     * [Saving Screen Images](#saving-screen-images)
@@ -32,7 +53,10 @@ This uses official resources and documentation but is NOT endorsed by the offici
 * [Publications and Integration](#publications-and-integration)
 * [Licensing](#licensing)  
 
-## The tinySA Ultra
+## The tinySA Series of Devices
+
+**TO BE ADDED**
+
 
 ## Requirements
 
