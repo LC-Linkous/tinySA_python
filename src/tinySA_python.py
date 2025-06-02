@@ -6,39 +6,51 @@
 #   UNOFFICIAL Python API based on the tinySA official documentation at https://www.tinysa.org/wiki/
 #
 #   Author(s): Lauren Linkous
-#   Last update: January 24, 2025
+#   Last update: June 2, 2025
 ##--------------------------------------------------------------------------------------------------\
 
 import serial
 import numpy as np
 import re
 
+
+from device_config.device_config import deviceConfig
+
 class tinySA():
     def __init__(self, parent=None):
         # serial port
-        self.ser = None 
+        self.ser = None
+
+        # user device class (to account for custom settings) 
+        self.dev = deviceConfig #TODO, finish this class and integrate
 
         # message feedback
         self.verboseEnabled = False
         self.returnErrorByte = False
 
+
+
+        # VARS BELOW HERE will be largely replaced with device class config calls
+        # # this will allow for user settings and device presets
+        
         # other overrides
         self.ultraEnabled = False
         self.abortEnabled = False
+        self.harmonicEnabled = False
 
         #select device vars - hardcoding for the Ultra for now
-        self.deviceType = "ultra"
+        self.deviceType = "ULTRA_ZS405"
         # spectrum analyzer
-        self.minSADeviceFreq = 100000  #100 kHz
-        self.maxSADeviceFreq = 5300000000 #5.3 GHz
+        self.minSADeviceFreq = 100e3  #100 kHz
+        self.maxSADeviceFreq = 5.3e9 #5.3 GHz
         # signal generator
-        self.minSGDeviceFreq = 100000  #100 kHz
-        self.maxSGDeviceFreq = 960000000 #960 MHz
+        self.minSGDeviceFreq = 100e3  #100 kHz
+        self.maxSGDeviceFreq = 960e6 #960 MHz
         # battery
         self.maxDeviceBattery = 4095
         # screen 
-        self.screenWidth = 320
-        self.screenHeight = 240
+        self.screenWidth = 480
+        self.screenHeight = 320
 
 
 ######################################################################
@@ -59,8 +71,9 @@ class tinySA():
 
 ######################################################################
 # Explicit error return
-# set/getErrorByteReturn()  - set how detailed the error printouts are
-# printMessage()  - deal with the bool in one place
+# setErrorByteReturn()  - set if explicit b'ERROR' is returned
+# getErrorByteReturn()  - get the return mode True/False
+# errorByteReturn()  - return 'ERROR' message or empty. 
 ######################################################################
 
     def setErrorByteReturn(self, errByte=False):
@@ -76,9 +89,10 @@ class tinySA():
             return bytearray(b'') # the default
 
 ######################################################################
-# Direct error checking overrides
+# Direct overrides
 #   These are used during DEBUG or when device state is already known
 #   Not recommended unless you are sure of the device state
+#   and which settings each device has
 ######################################################################
 
     def setUltraMode(self, ultraMode=False):
@@ -87,64 +101,9 @@ class tinySA():
     def setAbortMode(self, abortMode=False):
         self.abortEnabled = abortMode
 
-######################################################################
-# Device Selection and Config Functions
-# TODO
-# This is a quick template. there's more options that need to 
-# be researched
-######################################################################
-
-    def setDevice(self, val="ultra"):
-        self.deviceType = val
-        if val == "original":
-            self.setDeviceOriginal()
-        elif val == "ultra":
-            self.setDeviceUltra()
-        elif val == "plus":
-            self.setDeviceUltraPlus()
-        else:
-            self.printMessage("ERROR: unrecognized device type")
-
-    def setDeviceOriginal(self):
-        # pull the device configs and set vals
-        self.printMessage("IN PROGRESS. device config not available yet")
-        # spectrum analyzer
-        self.minSADeviceFreq = 100000  #100 kHz
-        self.maxSADeviceFreq = 5300000000 #5.3 GHz
-        # signal generator
-        # MF/HF/VHF sin wave 100 kHz - 350 MHz
-        # UHF Square wave 240 MHz - 960 MHz
-        # mixing signal output ??
-        self.minSGDeviceFreq = 100000  #100 kHz
-        self.maxSGDeviceFreq = 960000000 #960 MHz
-        # battery
-        self.maxDeviceBattery = 4095
-        # screen 
-        self.screenWidth = 320
-        self.screenHeight = 240
-
-    def setDeviceUltra(self):
-        # pull the device configs and set vals
-        self.printMessage("IN PROGRESS. device config not available yet")
-        # spectrum analyzer
-        self.minSADeviceFreq = 100000  #100 kHz
-        self.maxSADeviceFreq = 5300000000 #5.3 GHz
-        # signal generator
-        # MF/HF/VHF sin wave 100 kHz - 800 MHz
-        # UHF Square wave 800 MHz - 4.4 GHz
-        # mixing signal output 4.4 GHz - 5.4 GHz
-        self.minSGDeviceFreq = 100000  #100 kHz
-        self.maxSGDeviceFreq = 5400000000 #5.4 GHz
-        # battery
-        self.maxDeviceBattery = 4095
-        # screen 
-        self.screenWidth = 480
-        self.screenHeight = 320
-
-    def setDeviceUltraPlus(self):
-        # pull the device configs and set vals
-        self.printMessage("IN PROGRESS. device config not available yet")
-        return
+    def setHarmonicMode(self, harmonicMode=False):
+        self.harmonicEnabled = harmonicMode
+    
 
 ######################################################################
 # Serial management and message processing
@@ -165,6 +124,14 @@ class tinySA():
     def disconnect(self):
         # closes the serial port
         self.ser.close()
+
+    def command(self, c):
+        # if the command isn't already a function,
+        #  use existing func setup to send command
+        writebyte = str(c) + '\r\n'
+        msgbytes = self.tinySASerial(writebyte, printBool=False) 
+        self.printMessage("capture() called for screen data")   
+
 
     def tinySASerial(self, writebyte, printBool=False):
         # write out to serial, get message back, clean up, return
@@ -215,47 +182,6 @@ class tinySA():
             # Remove 'ch>' from the end
             data = data[:-4]  # Remove the last 4 bytes ('ch>')
         return data
-
-######################################################################
-# Device and library help
-######################################################################
-
-    def help(self, val=0):
-        # val controls if the tinySA help is called or the 
-        # 1 = libraryHelp(), everything else is the tinySAHelp()
-
-        if val == 1:
-            msgbytes = self.libraryHelp() 
-        else:
-            msgbytes = self.tinySAHelp()    
-        return msgbytes
-
-    def libraryHelp(self):
-        self.printMessage("Returning command options for this library")
-        self.printMessage("IN PROGRESS. Include tinySA_help.py")
-
-        return b''
-
-    def tinySAHelp(self):
-        # dumps a list of the available commands
-        # usage: help
-        # example return: bytearray(b'commands: freq time dac 
-        # nf saveconfig clearconfig zero sweep pause resume wait
-        #  repeat status caloutput save recall trace trigger
-        #  marker line usart_cfg vbat_offset color if if1 lna2 
-        # agc actual_freq freq_corr attenuate level sweeptime
-        #  leveloffset levelchange modulation rbw mode spur 
-        # lna direct ultra load ext_gain output deviceid 
-        # correction calc menu text remark\r\nOther commands:
-        #  version reset data frequencies scan hop scanraw test 
-        # touchcal touchtest usart capture refresh touch release
-        #  vbat help info selftest sd_list sd_read sd_delete 
-        # threads\r')
-
-        writebyte = 'help\r\n'
-        msgbytes = self.tinySASerial(writebyte, printBool=False) 
-        self.printMessage("Returning command options for tinySA device")
-        return msgbytes
 
 ######################################################################
 # Reusable format checking functions
@@ -453,27 +379,27 @@ class tinySA():
             msgbytes = self.errorByteReturn()
         return msgbytes
 
-    def correction(self, tableName="low", slot=None, freq=None, val=None):
+    def correction(self, argName="low", slot=None, freq=None, val=None):
         # sets or dumps the frequency level orrection table
         # usage: correction [0..9 {frequency} {level dB}]
         # usage: correction low|lna|ultra|ultra_lna|direct|direct_lna|harm|harm_lna|out|out_direct|out_adf|out_ultra|off|on 0-19 frequency(Hz) value(dB)
         # example return:  
 
         # explicitly allowed vals
-        accepted_table_name = ["low", "lna", "ultra", "ultra_lna", 
+        accepted_table_args = ["low", "lna", "ultra", "ultra_lna", 
                                "direct", "direct_lna",  "harm", 
                                "harm_lna", "out", "out_direct", 
                                "out_adf", "out_ultra", "off", "on"]
 
         accepted_slots = np.arange(0, 20, 1) # max exclusive. 
 
-        if (tableName in accepted_table_name) and (slot==None):
+        if (argName in accepted_table_args) and (slot==None):
             # prints out the table as it currently is
-            writebyte = 'correction ' + str(tableName)+ '\r\n'
+            writebyte = 'correction ' + str(argName)+ '\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)
         else:
             # check error conditions quickly since there's 4
-            if not(tableName in accepted_table_name):
+            if not(argName in accepted_table_args):
                 self.printMessage("ERROR: correction() requires a table indicator. see documentation")
                 msgbytes = self.errorByteReturn()
                 return msgbytes
@@ -489,10 +415,10 @@ class tinySA():
                 self.printMessage("ERROR: correction() val dB outside of  specs. see documentation")
                 msgbytes = self.errorByteReturn()
                 return msgbytes
-            writebyte = 'correction ' + str(tableName) + ' ' + str(slot) +\
+            writebyte = 'correction ' + str(argName) + ' ' + str(slot) +\
                     ' ' + str(freq) + ' ' + str(val) + '\r\n'
             msgbytes = self.tinySASerial(writebyte, printBool=False)
-            self.printMessage("correction() set with " + str(tableName) + " " + str(slot) +\
+            self.printMessage("correction() set with " + str(argName) + " " + str(slot) +\
                     " " + str(freq) + " " + str(val))
  
         return msgbytes
@@ -1145,23 +1071,101 @@ class tinySA():
         msgbytes = self.tinySASerial(writebyte, printBool=False) 
         self.printMessage("getting device status() paused/resumed")
         return msgbytes
+
     
-    def sweep(self):
-        # TODO: get info on the format and err checking
-        # Set sweep boundaries or execute a sweep.
-        # Sweep without arguments lists the current sweep 
-        # settings. The frequencies specified should be 
-        # within the permissible range. The sweep commands 
-        # apply both to input and output modes        
-        # usage: 
-        # sweep [(start|stop|center|span|cw {frequency}) | 
-        #   ({start(Hz)} {stop(Hz)} [0..290])]
+    def sweep(self, argName=None, val=None): # pts=None):
+            # Set sweep boundaries or execute a sweep.
+            # Sweep without arguments lists the current sweep 
+            # settings. The frequencies specified should be 
+            # within the permissible range. The sweep commands 
+            # apply both to input and output modes        
+            # usage: 
+            # sweep [(start|stop|center|span|cw {frequency}) | 
+            #   ({start(Hz)} {stop(Hz)} [0..290])]
+            # # example return:  
+
+        # explicitly allowed vals
+        accepted_table_args = ["start", "stop", "center", 
+                               "span", "cw"]
+
+        if (argName==None) and (val==None):
+            # do sweep
+            writebyte = 'sweep\r\n'
+            msgbytes = self.tinySASerial(writebyte, printBool=False)
+
+        elif (argName in accepted_table_args): 
+            if val == None:
+                #error
+                self.printMessage("ERROR: sweep " + str(argName) + " needs a value")
+                msgbytes = self.errorByteReturn()
+            else:
+                #do stuff, error checking needed
+                writebyte = 'sweep ' + str(argName)+ ' ' + str(val)+ '\r\n'
+                self.printMessage("sweep " +str(argName) + " is " + str(val))
+                msgbytes = self.tinySASerial(writebyte, printBool=False)
+
+        else: #not in table of accepted args, so doesn't matter what val is
+            self.printMessage("ERROR: " + str(argName) + " invalid argument for sweep")
+            msgbytes = self.errorByteReturn()
+
+        return msgbytes
+
+    def set_sweep_center(self, val=None):
+        if (val==None):
+            self.printMessage("ERROR: sweep center needs a non-empty value")
+            msgbytes = self.errorByteReturn()
+        else:
+            writebyte = 'sweep center ' + str(val) +'\r\n'
+            msgbytes = self.tinySASerial(writebyte, printBool=False) 
+            self.printMessage("sweep center is " + str(val))
+        return msgbytes 
+
+    def set_sweep_range(self, startVal=None, stopVal=None):
+        if (startVal==None) or (stopVal==None):
+            self.printMessage("ERROR: sweep start and stop need non-empty values")
+            msgbytes = self.errorByteReturn()
+        elif (int(startVal) >= int(stopVal)):
+            self.printMessage("ERROR: sweep start must be less than sweep stop value")
+            msgbytes = self.errorByteReturn()
+        else:
+            # start
+            msgbytes1 = self.set_sweep_start(startVal)
+            # stop
+            msgbytes2 = self.set_sweep_stop(stopVal)
+            # combine (for now)
+            msgbytes = msgbytes1 + "\n" + msgbytes2
+        return msgbytes 
+
+    def set_sweep_start(self, val=None):
+        if (val==None):
+            self.printMessage("ERROR: sweep start needs a non-empty value")
+            msgbytes = self.errorByteReturn()
+        else:
+            writebyte = 'sweep start ' + str(val) +'\r\n'
+            msgbytes = self.tinySASerial(writebyte, printBool=False) 
+            self.printMessage("sweep start is " + str(val))
+        return msgbytes 
 
 
-        self.printMessage("Function does not exist yet. error checking needed")
-        writebyte = 'sd_list\r\n'
-        msgbytes = self.tinySASerial(writebyte, printBool=False) 
-        self.printMessage("listing files from sd card")
+    def set_sweep_stop(self, val=None):
+        if (val==None):
+            self.printMessage("ERROR: sweep start needs a non-empty value")
+            msgbytes = self.errorByteReturn()
+        else:
+            writebyte = 'sweep stop ' + str(val) +'\r\n'
+            msgbytes = self.tinySASerial(writebyte, printBool=False) 
+            self.printMessage("sweep stop is " + str(val))
+        return msgbytes 
+
+   
+    def set_sweep_span(self, val=None):
+        if (val==None):
+            self.printMessage("ERROR: sweep span needs a non-empty value")
+            msgbytes = self.errorByteReturn()
+        else:
+            writebyte = 'sweep span ' + str(val) +'\r\n'
+            msgbytes = self.tinySASerial(writebyte, printBool=False) 
+            self.printMessage("sweep span is " + str(val))
         return msgbytes 
 
 
@@ -1189,7 +1193,7 @@ class tinySA():
             msgbytes = self.tinySASerial(writebyte, printBool=False) 
             self.printMessage("text() entered is " + str(val))
         else:
-            self.printMessage("ERROR: text() needs non-empty values")
+            self.printMessage("ERROR: text needs non-empty values")
             msgbytes = self.errorByteReturn()
         return msgbytes 
 
@@ -1358,6 +1362,57 @@ class tinySA():
         return None
 
 
+######################################################################
+# Device and library help
+######################################################################
+
+    def help(self, val=0):
+        # val controls if the tinySA help is called or the 
+        # 1 = libraryHelp(), everything else is the tinySAHelp()
+
+        if val == 1:
+            msgbytes = self.libraryHelp() 
+        else:
+            msgbytes = self.tinySAHelp()    
+        return msgbytes
+
+    def libraryHelp(self):
+        self.printMessage("Returning command options for this library")
+        self.printMessage("IN PROGRESS. Include tinySA_help.py")
+
+        return b''
+
+    def tinySAHelp(self):
+        # dumps a list of the available commands
+        # usage: help
+        # example return: bytearray(b'commands: freq time dac 
+        # nf saveconfig clearconfig zero sweep pause resume wait
+        #  repeat status caloutput save recall trace trigger
+        #  marker line usart_cfg vbat_offset color if if1 lna2 
+        # agc actual_freq freq_corr attenuate level sweeptime
+        #  leveloffset levelchange modulation rbw mode spur 
+        # lna direct ultra load ext_gain output deviceid 
+        # correction calc menu text remark\r\nOther commands:
+        #  version reset data frequencies scan hop scanraw test 
+        # touchcal touchtest usart capture refresh touch release
+        #  vbat help info selftest sd_list sd_read sd_delete 
+        # threads\r')
+
+        writebyte = 'help\r\n'
+        msgbytes = self.tinySASerial(writebyte, printBool=False) 
+        self.printMessage("Returning command options for tinySA device")
+        return msgbytes
+
+
+
+######################################################################
+# Device Selection and Config Functions
+# TODO LATER
+# This is a quick template. there's more options that need to 
+# be researched
+######################################################################
+
+
 
 
 ######################################################################
@@ -1365,7 +1420,7 @@ class tinySA():
 ######################################################################
 
 if __name__ == "__main__":
-    # unit testing
+    # unit testing. not recomended to write program from here
 
     # create a new tinySA object    
     tsa = tinySA()
@@ -1383,12 +1438,4 @@ if __name__ == "__main__":
         tsa.disconnect()
     else:
         print("ERROR: could not connect to port")
-
-
-    # print(msgbytes[0:10])
-    # print(msgbytes[-25:])
-    # hex_values = [f'{byte:02x}' for byte in msgbytes]
-    # print("HEX")
-    # print(len(hex_values))
-    # print(hex_values[-25:])
 
