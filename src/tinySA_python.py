@@ -835,21 +835,39 @@ class tinySA():
         self.print_message("Function does not exist yet. error checking needed")
         return self.error_byte_return()
 
-    def mode(self, val="low", devMode="input"):
+    def mode(self, val1="low", val2="input"):
         # sets the mode of the tinySA
         # usage: mode low|high input|output
         # example return: ''
 
         #explicitly allowed vals
-        accepted_vals =  ["off", "minh", "maxh", "maxd", 
-                          "aver4", "aver16", "quasip"]
-
-
-        writebyte = 'mode\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        accepted_val1 =  ["low", "high"]
+        accepted_val2= ["input", "output"]
+        #check input
+        if (val1 in accepted_val1) and (val2 in accepted_val2):
+            writebyte = 'mode '+str(val1)+ + ' ' +str(val2)+'\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)           
+        else:
+            self.print_message("ERROR: output() takes vals [on|off]")
+            msgbytes = self.error_byte_return()
         return msgbytes
-        # self.print_message("Function does not exist yet. error checking needed")
-        # return self.error_byte_return()
+    
+    def set_low_input_mode(self):
+        # alias for mode()
+        return self.mode("low", "input")
+
+    def set_low_output_mode(self):
+        # alias for mode()
+        return self.mode("low", "output")
+
+    def set_high_input_mode(self):
+        # alias for mode()
+        return self.mode("high", "input")
+
+    # def set_high_output_mode(self):
+    #     # alias for mode()
+    #     # TODO: ERROR CHECKING
+    #     return self.mode("high", "output")
 
     def modulation(self):
         # sets the modulation in output mode
@@ -890,14 +908,14 @@ class tinySA():
             self.print_message("ERROR: output() takes vals [on|off]")
             msgbytes = self.error_byte_return()
         return msgbytes
-
+    
     def set_output_on(self):
         #alias for output()
-        return self.lna2("on") 
+        return self.output("on") 
     
     def set_output_off(self):
         #alias for output()
-        return self.lna2("off")     
+        return self.output("off")     
 
     def pause(self):
         # pauses the sweeping in either input or output mode
