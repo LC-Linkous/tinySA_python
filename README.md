@@ -2,11 +2,9 @@
 # tinySA_python
 ## AN UNOFFICIAL Python Library for the tinySA
 
-
 # INPROGRESS. 
 ## From June 1 2025 - June 7 2025 there are NO promises of the stability of this project. 
 ## Several major feature changes + a documentation overhaul are happening.
-
 
 A Non-GUI Python API class for the tinySA series of devices. This repository uses official resources and documentation but is NOT endorsed by the official tinySA product or company. See the [references](#references) section for further reading. See the [official tinySA resources](https://www.tinysa.org/wiki/) for device features.
 
@@ -16,16 +14,22 @@ Warning:
 
 Currently integrated:
 * general commands and class structure
+* round 1 of default device preset configs
+    * tinySA Basic
+    * tinySA Ultra ZS405
+    * tinySA Ultra+ ZS406
+    * tinySA Ultra+ ZS407
 
 Working on it:
-* tinySA Basic
-* tinySA Ultra ZS405
-* tinySA Ultra+ ZS406
-* tinySA Ultra+ ZS407
-* Config files to swap between the devices
+* filling in unfinished args
 * An argparse option + some example scripts
 
-
+TODO:
+* error checking
+* user config memory
+* SD cards
+* logging user input for replay
+* Config files to swap between the devices
 
 ## Table of Contents
 * [The tinySA Series of Devices](#the-tinysa-series-of-devices)
@@ -55,46 +59,67 @@ Working on it:
 
 ## The tinySA Series of Devices
 
-**TO BE ADDED**
+The [tinySA line of devices](https://tinysa.org/wiki/pmwiki.php?n=TinySA4.Comparison) are a series of portable and pretty user-friendly devices with both spectrum analyzer and signal generator capabilities. There are four main versions, all of which share the same key features. The Ultra and Ultra Plus versions build off of the original tinySA Basic. They look very similar to the [NanoVNA series](https://nanovna.com/), but are NOT the same device and have different functionalities. 
 
+The NanoVNA series is a handheld vector network analyzer (VNA), which measures the S-parameters (loosely: a type of response of a device or antenna) over at different frequencies, while a spectrum analyzer measures the amplitude of RF signals at different frequencies. There's a lot of overlap with the use of both devices, but the measurements are very different. A signal generator is exactly what it sounds like - it generates a signal at a specific frequency or frequencies at a specified power level.
+
+Official documentation can be found at [https://tinysa.org/](https://tinysa.org/). The official Wiki is going to be more up to date than this repo with new versions and features, and they also have links to GUI-based software (which is also under development). Several community projects also exist on GitHub.
+
+There is also a very active tinySA community at [https://groups.io/g/tinysa](https://groups.io/g/tinysa) exploring the device capabilities and its many features. 
+
+The end of this README will have some references and links to supporting material, but it is STRONGLY suggested to do some basic research and become familiar with your device before attempting to script or write code for it. 
 
 ## Requirements
 
-This project requires numpy and pyserial. 
+This project requires numpy, pandas and pyserial. 
 
 Use 'pip install -r requirements.txt' to install the following dependencies:
 
 ```python
 pyserial
 numpy
+pandas
 
 ```
 
-These dependencies cover only the API. Additional dependencies should be installed to follow the included examples and tests. These can be installed with 'pip install -r test_requirements.txt':
+The above dependencies are only for the API interfacing of the tinySA_python library. Additional dependencies should be installed if you are following the examples in this README. These can be installed with 'pip install -r test_requirements.txt':
 
 ```python
+pyserial
+numpy
+pandas
 matplotlib
+pillow
 
 ```
+
+For anyone unfamiliar with using requirements files, or having issues with the libraries, these can also be installed manually in the terminal (we recommend a Python virtual environment) with:
+
+```python
+pip install pyserial numpy pandas matplotlib pillow
+
+```
+
+
 
 ## Library Usage
 
-This library is currently only available as the tinySA class in 'tinySA_python.py' in this repository. It is very much under development and missing error checking and handling. 
+This library is currently only available as the tinySA class in 'tinySA_python.py' in this repository. It is very much under development and missing some key error checking and handling. HOWEVER, ‘any’ error checking is currently more than the ‘no’ error checking provided by interfacing directly with the device. The code that is included in this repository has been tested on at least one tinySA device and is relatively stable. 
 
 Several usage examples are provided in the [Example Implementations](#example-implementations) section, including working with the hardware and plotting results with matplotlib. 
 
 
-
 ## Error Handling
 
-Some error handling has been implemented for the individual functions. Most functions have a list of acceptable formats for input, which is included in the documentation and the 'libraryHelp' function. The 'tinySAHelp' function will get output from the current version of firmware running on the connected tinySA device.
+Some error handling has been implemented for the individual functions in this library, but not for the device configuration. Most functions have a list of acceptable formats for input, which is included in the documentation and the `library_help` function. The `tinySA_help` function will get output from the current version of firmware running on the connected tinySA device.
 
 Detailed error messages can be returned by toggling 'verbose' on.
 
 From the [official wiki USB Interface page](https://tinysa-org.translate.goog/wiki/pmwiki.php?n=Main.USBInterface&_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en-US):
 
-    There is limited error checking against incorrect parameters of incorrect mode
+    There is limited error checking against incorrect parameters or incorrect device mode. Some error checking will be integrated as the device configurations are included, but this is not intended to be exhaustive. 
 
+Some error checking includes:
     * Frequencies can be specified using an integer optionally postfixed with a the letter 'k' for kilo 'M' for Mega or 'G' for Giga. E.g. 0.1M (100kHz), 500k (0.5MHz) or 12000000 (12MHz)
     * Levels are specified in dB(m) and can be specified using a floating point notation. E.g. 10 or 2.5
     * Time is specified in seconds optionally postfixed with the letters 'm' for mili or 'u' for micro. E.g. 1 (1 second), 2.5 (2.5 seconds), 120m (120 milliseconds)
@@ -105,12 +130,28 @@ This library has been tested on Windows, but not yet on Unix systems. The primar
 
 ### Finding the Serial Port
 
-There are several ways to list avilable serial ports.
+To start, a serial connection between the tinySA and user PC device must be created. There are several ways to list available serial ports. The library supports some rudimentary autodetection, but if that does not work instructions in this section also support manual detection. 
 
-#### Windows:
+
+#### Autoconnection with the tinySA_python Library
+
+
+```python
+
+
+
+```
+
+
+
+
+
+
+
+#### Manually Finding a Port on Windows:
 1)  Open _Device Manager_, scroll down to _Ports (COM & LPT)_, and expand the menu. There should be a _COM#_ port listing "USB Serial Device(COM #)". If your tinySA Ultra is set up to work with Serial, this will be it.
 
-2) This uses the pyserial library requirement  already installed for this library. It probably also works on Linux systems, but has not been tested yet.
+2) This uses the pyserial library requirement already installed for this library. It probably also works on Linux systems, but has not been tested yet.
 
 ```python
 
@@ -136,18 +177,16 @@ Port: COM10, Description: USB Serial Device (COM10), Hardware ID: USB VID:PID=04
 "COM10" is the port location of the tinySA Ultra that is used in the examples in this README.
 
 
-
-#### Linux
+#### Manually Finding a Port on Linux
 
 ```python
 TODO
 ```
 
 
-
 ### Serial Message Return Format
 
-This library returns strings as cleaned bytearrays. The command and first `\r\n` pair are removed from the front, and the `ch>` is removed from the end of the tinySA serial return.
+This library returns strings as cleaned byte arrays. The command and first `\r\n` pair are removed from the front, and the `ch>` is removed from the end of the tinySA serial return.
 
 The original message format:
 
@@ -162,7 +201,7 @@ bytearray(b'deviceid 0\r')
 ```
 
 ### Connecting and Disconnecting the Device
- Show the process for initializing, opening the serial port, getting device info, and disconnecting
+ This example shows the process for initializing, opening the serial port, getting device info, and disconnecting.
 
 ```python
 
@@ -193,7 +232,6 @@ bytearray(b'tinySA ULTRA\r\n2019-2024 Copyright @Erik Kaashoek\r\n2016-2020 Copy
 ```
 
 
-
 ### Toggle Error Messages
 
 Currently, the following can be used to turn on or off returned error messages.
@@ -202,20 +240,20 @@ Currently, the following can be used to turn on or off returned error messages.
 
 ```python
 # detailed messages are ON
-tsa.setVerbose(True) 
+tsa.set_verbose(True) 
 
 # detailed messages are OFF
-tsa.setVerbose(False) 
+tsa.set_verbose(False) 
 ```
 
 1) the 'errorByte' option. When enabled, if there is an error with the command or configuration, `b'ERROR'` is returned instead of the default `b''`. 
 
 ```python
 # when an error occurs, b'ERROR' is returned
-tsa.setErrorByteReturn(True) 
+tsa.set_error_byte_return(True) 
 
 # when an error occurs, the default b'' might be returned
-tsa.setErrorByteReturn(False) 
+tsa. set_error_byte_return(False) 
 ```
 
 ### Device and Library Help
@@ -224,14 +262,14 @@ There are three options for help() with this library.
 
 ```python
 # the default help function
-# 1 = help for this library, other values call the tinySA help function 
+# 1 = help for this library, other values call the tinySA device help function 
 tsa.help(1)
 
 # calling the library help function directly
-tsa.libraryHelp()
+tsa.library_help()
 
-# calling the tinySA help directly
-tsa.tinySAHelp()
+# calling the tinySA device help directly
+tsa.tinySA_help()
 
 ```
 
@@ -249,7 +287,7 @@ See other sections for the following examples:
 * [Saving Screen Images](#saving-screen-images)
 * [Plotting Data with Matplotlib](#plotting-data-with-matplotlib)
 
-This example shows several examples for common data requests:
+This example shows several types of common data requests:
 
 ```python
 
@@ -300,10 +338,9 @@ else:
 
 ```
 
-
 ### Saving Screen Images
  
- The `capture()` function can be used to capture the screen and output it to an image file. Note that the screen size varies by device, and the serial read
+ The `capture()` function can be used to capture the screen and output it to an image file. Note that the screen size varies by device. The library itself does not have a function for saving to an image (requires an additional library), but examples and the CLI wrapper have this functionality.
 
  This example truncates the last hex value, so a single padding `x00` value has been added. This will eventually be investigated, but it's not hurting the output right now.
 
@@ -387,7 +424,6 @@ else: # port open, complete task(s) and disconnect
 </p>
    <p align="center">Capture On-Screen Trace Data of a Frequency Sweep from 100 kHz to 800 kHz</p>
 
-
 ### Plotting Data with Matplotlib
 
 This example plots the last/current sweep of data from the tinySA device. 
@@ -455,10 +491,9 @@ else: # port open, complete task(s) and disconnect
 </p>
    <p align="center">Plotted On-Screen Trace Data of a Frequency Sweep from 100 kHz to 800 kHz</p>
 
-
 ## List of tinySA Commands and their Library Commands
 
-This list and the following list in the [Additional Library Commands](#additional-library-commands) section describe the functions in this library.
+Library functions are organized based on the command passed to the device. For example, any functions with shortcuts for using the `sweep` command will be grouped under `sweep`. This list and the following list in the [Additional Library Commands](#additional-library-commands) section describe the functions in this library. 
 
 This section is sorted by the tinySA (Ultra) commands, and includes:
 * A brief description of what the command does
@@ -483,7 +518,6 @@ Quick Link Table:
 | [status](#status)           | [sweep](#sweep)   | [sweeptime](#sweeptime) | [sweep_voltage](#sweep_voltage) | [text](#text)   | [threads](#threads) | [touch](#touch)             |
 | [touchcal](#touchcal) | [touchtest](#touchtest) | [trace](#trace)     | [trigger](#trigger)  | [ultra](#ultra)   | [usart_cfg](#usart_cfg)     | [vbat](#vbat)     |
 | [vbat_offset](#vbat_offset) | [version](#version) | [wait](#wait)        | [zero](#zero)     |                         |                     |                      |
-
 
 ### **actual_freq**
 * **Status:** Getting works, setting does not.
@@ -555,7 +589,7 @@ Quick Link Table:
 * **Description:** Resets the configuration data to factory defaults
 * **Original Usage:** `clearconfig`
 * **Library Function Call:** `clearconfig()`
-* **Example Return:** `b'Config and all cal data cleared. \r\nDo reset manually to take effect. Then do touch cal and save.\r'`
+* **Example Return:** `b'Config and all calibration data cleared. \r\n Do reset manually to take effect. Then do touch calibration and save.\r'`
 * **Notes:** Requires password '1234'. Hardcoded. Other functions need to be used with this to complete the process.
 
 ### **color**
@@ -699,7 +733,6 @@ Quick Link Table:
 * **Library Function Call:** `level(val=-76...13)`
 * **Example Return:** empty bytearray
 * **Notes:** Not all values in the range are available.  
-
 
 ### **levelchange**
 * **Status:** Done
@@ -1083,7 +1116,6 @@ UNDERGROING TESTING
 * **Notes:**
 
 
-
 ''' Full list of help commands
 commands: freq time dac nf saveconfig clearconfig zero sweep pause resume wait repeat status caloutput save recall trace trigger marker line usart_cfg vbat_offset color if if1 lna2 agc actual_freq freq_corr attenuate level sweeptime leveloffset levelchange modulation rbw mode spur lna direct ultra load ext_gain output deviceid correction calc menu text remark
 
@@ -1106,7 +1138,6 @@ usart
 * **Library Function Call:** `abort(val=None|"off"|"on")` 
 * **Example Return:** ????
 * **Notes:** When used without parameters the previous command still running will be aborted. Abort must be enabled before using the "abort on" command. Additional error checking has been added with the 'verbose' option. 
-
 
 ### **lna2**
 * **Status:** REMOVED until more documentation is confirmed
@@ -1134,7 +1165,6 @@ usart
 
 
 
-
 ## Additional Library Commands
 
 ## Table of Command and Device Compatibility
@@ -1145,81 +1175,80 @@ If a last checked firmware version is known, that is included in the header in t
 
 ?? is for an unfinished TODO list item, not an unknown. When a function is complete its compatibility is added.
 
-|  Device Command  | tinySA ()   | tinySA Ultra ()| tinySA Ultra + ()|
-|------------------|-------------|----------------|------------------|
-| abort | |??| |
-| actual_freq| | Get Only | |
-| agc| | Set | |
-| attenuate| | Set | |
-| bulk| | ??| |
-| calc| | Set | |
-| caloutput| | Set | |
-| capture| | Get| |
-| clearconfig| | Reset | |
-| color| | Set and Get | |
-| correction| |Set and Get| |
-| dac| |Set and Get | |
-| data| | Get | |
-| deviceid|| Set and Get | |
-| direct| |??| |
-| ext_gain| | Set | |
-| fill| |??| |
-| freq| |Set| |
-| freq_corr| |Get | |
-| frequencies| |Get | |
-| help| |Get | |
-| hop| No | ?? | |
-| if| | Set | |
-| if1| | Set | |
-| info| | Get| |
-| level| | Set | |
-| levelchange| | Set| |
-| leveloffset| | ??| |
-| line| | ??| |
-| load| |Load to Device| |
-| lna| | Set | |
-| marker| | ??| |
-| menu| |?? | |
-| mode| |??| |
-| modulation| | ??| |
-| nf| | ??| |
-| output| |?? | |
-| pause| | Set| |
-| rbw| | ??| |
-| recall| |Load to Device| |
-| refresh| | | |
-| release| | | |
-| remark| | | |
-| repeat| | | |
-| reset| | | |
-| resume| | | |
-| save| | | |
-| saveconfig| | | |
-| scan| | | |
-| scanraw| | | |
-| sd_delete| | | |
-| sd_list| |Get | |
-| sd_read| | | |
-| selftest| | | |
-| spur| | | |
-| status| | | |
-| sweep| | | |
-| sweeptime| | | |
-| text| |Set| |
-| threads| |Get| |
-| touch| |??| |
-| touchcal| |??| |
-| touchtest| | | |
-| trace| | | |
-| trigger| | | |
-| ultra| | | |
-| usart_cfg| | | |
-| vbat| | | |
-| vbat_offset| | | |
-| version| | | |
-| wait| | | |
-| zero| | | |
-
+|  Device Command  | tinySA Basic  | tinySA Ultra (ZS405)| tinySA Ultra + (ZS406)| | tinySA Ultra + (ZS407)|
+|------------------|-------------|----------------|------------------|------------------|
+| abort | |??| | |
+| actual_freq| | Get Only | | |
+| agc| | Set | | |
+| attenuate| | Set | | |
+| bulk| | ??| | |
+| calc| | Set | | |
+| caloutput| | Set | | |
+| capture| | Get| | |
+| clearconfig| | Reset | | |
+| color| | Set and Get | | |
+| correction| |Set and Get| | |
+| dac| |Set and Get | | |
+| data| | Get | | |
+| deviceid|| Set and Get | | |
+| direct| |??| | |
+| ext_gain| | Set | | |
+| fill| |??| | |
+| freq| |Set| | |
+| freq_corr| |Get | | |
+| frequencies| |Get | | |
+| help| |Get | | |
+| hop| No | ?? | | |
+| if| | Set | | |
+| if1| | Set | | |
+| info| | Get| | |
+| level| | Set | | |
+| levelchange| | Set| | |
+| leveloffset| | ??| | |
+| line| | ??| | |
+| load| |Load to Device| | |
+| lna| | Set | | |
+| marker| | ??| | |
+| menu| |?? | | |
+| mode| |??| | |
+| modulation| | ??| | |
+| nf| | ??| | |
+| output| |?? | | |
+| pause| | Set| | |
+| rbw| | ??| | |
+| recall| |Load to Device| | |
+| refresh| | | | |
+| release| | | | |
+| remark| | | | |
+| repeat| | | | |
+| reset| | | | |
+| resume| | | | |
+| save| | | | |
+| saveconfig| | | | |
+| scan| | | | |
+| scanraw| | | | |
+| sd_delete| | | | |
+| sd_list| |Get | | |
+| sd_read| | | | |
+| selftest| | | | |
+| spur| | | | |
+| status| | | | |
+| sweep| | | | |
+| sweeptime| | | | |
+| text| |Set| | |
+| threads| |Get| | |
+| touch| |??| | |
+| touchcal| |??| | |
+| touchtest| | | | |
+| trace| | | | |
+| trigger| | | | |
+| ultra| | | | |
+| usart_cfg| | | | |
+| vbat| | | | |
+| vbat_offset| | | | |
+| version| | | | |
+| wait| | | | |
+| zero| | | | |
 
 ## Notes for Beginners
 
@@ -1231,20 +1260,36 @@ Very useful, important documentation can be found at:
 * The getting started [first use](https://tinysa.org/wiki/pmwiki.php?n=Main.FirstUse) page
 * Frequently asked questions (FAQs) can be found on the [Wiki FAQs page](https://tinysa.org/wiki/pmwiki.php?n=Main.FAQ)
 
-
 ### Vocab Check
 
 Running list of acronyms that get tossed around with little to no explanation. Googling is recommended if you are not familiar with these terms as they're essential to understanding device usage.
 
 * **AGC** - Automatic Gain Control. This controls the overall dynamic range of the output when the input level(s) changes. 
 * **Baud** - Baud, or baud rate. The rate that information is transferred in a communication channel. A baud rate of 9600 means a max of 9600 bits per second is transmitted.
+* **DANL** -  Displayed Average Noise Level (DANL) refers to the average noise level displayed on a spectrum analyzer. 
 * **dB** - dB (decibel) and dBm (decibel-milliwatts). dB (unitless) quantifies the ratio between two values, whereas dBm expresses the absolute power level (always relative to 1mW). 
 * **DUT** - Device Under Test. Used here to refer to the singular device used while initially writing the API. 
 * **IF** - Intermediate Frequency. A frequency to which a carrier wave is shifted as an intermediate step in transmission or reception - [Wikipedia](https://en.wikipedia.org/wiki/Intermediate_frequency)
 * **LNA** - Low Noise Amplifier. An electronic component that amplifies a very low-power signal without significantly degrading its signal-to-noise ratio - [Wikipedia](https://en.wikipedia.org/wiki/Low-noise_amplifier)
 * **RBW** - Resolution Bandwidth. Frequency span of the final filter (IF filter) that is applied to the input signal. Determines the fast-Fourier transform (FFT) bin size.
+* **S-parameters** -
+* **VNA** - Vector Network analyzer. A device that measures the network parameters of electrical networks (typically, s-parameters). Can measure both measures both amplitude and phase properties. The [wiki article on network analyzers]( https://en.wikipedia.org/wiki/Network_analyzer_(electrical)) covers the topic in detail.  
 
+### VNA vs. SA vs. LNA vs. SNA vs. Signal Generator
+Aka “what am I looking at and did I buy the right thing?”
  
+VNA – 
+
+SNA – 
+
+SA - 
+
+Signal Generator - 
+
+LNA - 
+
+
+
 
 ### Calibration Setup
 
@@ -1272,4 +1317,5 @@ Other publications featuring the code in this repo will be added as they become 
 ## Licensing
 
 The code in this repository has been released under GPL-2.0 for lack of better idea right now. This licensing does not take priority over the official releases and the decisions of the tinySA team.
+
 
