@@ -491,6 +491,7 @@ else: # port open, complete task(s) and disconnect
 </p>
    <p align="center">Plotted On-Screen Trace Data of a Frequency Sweep from 100 kHz to 800 kHz</p>
 
+
 ## List of tinySA Commands and their Library Commands
 
 Library functions are organized based on the command passed to the device. For example, any functions with shortcuts for using the `sweep` command will be grouped under `sweep`. This list and the following list in the [Additional Library Commands](#additional-library-commands) section describe the functions in this library. 
@@ -523,41 +524,59 @@ Quick Link Table:
 * **Status:** Getting works, setting does not.
 * **Description:**  Gets the frequency correction set by CORRECT FREQUENCY menu in the expert menu settings
 * **Original Usage:** `actual_freq [{frequency in Hz}]`
-* **Library Function Call:** `actual_freq(val=None|Int)`
+* **Direct Library Function Call:** `actual_freq(val=None|Int)`
 * **Example Return:** 3000000000
+* **Alias Functions:**
+    * `set_actual_freq(val=Int)`
+    * `set_actual_freq()`
+* **CLI Wrapper Usage:**
 * **Notes:**  freq in Hz going by the returns. Should be able to set the value with this, according to documentation, but its probably a format issue in the library.
 
 ### **agc**
 * **Status:** Done
 * **Description:**  Enables/disables the build in Automatic Gain Control
 * **Original Usage:** `agc 0..7|auto`
-* **Library Function Call:** `agc(val="auto"|0..7)`
+* **Direct Library Function Call:** `agc(val="auto"|0..7)`
 * **Example Return:** empty bytearray
-* **Notes:**
+* **Alias Functions:**
+    * `set_agc(val="auto"|Int 0..7)`
+* **CLI Wrapper Usage:**
+* **Notes:** 
 
 ### **attenuate**
 * **Status:** Done
 * **Description:** Sets the internal attenuation
 * **Original Usage:** `attenuate [auto|0-31]`
-* **Library Function Call:** `attenuate(val="auto"|0..31)`
+* **Direct Library Function Call:** `attenuate(val="auto"|0..31)`
 * **Example Return:** empty bytearray
+* **Alias Functions:**
+    * `set_attenuation(val="auto"|Int 0..31)`
+* **CLI Wrapper Usage:**
 * **Notes:** 
+
 
 ### **bulk**
 * **Status:** TODO
 * **Description:** Sent by tinySA when in auto refresh mode
 * **Original Usage:** `????`
-* **Library Function Call:** `bulk()`
+* **Direct Library Function Call:** `bulk()`
 * **Example Return:** `format: "bulk\r\n{X}{Y}{Width}{Height} {Pixeldata}\r\n"`
-* **Notes:** All numbers are binary coded 2 bytes little endian. The pixel data is encoded as 2 bytes per pixel           
+* **Alias Functions:**
+    *  
+* **CLI Wrapper Usage:**
+* **Notes:** 
+ All numbers are binary coded 2 bytes little endian. The pixel data is encoded as 2 bytes per pixel           
             
 
 ### **calc**
 * **Status:** Done
 * **Description:** Sets or cancels one of the measurement modes
 * **Original Usage:** `calc off|minh|maxh|maxd|aver4|aver16|quasip`
-* **Library Function Call:** `calc(val="off"|"minh"|"maxh"|"maxd"|"aver4"|"aver16"|"quasip")`
+* **Direct Library Function Call:** `calc(val="off"|"minh"|"maxh"|"maxd"|"aver4"|"aver16"|"quasip")`
 * **Example Return:** empty bytearray
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
 * **Notes:** 
   * the commands are the same as those listed in the MEASURE menu
   * [tinySA Calc Menu](#https://tinysa.org/wiki/pmwiki.php?n=Main.CALC):
@@ -574,40 +593,55 @@ Quick Link Table:
 * **Original Usage:** `caloutput off|30|15|10|4|3|2|1`
 * **Library Function :**  `caloutput(val="off"|30|15|10|4|3|2|1)`
 * **Example Return:** empty bytearray
-* **Notes:**
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:** 
 
 ### **capture**
 * **Status:** Done
 * **Description:** Requests a screen dump to be sent in binary format of HEIGHTxWIDTH pixels of each 2 bytes
 * **Original Usage:** `capture`
-* **Library Function Call:** `capture()`
+* **Direct Library Function Call:** `capture()`
 * **Example Return:** `format:'\x00\x00\x00\x00\x00\x00\x00\...x00\x00\x00'`
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
 * **Notes:** tinySA original: 320x240, tinySA Ultra: 480x320 
 
 ### **clearconfig**
 * **Status:** Done
 * **Description:** Resets the configuration data to factory defaults
 * **Original Usage:** `clearconfig`
-* **Library Function Call:** `clearconfig()`
+* **Direct Library Function Call:** `clearconfig()`
 * **Example Return:** `b'Config and all calibration data cleared. \r\n Do reset manually to take effect. Then do touch calibration and save.\r'`
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
 * **Notes:** Requires password '1234'. Hardcoded. Other functions need to be used with this to complete the process.
 
 ### **color**
 * **Status:** Done
 * **Description:** Sets or gets the colors used
 * **Original Usage:** `color [{id} {rgb24}]`
-* **Library Function Call:** `color(ID=None|0..31, RGB=None(default:'0xF8FCF8')|'0x000000'..'0xFFFFFF')`
+* **Direct Library Function Call:** `color(ID=None|0..31, RGB=None(default:'0xF8FCF8')|'0x000000'..'0xFFFFFF')`
 * **Example Return:** If ID='None' used:  
 `0: 0x000000\r\n  1: 0xF8FCF8\r\n  2: 0x808080\r\n  3: 0xE0E4E0\r\n  4: 0x000000\r\n  5: 0xD0D0D0\r\n  6: 0xF8FC00\r\n  7: 0x40FC40\r\n  8: 0xF800F8\r\n  9: 0xF84040\r\n 10: 0x18E000\r\n 11: 0xF80000\r\n 12: 0x0000F8\r\n 13: 0xF8FCF8\r\n 14: 0x808080\r\n 15: 0x00FC00\r\n 16: 0x808080\r\n 17: 0x000000\r\n 18: 0xF8FCF8\r\n 19: 0x0000F8\r\n 20: 0xF88080\r\n 21: 0x00FC00\r\n 22: 0x888C88\r\n 23: 0xD8DCD8\r\n 24: 0x282828\r\n 25: 0xC0C4C0\r\n 26: 0xF8FCF8\r\n 27: 0x00FC00\r\n 28: 0x00FCF8\r\n 29: 0xF8FC00\r\n 30: 0x000000\r\n 31: 0x000000\r'`
-* **Notes:** the hex value currently must be passed in as a string
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  the hex value currently must be passed in as a string
 
 ### **correction**
 * **Status:** Done
 * **Description:** Sets or gets the frequency level correction table
 * **Original Usage:** `correction {low|lna|ultra|ultra_lna|direct|direct_lna|harm|harm_lna|out|out_direct|out_adf|out_ultra|off|on} [{0-19} {frequency(Hz)} {value(dB)}]`
-* **Library Function Call:** `correct(tableName, slot, freq, val)`
+* **Direct Library Function Call:** `correct(tableName, slot, freq, val)`
 * **Example Return:** empty bytearray
-* **Notes:** See [Correction Wiki](https://tinysa.org/wiki/pmwiki.php?n=Main.Correction). The current content of the table is shown by entering `correction low` without any arguments. The data in the table can be modified by specifying the slot number and the new values. There **MUST** be one entry in the low table for 30MHz and the correction for that frequency **MUST** be zero. 
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  See [Correction Wiki](https://tinysa.org/wiki/pmwiki.php?n=Main.Correction). The current content of the table is shown by entering `correction low` without any arguments. The data in the table can be modified by specifying the slot number and the new values. There **MUST** be one entry in the low table for 30MHz and the correction for that frequency **MUST** be zero. 
 * **Future Work:** **Confirm table format across devices**. Value currently limited between -10 and 35, but this needs to be more specific.
 
 ### **dac**
@@ -616,40 +650,55 @@ Quick Link Table:
 * **Original Usage:** `dac [0..4095]`
 * **Library Function Call(s):** `dac(val=None|0..4095)`
 * **Example Return:** `b'usage: dac {value(0-4095)}\r\ncurrent value: 1922\r'`
-* **Notes:**
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:** 
 
 ### **data**
 * **Status:** Done
 * **Description:** Gets the trace data
 * **Original Usage:** `data 0..2`
-* **Library Function Call:** `data(val=0|1|2)`
+* **Direct Library Function Call:** `data(val=0|1|2)`
 * **Example Return:** `format bytearray(b'7.593750e+00\r\n-8.437500e+01\r\n-8.693750e+01\r\n...\r')`
-* **Notes:**  0 = temp value, 1 = stored trace, 2 = measurement. strength in decibels (dB) 
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**   0 = temp value, 1 = stored trace, 2 = measurement. strength in decibels (dB) 
        
           
 ### **deviceid**
 * **Status:** Done
 * **Description:** Sets or gets a user settable integer number ID that can be use to identify a specific tinySA connected to the PC
 * **Original Usage:** `deviceid [{number}]`
-* **Library Function Call:** `deviceid(id=None|{int number})`
+* **Direct Library Function Call:** `deviceid(id=None|{int number})`
 * **Example Return:** `'deviceid 0\r'`
-* **Notes:**
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:** 
 
 ### **direct**
 * **Status:** TODO
 * **Description:** ??
 * **Original Usage:** `direct {start|stop|on|off} {freq(Hz)}`
-* **Library Function Call:** `direct()`
+* **Direct Library Function Call:** `direct()`
 * **Example Return:** empty bytearray
-* **Notes:**
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:** 
 
 ### **ext_gain**
 * **Status:** Done
 * **Description:** Sets the external attenuation/amplification
 * **Original Usage:** `ext_gain -100..100`
-* **Library Function Call:** `ext_gain(val=-100...100)`
+* **Direct Library Function Call:** `ext_gain(val=-100...100)`
 * **Example Return:** empty bytearray
-* **Notes:** Works in both input and output mode
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:** * Works in both input and output mode
 
 ### **fill**
 * **Status:** TODO
@@ -657,31 +706,43 @@ Quick Link Table:
 * **Original Usage:**
 * **Library Function Call:**
 * **Example Return:** `format: "fill\r\n{X}{Y}{Width}{Height} {Color}\r\n"`
-* **Notes:** All numbers returned are binary coded 2 bytes little endian. Similar to 'bulk'???
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  All numbers returned are binary coded 2 bytes little endian. Similar to 'bulk'???
 
 ### **freq**
 * **Status:** Done
 * **Description:** Pauses the sweep and sets the measurement frequency in Hz.
 * **Original Usage:** `freq {frequency}`
-* **Library Function Call:** `freq()`
+* **Direct Library Function Call:** `freq()`
 * **Example Return:** empty bytearray
-* **Notes:**  
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**   
 
 ### **freq_corr**
 * **Status:** Done
 * **Description:** Gets the frequency correction.
 * **Original Usage:** `freq_corr`
-* **Library Function Call:**  `freq_corr()`
+* **Direct Library Function Call:**  `freq_corr()`
 * **Example Return:** `b'0 ppb\r'`
-* **Notes:** This command returns the frequency correction, in parts per billion (ppb).
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  This command returns the frequency correction, in parts per billion (ppb).
 
 ### **frequencies**
 * **Status:** Done
 * **Description:** Gets the frequencies used by the last sweep
 * **Original Usage:** `frequencies`
-* **Library Function Call:**  `frequencies()`
+* **Direct Library Function Call:**  `frequencies()`
 * **Example Return:**  `b'1500000000\r\n... \r\n3000000000\r'`
-* **Notes:**  
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**   
 
 ### **help**
 * **Status:** TODO libraryHelp() 
@@ -692,7 +753,10 @@ Quick Link Table:
     * `tinySAHelp()`
     * `libraryHelp()` 
 * **Example Return:**   
-* **Notes:** 0 = tinySAHelp(), 1=libraryHelp(). Both functions can also be called directly. libraryHelp() has more information about this library and the inputs. 
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  0 = tinySAHelp(), 1=libraryHelp(). Both functions can also be called directly. libraryHelp() has more information about this library and the inputs. 
 
 ### **hop**
 * **Status:** TODO. needs error checking added
@@ -700,47 +764,65 @@ Quick Link Table:
 * **Original Usage:** `hop {start(Hz)} {stop(Hz)} {step(Hz) | points}  [outmask]`
 * **Library Function Call:**
 * **Example Return:** empty bytearray
-* **Notes:** Ultra only. From [tinysa-org](https://tinysa-org.translate.goog/wiki/pmwiki.php?n=Main.USBInterface&_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en-US): if the 3rd parameter is below 450 it is assumed to be points, otherwise as step frequency Outmask selects if the frequency (1) or level (2) is output. 
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  Ultra only. From [tinysa-org](https://tinysa-org.translate.goog/wiki/pmwiki.php?n=Main.USBInterface&_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en-US): if the 3rd parameter is below 450 it is assumed to be points, otherwise as step frequency Outmask selects if the frequency (1) or level (2) is output. 
 
 ### **if**
 * **Status:** Done
 * **Description:** Sets the intermediate frequency (IF) to automatic or a specific value
 * **Original Usage:** `if (0|433M..435M )`
-* **Library Function Call:** `setIF(val=0|433M..435M|'auto')`
+* **Direct Library Function Call:** `setIF(val=0|433M..435M|'auto')`
 * **Example Return:** empty bytearray
-* **Notes:** Val input of 0 is 'auto'. Added explicit 'auto' to match other library funcs.
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  Val input of 0 is 'auto'. Added explicit 'auto' to match other library funcs.
 
 ### **if1**
 * **Status:** Done
 * **Description:** Sets intermediate frequency (IF) to a specific value
 * **Original Usage:** `if1 (975M..979M )`
-* **Library Function Call:** `setIF1(val=0|975M..979M|'auto')`
+* **Direct Library Function Call:** `setIF1(val=0|975M..979M|'auto')`
 * **Example Return:** empty bytearray
-* **Notes:** Val input of 0 is 'auto'. Added explicit 'auto' to match other library funcs.
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  Val input of 0 is 'auto'. Added explicit 'auto' to match other library funcs.
 
 ### **info**
 * **Status:** Done
 * **Description:** Displays various software/firmware and hardware information
 * **Original Usage:** `info`
-* **Library Function Call:** `info()`
+* **Direct Library Function Call:** `info()`
 * **Example Return:** `b'tinySA ULTRA\r\n2019-2024 Copyright @Erik Kaashoek\r\n2016-2020 Copyright edy555\r\nSW licensed under GPL. See: https://github.com/erikkaashoek/tinySA\r\nVersion: tinySA4_v1.-143-g864bb27\r\nBuild Time: Jan 10 2024 - 11:14:08\r\nKernel: 4.0.0\r\nCompiler: GCC 7.2.1 20170904 (release) [ARM/embedded-7-branch revision 255204]\r\nArchitecture: ARMv7E-M Core Variant: Cortex-M4F\r\nPort Info: Advanced kernel mode\r\nPlatform:STM32F303xC Analog & DSP\r'`
-* **Notes:**
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:** 
 
 ### **level**
 * **Status:** Done
 * **Description:** Sets the output level
 * **Original Usage:** `level -76..13`
-* **Library Function Call:** `level(val=-76...13)`
+* **Direct Library Function Call:** `level(val=-76...13)`
 * **Example Return:** empty bytearray
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
 * **Notes:** Not all values in the range are available.  
 
 ### **levelchange**
 * **Status:** Done
 * **Description:** Sets the output level delta for low output mode level sweep
 * **Original Usage:** `levelchange -70..+70`
-* **Library Function Call:** `levelchange(val=-70...70)`
+* **Direct Library Function Call:** `levelchange(val=-70...70)`
 * **Example Return:** empty bytearray
-* **Notes:** 
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  
 
 ### **leveloffset**
 * **Status:** TODO
@@ -748,7 +830,10 @@ Quick Link Table:
 * **Original Usage:** `leveloffset low|high|switch [output] {error}`
 * **Library Function Call:**
 * **Example Return:** empty bytearray
-* **Notes:** For the output corrections first ensure correct output levels at maximum output level. For the low output set the output to -50dBm and measure and correct the level with "leveloffset switch error" where For all output leveloffset commands measure the level with the leveloffset to zero and calculate error = measured level - specified level
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  For the output corrections first ensure correct output levels at maximum output level. For the low output set the output to -50dBm and measure and correct the level with "leveloffset switch error" where For all output leveloffset commands measure the level with the leveloffset to zero and calculate error = measured level - specified level
 
 ### **line**
 * **Status:** TODO
@@ -756,40 +841,55 @@ Quick Link Table:
 * **Original Usage:**  `line off|{level}` 
 * **Library Function Call:**
 * **Example Return:** empty bytearray
-* **Notes:**  
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**   
 
 ### **load**
 * **Status:** Done
 * **Description:** Loads a previously stored preset to the connected device
 * **Original Usage:** `load 0..4`
-* **Library Function Call:** `load(val=0|1|2|3|4)`
+* **Direct Library Function Call:** `load(val=0|1|2|3|4)`
 * **Example Return:** empty bytearray
-* **Notes:** 0 is the startup preset
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  0 is the startup preset
 
 ### **lna**
 * **Status:** Done
 * **Description:** Set lna usage off/on
 * **Original Usage:** `lna off|on` 
-* **Library Function Call:** `lna(val="off"|"on")`
+* **Direct Library Function Call:** `lna(val="off"|"on")`
 * **Example Return:** empty bytearray
-* **Notes:** Should not be enabled when AGC is enabled - [tinySA wiki SETTINGS2](https://tinysa.org/wiki/pmwiki.php?n=Main.SETTINGS2)
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  Should not be enabled when AGC is enabled - [tinySA wiki SETTINGS2](https://tinysa.org/wiki/pmwiki.php?n=Main.SETTINGS2)
 
 ### **marker**
 * **Status:** TODO
 * **Description:** sets or dumps marker info
 * **Original Usage:**  `marker {id} on|off|peak|{freq}| {index}`
-* **Library Function Call:** `marker()`
+* **Direct Library Function Call:** `marker()`
 * **Example Return:** empty bytearray
-* **Notes:**  where id=1..4 index=0..num_points-1
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**   where id=1..4 index=0..num_points-1
 Marker levels will use the selected unit Marker peak will activate the marker (if not done already), position the marker on the strongest signal and display the marker info The frequency must be within the selected sweep range mode 
 
 ### **menu**
 * **Status:** TODO
 * **Description:** The menu command can be used to activate any menu item based on the index of the menu item
 * **Original Usage:** `menu {#} [{#} [{#} [{#}]]]`
-* **Library Function Call:** `menu([])`
+* **Direct Library Function Call:** `menu([])`
 * **Example Return:** empty bytearray
-* **Notes:** where # is the menu entry number starting with 1 at the top.
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  where # is the menu entry number starting with 1 at the top.
 Example: menu 6 2 will toggle the waterfall option 
 [tinySA Menu Tree](https://tinysa.org/wiki/pmwiki.php?n=TinySA4.MenuTree)
 
@@ -797,9 +897,12 @@ Example: menu 6 2 will toggle the waterfall option
 * **Status:** TODO
 * **Description:** Sets the mode of the tinySA
 * **Original Usage:** `mode low|high input|output`
-* **Library Function Call:** `mode(freq)`
+* **Direct Library Function Call:** `mode(freq)`
 * **Example Return:** empty bytearray
-* **Notes:** [tinySA Wiki MODE](https://tinysa.org/wiki/pmwiki.php?n=Main.MODE)
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  [tinySA Wiki MODE](https://tinysa.org/wiki/pmwiki.php?n=Main.MODE)
 * LOW INPUT activates the 0.1-350MHz input mode
 * HIGH INPUT activates the 240MHz-960MHz input mode
 * LOW OUTPUT activates the 0.1-350MHz output mode
@@ -809,65 +912,89 @@ Example: menu 6 2 will toggle the waterfall option
 * **Status:** TODO
 * **Description:** Set the modulation in output mode
 * **Original Usage:** `modulation off|AM_1kHz|AM_10Hz|NFM|WFM|extern`
-* **Library Function Call:** `modulation()`
+* **Direct Library Function Call:** `modulation()`
 * **Example Return:** empty bytearray
-* **Notes:**
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:** 
 
 ### **nf**
 * **Status:** TODO
 * **Description:** ??
 * **Original Usage:** ` `
-* **Library Function Call:** ` `
+* **Direct Library Function Call:** ` `
 * **Example Return:** empty bytearray
-* **Notes:** Check documentation on this to see if more options
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  Check documentation on this to see if more options
 
 ### **output**
 * **Status:** Done
 * **Description:** Sets the output on or off
 * **Original Usage:** `output on|off`
-* **Library Function Call:** `output(val="off"|"on")`
+* **Direct Library Function Call:** `output(val="off"|"on")`
 * **Example Return:** empty bytearray
-* **Notes:**
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:** 
 
 ### **pause**
 * **Status:** Done
 * **Description:** Pauses the sweeping in either input or output mode
 * **Original Usage:** `pause`
-* **Library Function Call:** `pause()`
+* **Direct Library Function Call:** `pause()`
 * **Example Return:** empty bytearray
-* **Notes:**
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:** 
 
 ### **rbw**
 * **Status:** Done
 * **Description:** sets the rbw to either automatic or a specific value
 * **Original Usage:** `rbw auto|3..600`
-* **Library Function Call:** `rbw(val="auto"|3..600)`
+* **Direct Library Function Call:** `rbw(val="auto"|3..600)`
 * **Example Return:**  empty bytearray
-* **Notes:** the number specifies the target rbw in kHz. Frequencies listed in official documentation: 3 kHz, 10 kHz, 30 kHz, 100 kHz, 300 kHz, 600 kHz     
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  the number specifies the target rbw in kHz. Frequencies listed in official documentation: 3 kHz, 10 kHz, 30 kHz, 100 kHz, 300 kHz, 600 kHz     
 
 ### **recall**
 * **Status:** Done
 * **Description:** Loads a previously stored preset from the device
 * **Original Usage:** ` recall 0..4`
-* **Library Function Call:** `recal(val=0|1|2|3|4)`
+* **Direct Library Function Call:** `recal(val=0|1|2|3|4)`
 * **Example Return:** empty bytearray
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
 * **Notes:** Same functionality as `load()`. 0 is the startup preset.
 
 ### **refresh**
 * **Status:** Done
 * **Description:** Enables or disables the auto refresh mode
 * **Original Usage:** `refresh on|off`
-* **Library Function Call:** `refresh(val="off"|"on")`
+* **Direct Library Function Call:** `refresh(val="off"|"on")`
 * **Example Return:** empty bytearray
-* **Notes:**
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:** 
 
 ### **release**
 * **Status:** Done
 * **Description:** Triggers a signal for the removal/release of the touch screen
 * **Original Usage:** `release`
-* **Library Function Call:** `release()`
+* **Direct Library Function Call:** `release()`
 * **Example Return:** empty bytearray
-* **Notes:**
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:** 
 
 ### **remark**
 * **Status:** TODO
@@ -875,47 +1002,65 @@ Example: menu 6 2 will toggle the waterfall option
 * **Original Usage:** `remark [use any text]`
 * **Library Function Call:**
 * **Example Return:** empty bytearray
-* **Notes:** ?? included due to documentation 
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  ?? included due to documentation 
 
 ### **repeat**
 * **Status:** Done
 * **Description:** Sets the number of (re)measurements that should be taken at every frequency
 * **Original Usage:** ` repeat 1..1000`
-* **Library Function Call:** `repeat(val=1.1000)`
+* **Direct Library Function Call:** `repeat(val=1.1000)`
 * **Example Return:** empty bytearray
-* **Notes:** increasing the repeat reduces the noise per frequency, repeat 1 is the normal scanning mode. Has int(val) conversion.
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  increasing the repeat reduces the noise per frequency, repeat 1 is the normal scanning mode. Has int(val) conversion.
 
 ### **reset**
 * **Status:** Done
 * **Description:** Resets the tinySA
 * **Original Usage:** `reset`
-* **Library Function Call:** `reset()`
+* **Direct Library Function Call:** `reset()`
 * **Example Return:** empty bytearray, serial error message. depends on the system.
-* **Notes:** Disconnects the serial.
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  Disconnects the serial.
 
 ### **resume**
 * **Status:** Done
 * **Description:** Resumes the sweeping in either input or output mode
 * **Original Usage:** `resume`
-* **Library Function Call:** `resume()`
+* **Direct Library Function Call:** `resume()`
 * **Example Return:** empty bytearray
-* **Notes:**
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:** 
 
 ### **save**
 * **Status:** Done
 * **Description:** Saves the current setting to a preset
 * **Original Usage:** `save 0..4`
-* **Library Function Call:** `save(val=0..4)`
+* **Direct Library Function Call:** `save(val=0..4)`
 * **Example Return:** empty bytearray
-* **Notes:** where 0 is the startup preset
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  where 0 is the startup preset
 
 ### **saveconfig**
 * **Status:** Done
 * **Description:** Saves the device configuration data
 * **Original Usage:** `saveconfig`
-* **Library Function Call:** `saveconfig()`
+* **Direct Library Function Call:** `saveconfig()`
 * **Example Return:** empty bytearray
-* **Notes:**
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:** 
  
 ### **scan**
 * **Status:** TODO
@@ -923,7 +1068,10 @@ Example: menu 6 2 will toggle the waterfall option
 * **Original Usage:** `scan {start(Hz)} {stop(Hz)} [points] [outmask]`
 * **Library Function Call:**
 * **Example Return:** empty bytearray
-* **Notes:** where the outmask is a binary OR of 1=frequencies, 2=measured data, 4=stored data and points is maximum 290
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  where the outmask is a binary OR of 1=frequencies, 2=measured data, 4=stored data and points is maximum 290
 
 ### **scanraw**
 * **Status:** TODO
@@ -931,6 +1079,9 @@ Example: menu 6 2 will toggle the waterfall option
 * **Original Usage:** `scanraw {start(Hz)} {stop(Hz)} [points][option]`
 * **Library Function Call:**
 * **Example Return:** empty bytearray
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
 * **Notes:** From Documentation 1: The measured data is send as '{' ('x' MSB LSB)*points '}' where the 16 bit data is scaled by 32.
 
 From Documentation 2: The measured data is the level in dBm and is send as '{' ('x' MSB LSB)*points '}'. To get the dBm level from the 16 bit data, divide by 32 and subtract 128 for the tinySA and 174 for the tinySA Ultra. The option, when present, can be either 0,1,2 or 3 being the sum of 1=unbuffered and 2=continuous 
@@ -943,49 +1094,67 @@ UNDERGROING TESTING
 * **Original Usage:** `sd_delete {filename}`
 * **Library Function Call:**
 * **Example Return:** empty bytearray
-* **Notes:**
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:** 
 
 ### **sd_list**
 * **Status:** Done
 * **Description:** Displays list of filenames with extension and sizes
 * **Original Usage:** `sd_list`
-* **Library Function Call:** `sd_list()`
+* **Direct Library Function Call:** `sd_list()`
 * **Example Return:** format example: `-0.bmp 307322`
-* **Notes:**
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:** 
   
 ### **sd_read**
 * **Status:**  TODO
 * **Description:** Reads a specific file on the sd card
 * **Original Usage:** `sd_read {filename}`
-* **Library Function Call:** `sd_read(filename)`
+* **Direct Library Function Call:** `sd_read(filename)`
 * **Example Return:** empty bytearray
-* **Notes:**
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:** 
 
 ### **selftest**
 * **Status:** Done
 * **Description:** performs one or all selftests
 * **Original Usage:** `selftest 0 0..9`, `selftest (1-3) [arg]`
-* **Library Function Call:** `selftest(val=0..9)`
+* **Direct Library Function Call:** `selftest(val=0..9)`
 * **Example Return:** empty bytearray
-* **Notes:** MUST have cable connected to RF and CAL
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  MUST have cable connected to RF and CAL
   
     
 ### **spur**
 * **Status:** Done
 * **Description:** Enables or disables spur reduction
 * **Original Usage:** `spur on|off`
-* **Library Function Call:** `spur(val="off"|"on")`
+* **Direct Library Function Call:** `spur(val="off"|"on")`
 * **Example Return:** empty bytearray
-* **Notes:**
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:** 
  
 
 ### **status**
 * **Status:** Done
 * **Description:** Displays the current device status (paused/resumed)
 * **Original Usage:** `status`
-* **Library Function Call:** `status()`
+* **Direct Library Function Call:** `status()`
 * **Example Return:** `b'Resumed'`
-* **Notes:**
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:** 
 
 ### **sweep**
 * **Status:** TODO
@@ -993,7 +1162,10 @@ UNDERGROING TESTING
 * **Original Usage:** `sweep [(start|stop|center|span|cw {frequency}) | ({start(Hz)} {stop(Hz)} [0..290] ) ]`
 * **Library Function Call:**
 * **Example Return:** empty bytearray
-* **Notes:** sweep without arguments lists the current sweep settings, the frequencies specified should be within the permissible range. The sweep commands apply both to input and output modes
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  sweep without arguments lists the current sweep settings, the frequencies specified should be within the permissible range. The sweep commands apply both to input and output modes
 
 ### **sweeptime**
 * **Status:** TODO
@@ -1001,47 +1173,65 @@ UNDERGROING TESTING
 * **Original Usage:** `sweep {time(Seconds)}`
 * **Library Function Call:**
 * **Example Return:** empty bytearray
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
 * **Notes:** the time specified may end in a letter where  m=mili and u=micro
 
 ### **text**
 * **Status:**  Done
 * **Description:** specifies the text entry for the active keypad 
 * **Original Usage:** `text keypadtext `
-* **Library Function Call:** `text(val="")`
+* **Direct Library Function Call:** `text(val="")`
 * **Example Return:** empty bytearray
-* **Notes:** where keypadtext is the text used. Example: text 12M. Currently does not work for entering file names. 
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  where keypadtext is the text used. Example: text 12M. Currently does not work for entering file names. 
 
 ### **threads**
 * **Status:** Done
 * **Description:** lists information of the threads in the tinySA
 * **Original Usage:** `threads`
-* **Library Function Call:** `threads()`
+* **Direct Library Function Call:** `threads()`
 * **Example Return:** `b'stklimit|        |stk free|    addr|refs|prio|    state|        name\r\n20000200|2000054C|00000248|200016A8|   0| 128|  CURRENT|        main\r\n20001530|2000157C|0000008C|20001650|   0|   1|    READY|        idle\r\n200053D8|200056C4|00000250|200059B0|   0| 127|    READY|       sweep\r'`
-* **Notes:**
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:** 
 
 ### **touch**
 * **Status:** Done
 * **Description:** sends the coordinates of a touch
 * **Original Usage:** `touch {X coordinate} {Y coordinate}`
-* **Library Function Call:** `touch(x=0,y=0)`
+* **Direct Library Function Call:** `touch(x=0,y=0)`
 * **Example Return:** empty bytearray
-* **Notes:** The upper left corner of the screen is "0 0"
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  The upper left corner of the screen is "0 0"
 
 ### **touchcal**
 * **Status:** Done
 * **Description:** starts the touch calibration
 * **Original Usage:** `touchcal`
-* **Library Function Call:** `touchcal()`
+* **Direct Library Function Call:** `touchcal()`
 * **Example Return:** empty bytearray
-* **Notes:** is there a way to cancel this?
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  is there a way to cancel this?
 
 ### **touchtest**
 * **Status:** Done
 * **Description:** starts the touch test
 * **Original Usage:** `touchtest`
-* **Library Function Call:** `touchtest()`
+* **Direct Library Function Call:** `touchtest()`
 * **Example Return:** empty bytearray
-* **Notes:** instructions on screen "touch panel, draw lines, press button to complete"
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  instructions on screen "touch panel, draw lines, press button to complete"
 
 ### **trace**
 * **Status:** TODO
@@ -1049,7 +1239,10 @@ UNDERGROING TESTING
 * **Original Usage:** `trace [{0..2} | dBm|dBmV|dBuV| V|W |store|clear|subtract | (scale|reflevel) auto|{level}]`
 * **Library Function Call:**
 * **Example Return:** empty bytearray
-* **Notes:**
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:** 
 
 ### **trigger**
 * **Status:** TODO
@@ -1057,22 +1250,31 @@ UNDERGROING TESTING
 * **Original Usage:** `trigger auto|normal|single|{level(dBm)}`
 * **Library Function Call:**
 * **Example Return:** empty bytearray
-* **Notes:** the trigger level is always set in dBm
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  the trigger level is always set in dBm
 
 ### **ultra**
 * **Status:** Done
 * **Description:** turn on/config tiny SA ultra mode
 * **Original Usage:** `ultra off|on|auto|start|harm {freq}`
-* **Library Function Call:** `ultra(val="on"|"off")`
+* **Direct Library Function Call:** `ultra(val="on"|"off")`
 * **Example Return:** empty bytearray
-* **Notes:** limited input until more documentation found
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:**  limited input until more documentation found
 
 ### **usart_cfg**
 * **Status:** Done
 * **Description:** Get port current baud rate/ gets the current serial config
 * **Original Usage:** `usart_cfg`
-* **Library Function Call:** `usart_cfg()`
+* **Direct Library Function Call:** `usart_cfg()`
 * **Example Return:** `b'Serial: 115200 baud\r'`
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
 * **Notes:**  default is 115,200
 
 ### **vbat**
@@ -1081,23 +1283,32 @@ UNDERGROING TESTING
 * **Original Usage:** `vbat`
 * **Library Function Call:**
 * **Example Return:** empty bytearray
-* **Notes:**
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:** 
 
 ### **vbat_offset**
 * **Status:** Done
 * **Description:** Sets or gets the battery offset value
 * **Original Usage:** `vbat_offset [{0..4095}]`
-* **Library Function Call:** `vbat_offset(val=None|0..4095)`
+* **Direct Library Function Call:** `vbat_offset(val=None|0..4095)`
 * **Example Return:** `b'300\r'`
-* **Notes:**
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:** 
 
 ### **version**
 * **Status:** Done
 * **Description:** returns the version text
 * **Original Usage:** `version`
-* **Library Function Call:** `version()` 
+* **Direct Library Function Call:** `version()` 
 * **Example Return:** empty bytearray
-* **Notes:**
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:** 
 
 ### **wait**
 * **Status:** Done
@@ -1113,7 +1324,10 @@ UNDERGROING TESTING
 * **Original Usage:** `zero {level}\r\n174dBm`
 * **Library Function Call:**
 * **Example Return:** empty bytearray
-* **Notes:**
+* **Alias Functions:**
+    * 
+* **CLI Wrapper Usage:**
+* **Notes:** 
 
 
 ''' Full list of help commands
@@ -1135,7 +1349,7 @@ usart
 * **Status:** REMOVED. NOT ON DEVELOPER'S DUT
 * **Description:**  Sets the abortion enabled status (on/off) or aborts the previous command.
 * **Original Usage:** `abort [off|on]`
-* **Library Function Call:** `abort(val=None|"off"|"on")` 
+* **Direct Library Function Call:** `abort(val=None|"off"|"on")` 
 * **Example Return:** ????
 * **Notes:** When used without parameters the previous command still running will be aborted. Abort must be enabled before using the "abort on" command. Additional error checking has been added with the 'verbose' option. 
 
@@ -1143,7 +1357,7 @@ usart
 * **Status:** REMOVED until more documentation is confirmed
 * **Description:** ??
 * **Original Usage:** `lna2 0..7|auto`
-* **Library Function Call:** `lna2(val="auto"|0..7)`
+* **Direct Library Function Call:** `lna2(val="auto"|0..7)`
 * **Example Return:** empty bytearray
 * **Notes:**
 
@@ -1151,7 +1365,7 @@ usart
 * **Status:** REMOVED. Not recognized by DUT.
 * **Description:** Restarts the  tinySA after the specified number of seconds
 * **Original Usage:** `restart {seconds}`
-* **Library Function Call:** `restart(val=0...)`
+* **Direct Library Function Call:** `restart(val=0...)`
 * **Example Return:** empty bytearray
 * **Notes:** where 0 seconds stops the restarting process. has int(val) conversion until it's clear if float() causes issues.
 
@@ -1159,13 +1373,16 @@ usart
 * **Status:** REMOVED
 * **Description:** Sets the sweep voltage 
 * **Original Usage:** `sweep_voltage {0-3.3}`
-* **Library Function Call:** `sweep_voltage()`
+* **Direct Library Function Call:** `sweep_voltage()`
 * **Example Return:** empty bytearray
 * **Notes:** device does not recognize this
 
 
 
-## Additional Library Commands
+## Additional Library Functions for Advanced Use
+
+
+
 
 ## Table of Command and Device Compatibility
 
