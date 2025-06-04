@@ -5,8 +5,15 @@
 #   './tinySA_python.py'
 #   UNOFFICIAL Python API based on the tinySA official documentation at https://www.tinysa.org/wiki/
 #
+#   references:
+#       https://tinysa.org/wiki/pmwiki.php?n=TinySA4.ConsoleCommands  (NOTE: backwards compat not tested!)
+#       http://athome.kaashoek.com/tinySA/python/tinySA.py  (existing library with some examples)
+#
+#
+#
+#
 #   Author(s): Lauren Linkous
-#   Last update: June 2, 2025
+#   Last update: June 3, 2025
 ##--------------------------------------------------------------------------------------------------\
 
 import serial
@@ -138,13 +145,6 @@ class tinySA():
         # closes the serial port
         self.ser.close()
 
-    def command(self, c):
-        # if the command isn't already a function,
-        #  use existing func setup to send command
-        writebyte = str(c) + '\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
-        self.print_message("capture() called for screen data")   
-
 
     def tinySA_serial(self, writebyte, printBool=False):
         # write out to serial, get message back, clean up, return
@@ -199,6 +199,26 @@ class tinySA():
 ######################################################################
 # Reusable format checking functions
 ######################################################################
+
+    def convert_frequency(self, txtstr):
+        # this takes the user input (as text) and converts it. 
+        #  From documentation:
+        #       Frequencies can be specified using an integer optionally postfixed with a the letter 
+        #       'k' for kilo 'M' for Mega or 'G' for Giga. E.g. 0.1M (100kHz), 500k (0.5MHz) or 12000000 (12MHz)
+        # However the abbreviation makes error checking with numerics more difficult. so convert everything to Hz.
+        #  e notation is fine
+        pass
+
+    def convert_time(self, txtstr):
+        # this takes the user input (as text) and converts it. 
+        #  From documentation:        
+        #        Time is specified in seconds optionally postfixed with the letters 'm' for mili 
+        #        or 'u' for micro. E.g. 1 (1 second), 2.5 (2.5 seconds), 120m (120 milliseconds)
+
+
+
+        pass
+
 
     def is_rgb24(self, hexStr):
         # check if the string matches the pattern 0xRRGGBB
@@ -413,6 +433,14 @@ class tinySA():
             msgbytes = self.error_byte_return()
         return msgbytes
 
+    def command(self, val):
+        # if the command isn't already a function,
+        #  use existing func setup to send command
+        writebyte = str(val) + '\r\n'
+        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        self.print_message("command() called with ::" + str(val))   
+
+
     def correction(self, argName="low", slot=None, freq=None, val=None):
         # sets or dumps the frequency level orrection table
         # usage: correction [0..9 {frequency} {level dB}]
@@ -585,7 +613,7 @@ class tinySA():
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def pause_freq_and_measure(self, val):
+    def set_freq(self, val):
         # freq() alias
         return self.freq(val)
 
@@ -614,16 +642,22 @@ class tinySA():
         self.print_message("getting frequencies from the last sweep")
         return msgbytes
 
-    def get_last_sweep_frequencies(self):
+    def get_frequencies(self):
+        # get frequencies of last sweep
         return self.frequencies()
+    
+
 
     def hop(self):
+        # this is a measurement, maybe a sample measurement. format looks like hop freqval integer
         # TODO: get documentation def of what the function is and the limits   
         # usage: hop {start(Hz)} {stop(Hz)} {step(Hz) | points} [outmask]
         # example return: ''
 
         self.print_message("Function does not exist yet. error checking needed")
         return None
+    
+
 
     def set_IF(self, val=0):
         # the IF call, but avoiding reserved keywords
@@ -806,6 +840,7 @@ class tinySA():
     
 
     def marker(self):
+        # TODO 
         # sets or dumps marker info.
         # where id=1..4 index=0..num_points-1
         # Marker levels will use the selected unit.
@@ -818,12 +853,29 @@ class tinySA():
         # usage: marker {id} on|off|peak|{freq}|{index}
         # example return: ''
                 #explicitly allowed vals
-        accepted_vals =  ["off", "minh", "maxh", "maxd", 
-                          "aver4", "aver16", "quasip"]
+        accepted_vals =  ["on", "off", "peak"]
+
 
         msgbytes =  self.error_byte_return()
         self.print_message("Function does not exist yet. error checking needed")
         return None
+    
+    def set_marker_at_freq(self, marker, freq):
+        # by freq
+        pass
+    def get_marker_value(self, val):
+        # by marker val 1-4
+        pass
+
+    def turn_on_marker(self, val):
+        # turn off marker by number
+        pass
+
+    def turn_off_marker(self, val):
+        pass
+
+
+
 
     def menu(self):
         # The menu command can be used to activate any menu item
@@ -1103,6 +1155,13 @@ class tinySA():
             # 4=stored data and points is maximum is 290
         self.print_message("Function does not exist yet. error checking needed")
         return None
+    
+    def run_scan(self):
+        # 
+        pass
+
+
+
 
     def scan_raw(self):
         # TODO: documentation for err checking
