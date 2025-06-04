@@ -306,6 +306,9 @@ class tinySA():
             self.print_message("ERROR: agc() takes vals [0 - 7]|\"auto\"")
             msgbytes = self.error_byte_return()
         return msgbytes
+    
+    def set_agc(self, val):
+        return self.agc(val)
 
     def attenuate(self, val='auto'):
         # sets the internal attenuation to automatic or a specific value
@@ -323,7 +326,10 @@ class tinySA():
             self.print_message("ERROR: attenuate() takes vals [0 - 31]|\"auto\"")
             msgbytes = self.error_byte_return()
         return msgbytes
-    
+
+    def set_attenuation(self, val):
+        return self.attenuate(val)
+
     def bulk(self):
         # sent by tinySA when in auto refresh mode
         # format: "bulk\r\n{X}{Y}{Width}{Height}
