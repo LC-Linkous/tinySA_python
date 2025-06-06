@@ -158,31 +158,6 @@ class tinySA():
 
         return msgbytes
 
-    def get_serial_return(self):
-        # while there's a buffer, read in the returned message
-        # original buffer reading from: https://groups.io/g/tinysa/topic/tinysa_screen_capture_using/82218670
-
-        buffer = bytes()
-        while True:
-            if self.ser.in_waiting > 0:
-                buffer += self.ser.read(self.ser.in_waiting)
-                try:
-                    # split the stream to take a chunk at a time
-                    # get up to '>' of the prompt
-                    complete = buffer[:buffer.index(b'>')+1]  
-                    # leave the rest in buffer
-                    buffer = buffer[buffer.index(b'ch>')+1:]  
-                except ValueError:
-                    # this is an acceptable err, so can skip it and keep looping
-                    continue 
-                except Exception as err:
-                    # otherwise, something else is wrong
-                    self.print_message("ERROR: exception thrown while reading serial")
-                    self.print_message(err)
-                    return None
-                break
-        return bytearray(complete)
-
     def clean_return(self, data):
         # takes in a bytearray and removes 1) the text up to the first '\r\n' (includes the command), an 2) the ending 'ch>'
         # Find the first occurrence of \r\n (carriage return + newline)
@@ -231,43 +206,49 @@ class tinySA():
 ######################################################################
 
     def abort(self, val=None):
-        # Sets the abortion enabled status (on/off)
+        # Sets the abort enabled status (on/off)
         # usage: abort [off|on]
         # example return: bytearray(b'')
 
-        self.print_message("ABORT function not enabled in developer's DUT")
-        msgbytes = bytearray(b'')
-        return msgbytes
-
         # #explicitly allowed vals
-        # accepted_vals =  ["off", "on"]        
+        accepted_vals =  ["off", "on"]        
 
-        # #check input
-        # if (val in accepted_vals): #toggle state
-        #     writebyte = 'abort '+str(val)+'\r\n'
-        #     msgbytes = self.tinySA_serial(writebyte, printBool=False) 
-        #     if val == "on":
-        #         self.print_message("ABORT option ENABLED")
-        #         self.abortEnabled = True
-        #     elif val == "off":
-        #         self.print_message("ABORT option DISABLED")
-        #         self.abortEnabled = False
-        # elif val == None: #action
-        #     if self.abortEnabled == True:
-        #         writebyte = 'abort\r\n'
-        #         msgbytes = self.tinySA_serial(writebyte, printBool=False) 
-        #     else:
-        #         self.print_message("ABORT option must be ENABLED before use")
-        #         msgbytes = bytearray(b'')
-        # else:
-        #     self.print_message("ERROR: abort() takes NONE|\"off\"|\"on\" as arguments")
-        #     msgbytes = bytearray(b'')
-        # return msgbytes
+        #check input
+        if (val in accepted_vals): #toggle state
+            writebyte = 'abort '+str(val)+'\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            if val == "on":
+                self.print_message("ABORT option ENABLED")
+                self.abortEnabled = True
+            elif val == "off":
+                self.print_message("ABORT option DISABLED")
+                self.abortEnabled = False
+        elif val == None: #action
+            if self.abortEnabled == True:
+                writebyte = 'abort\r\n'
+                msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            else:
+                self.print_message("ABORT option must be ENABLED before use")
+                msgbytes = bytearray(b'')
+        else:
+            self.print_message("ERROR: abort() takes NONE|\"off\"|\"on\" as arguments")
+            msgbytes = bytearray(b'')
+        return msgbytes
+    
+    def enable_abort(self):
+        # alias for abort()
+        return self.abort( "on")
+    def disable_abort(self):
+        # alias for abort()
+        return self.abort("off")
+    def abort_action(self):
+        # alias for abort()
+        return self.abort()
 
     def actual_freq(self, val=None):
         # Sets or gets the frequency correction set by CORRECT FREQUENCY menu in the expert menu settings
         # related to freq_corr
-        # usage: actual_freq [{frequency in Hz}]
+        # usage: actual_freq [{frequency}]
         # example return: bytearray(b'3000000000\r')
 
         if val == None:
@@ -284,9 +265,10 @@ class tinySA():
         return msgbytes
 
     def set_actual_freq(self, val):
-        return self.actual_freq(val)
-      
+        # alias for actual_freq()
+        return self.actual_freq(val)      
     def get_actual_freq(self):
+        # alias for actual_freq()
         return self.actual_freq(None)
     
 
@@ -308,6 +290,7 @@ class tinySA():
         return msgbytes
     
     def set_agc(self, val):
+        # alias for agc()
         return self.agc(val)
 
     def attenuate(self, val='auto'):
@@ -328,6 +311,7 @@ class tinySA():
         return msgbytes
 
     def set_attenuation(self, val):
+        # alias for attenuate()
         return self.attenuate(val)
 
     def bulk(self):
@@ -338,9 +322,14 @@ class tinySA():
         # bytes little endian. The Pixeldata is
         # encoded as 2 bytes per pixel
 
-        self.print_message("BULK function not enabled in developer's DUT")
-        msgbytes = bytearray(b'')
+        writebyte = 'bulk\r\n'
+        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        self.print_message("capture() called for screen data")   
         return msgbytes
+
+    def get_bulk_data(self):
+        # alias for bulk()
+        return self.bulk()
 
     def calc(self, val="off"):
         # sets or cancels one of the measurement modes
@@ -377,7 +366,7 @@ class tinySA():
     def set_calc_quasip(self):
         return self.calc("quasip")
 
-    def caloutput(self, val="off"):
+    def cal_output(self, val="off"):
         # disables or sets the caloutput to a specified frequency in MHz
         # usage: caloutput off|30|15|10|4|3|2|1
         # example return: bytearray(b'')
@@ -394,6 +383,32 @@ class tinySA():
             msgbytes = self.error_byte_return()
         return msgbytes
     
+    def set_cal_output_off(self):
+        # alias for cal_output()
+        return self.caloutput("off")
+    def set_cal_output_30(self):
+        # alias for cal_output()
+        return self.caloutput(30)
+    def set_cal_output_15(self):
+        # alias for cal_output()
+        return self.caloutput(15)
+    def set_cal_output_10(self):
+        # alias for cal_output()
+        return self.caloutput(10)       
+    def set_cal_output_4(self):
+        # alias for cal_output()
+        return self.caloutput(4)
+    def set_cal_output_3(self):
+        # alias for cal_output()
+        return self.caloutput(3)
+    def set_cal_output_2(self):
+        # alias for cal_output()
+        return self.caloutput(2)
+    def set_cal_output_1(self):
+        # alias for cal_output()
+        return self.caloutput(1)
+
+    
     def capture(self):
         # requests a screen dump to be sent in binary format 
         # of 320x240 pixels of each 2 bytes
@@ -403,6 +418,9 @@ class tinySA():
         msgbytes = self.tinySA_serial(writebyte, printBool=False) 
         self.print_message("capture() called for screen data")   
         return msgbytes
+    
+    def capture_screen(self):
+        return self.capture()
 
     def clear_config(self):
         # resets the configuration data to factory defaults. requires password
@@ -416,6 +434,11 @@ class tinySA():
         self.print_message("clear_config() with password. Config and all cal data cleared. \
                           Reset manually to take effect.")
         return msgbytes
+    
+    def clear_and_reset(self):
+        # alias function for full clear and reset process
+        self.clear_config()
+        self.reset()
 
     def color(self, ID=None, RGB='0xF8FCF8'):
         # sets or dumps the colors used
@@ -438,6 +461,31 @@ class tinySA():
             self.print_message("ERROR: color() takes either None, or ID as int 0..31 and RGB as a hex value")
             msgbytes = self.error_byte_return()
         return msgbytes
+    
+    def get_all_colors(self):
+        # alias for color(). returns array of all colors
+        return self.color()
+    
+    def get_color(self, ID):
+        # alias for color(). val must be int 1-31
+        msgbytes = self.color()
+        # check if something has been returned, otherwise pass the error through
+        if len(msgbytes) > 10:
+            # Use regex to find the value at index ID
+            pattern = rf'\b{int(ID)}:\s*0x([0-9A-Fa-f]+)'
+            match = re.search(pattern, msgbytes)
+            if match:
+                return f"0x{match.group(1)}" #return rgb24 value if found
+        
+            # if not found, then 
+            self.print_message("ERROR: color() takes either None, or ID as int 0..31 and RGB as a hex value")
+            msgbytes = self.error_byte_return()
+        return msgbytes
+   
+    def set_color(self, ID, val):
+        # alias for color()
+        return self.color(ID, val)
+
 
     def command(self, val):
         # if the command isn't already a function,
@@ -494,7 +542,6 @@ class tinySA():
         #TODO ADD the CORRECTION setter shortcuts here.     
 
 
-
     def dac(self, val=None):
         # sets or dumps the dac value
         # usage: dac [0..4095]
@@ -505,17 +552,19 @@ class tinySA():
             writebyte = 'dac\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)   
         elif (isinstance(val, int)) and (0<= val <=4095):
-            writebyte = 'dac '+str(id)+'\r\n'
+            writebyte = 'dac '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)   
-            self.print_message("dac set to " + str(id))
+            self.print_message("dac set to " + str(val))
         else:
             self.print_message("ERROR: dac() takes either None or integers")
             msgbytes = self.error_byte_return()
         return msgbytes
     
     def set_dac(self, val):
+        # alias for dac()
         return self.dac(val)
     def get_dac(self):
+        # alias for dac()
         return self.dac()
     
 
@@ -543,16 +592,18 @@ class tinySA():
             msgbytes = self.error_byte_return()
         return msgbytes
     
-    def get_data_temp(self):
+    def get_temp_data(self):
+        # alias func for data()
         return self.data(val=0)
-    def get_data_stored_trace(self):
+    def get_stored_trace_data(self):
+        # alias func for data()
         return self.data(val=1)
-    def dump_data_measurement(self):
+    def dump_measurement_data(self):
+        # alias func for data()
         return self.data(val=2)
 
 
-
-    def device_id(self, id=None):
+    def device_id(self, ID=None):
         # sets or dumps a user settable number that can be used to identify a specific tinySA
         # usage: deviceid [{number}]
         # example return: bytearray(b'deviceid 12\r')
@@ -562,13 +613,22 @@ class tinySA():
             writebyte = 'deviceid\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)   
         elif isinstance(id, int):
-            writebyte = 'deviceid '+str(id)+'\r\n'
+            writebyte = 'deviceid '+str(ID)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)   
-            self.print_message("device ID set to " + str(id))
+            self.print_message("device ID set to " + str(ID))
         else:
             self.print_message("ERROR: device_id() takes either None or integers")
             msgbytes = self.error_byte_return()
         return msgbytes
+
+    def get_device_id(self):
+        # alias for device_id()
+        return self.device_id()
+
+    def set_device_id(self, ID):
+        # alias for device_id()
+        return self.device_id(ID)
+
 
     def direct(self):
         # ??
@@ -1500,9 +1560,9 @@ class tinySA():
             writebyte = 'vbat_offset\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)   
         elif (isinstance(val, int)) and (0<= val <=4095):
-            writebyte = 'vbat_offset '+str(id)+'\r\n'
+            writebyte = 'vbat_offset '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)   
-            self.print_message("vbat_offset set to " + str(id))
+            self.print_message("vbat_offset set to " + str(val))
         else:
             self.print_message("ERROR: vbat_offset() takes either None or [0 - 4095] integers")
             msgbytes = self.error_byte_return()
