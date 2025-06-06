@@ -136,6 +136,11 @@ To start, a serial connection between the tinySA and user PC device must be crea
 #### Autoconnection with the tinySA_python Library
 
 
+The tinySA_python currently has some autodetection capabilities, but these are new and not very complex. If multiple devices have the same VID, then the first one found is used. If you are connecting multiple devices to a user PC, then it is suggested to connect them manually (for now).
+
+
+
+
 ```python
 
 
@@ -520,20 +525,32 @@ Quick Link Table:
 | [touchcal](#touchcal) | [touchtest](#touchtest) | [trace](#trace)     | [trigger](#trigger)  | [ultra](#ultra)   | [usart_cfg](#usart_cfg)     | [vbat](#vbat)     |
 | [vbat_offset](#vbat_offset) | [version](#version) | [wait](#wait)        | [zero](#zero)     |                         |                     |                      |
 
+
+### **abort**
+* **Description:** Sets the abortion enabled status (on/off) or aborts the previous command.
+* **Original Usage:** `abort [off|on]`
+* **Direct Library Function Call:** `abort(val=None|"off"|"on")` 
+* **Example Return:** ????
+* **Alias Functions:**
+    * `enable_abort()`
+    * `disable_abort()`
+    * `abort_action()`
+* **CLI Wrapper Usage:**
+* **Notes:** WARNING: DOES NOT ON DEVELOPER'S DUT. When used without parameters the previous command still running will be aborted. Abort must be enabled before using the "abort on" command. Additional error checking has been added with the 'verbose' option. 
+
 ### **actual_freq**
-* **Status:** Getting works, setting does not.
-* **Description:**  Gets the frequency correction set by CORRECT FREQUENCY menu in the expert menu settings
-* **Original Usage:** `actual_freq [{frequency in Hz}]`
+* **Description:**  Sets and gets the frequency correction set by CORRECT FREQUENCY menu in the expert menu settings
+* **Original Usage:** `actual_freq [{frequency}]`
 * **Direct Library Function Call:** `actual_freq(val=None|Int)`
 * **Example Return:** 3000000000
 * **Alias Functions:**
     * `set_actual_freq(val=Int)`
     * `set_actual_freq()`
 * **CLI Wrapper Usage:**
-* **Notes:**  freq in Hz going by the returns. Should be able to set the value with this, according to documentation, but its probably a format issue in the library.
+* **Notes:**  freq in Hz going by the returns. Should be able to set the value with this, according to documentation, but it doesn't appear to set with the development DUT. 
+
 
 ### **agc**
-* **Status:** Done
 * **Description:**  Enables/disables the build in Automatic Gain Control
 * **Original Usage:** `agc 0..7|auto`
 * **Direct Library Function Call:** `agc(val="auto"|0..7)`
@@ -543,8 +560,8 @@ Quick Link Table:
 * **CLI Wrapper Usage:**
 * **Notes:** 
 
+
 ### **attenuate**
-* **Status:** Done
 * **Description:** Sets the internal attenuation
 * **Original Usage:** `attenuate [auto|0-31]`
 * **Direct Library Function Call:** `attenuate(val="auto"|0..31)`
@@ -556,26 +573,30 @@ Quick Link Table:
 
 
 ### **bulk**
-* **Status:** TODO
 * **Description:** Sent by tinySA when in auto refresh mode
-* **Original Usage:** `????`
+* **Original Usage:** `bulk`
 * **Direct Library Function Call:** `bulk()`
 * **Example Return:** `format: "bulk\r\n{X}{Y}{Width}{Height} {Pixeldata}\r\n"`
 * **Alias Functions:**
-    *  
+    *  `get_bulk_data()`
 * **CLI Wrapper Usage:**
 * **Notes:** 
- All numbers are binary coded 2 bytes little endian. The pixel data is encoded as 2 bytes per pixel           
+ All numbers are binary coded 2 bytes little endian. The pixel data is encoded as 2 bytes per pixel. This is data returned by the device when in AUTO REFRESH mode. NOTE: may need to be paired with a continious buffer read and dump, which will be tested in the next           
             
 
 ### **calc**
-* **Status:** Done
 * **Description:** Sets or cancels one of the measurement modes
 * **Original Usage:** `calc off|minh|maxh|maxd|aver4|aver16|quasip`
 * **Direct Library Function Call:** `calc(val="off"|"minh"|"maxh"|"maxd"|"aver4"|"aver16"|"quasip")`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * `set_calc_off()`
+    * `set_calc_minh()` 
+    * `set_calc_maxh()` 
+    * `set_calc_maxd()` 
+    * `set_calc_aver4()` 
+    * `set_calc_aver16()` 
+    * `set_calc_quasip()` 
 * **CLI Wrapper Usage:**
 * **Notes:** 
   * the commands are the same as those listed in the MEASURE menu
@@ -586,97 +607,116 @@ Quick Link Table:
     * MAX DECAY sets the display to hold the maximum value measured for a certain number of scans after which the maximum will start to decay. The default number of scans to hold is 20. This default can be changed in the SETTINGS menu. This setting is used instead of MAX HOLD to reduce the impact of spurious signals 
     * AVER 4 sets the averaging to new_measurement = old_measurement*3/4+measured_value/4. By default the averaging is linear power averaging 
     * AVER 16 sets the averaging to new_measurement = old_measurement*15/16+measured_value/16. By default the averaging is linear power averaging 
+    * QUASSIP sets a quasi peak hold mode
+    * [Official CALC documentation](https://tinysa.org/wiki/pmwiki.php?n=Main.CALC)
+
 
 ### **caloutput**
-* **Status:** Done
-* **Description:** Disables or sets the caloutput to a specified frequency in MHz
+* **Description:** Disables or sets the caloutput to a specified frequency in MHz. Reference signal.
 * **Original Usage:** `caloutput off|30|15|10|4|3|2|1`
-* **Library Function :**  `caloutput(val="off"|30|15|10|4|3|2|1)`
+* **Library Function :**  `cal_output(val="off"|30|15|10|4|3|2|1)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * `set_cal_output_off()`
+    * `set_cal_output_30()`
+    * `set_cal_output_15()`
+    * `set_cal_output_10()`
+    * `set_cal_output_4()`
+    * `set_cal_output_3()`
+    * `set_cal_output_2()`
+    * `set_cal_output_1()`
 * **CLI Wrapper Usage:**
-* **Notes:** 
+* **Notes:** "controls the build in calibration reference generator. The output of the reference generator is connected to CAL connector. The output frequency can be 1,2,4,10,15 and 30MHz and the output level of the fundamental at 30MHz is -35.6dBm" - From [https://tinysa.org/wiki/pmwiki.php?n=TinySA4.MODE](https://tinysa.org/wiki/pmwiki.php?n=TinySA4.MODE)
+
 
 ### **capture**
-* **Status:** Done
 * **Description:** Requests a screen dump to be sent in binary format of HEIGHTxWIDTH pixels of each 2 bytes
 * **Original Usage:** `capture`
 * **Direct Library Function Call:** `capture()`
 * **Example Return:** `format:'\x00\x00\x00\x00\x00\x00\x00\...x00\x00\x00'`
 * **Alias Functions:**
-    * 
+    * `capture_screen()`
 * **CLI Wrapper Usage:**
-* **Notes:** tinySA original: 320x240, tinySA Ultra: 480x320 
+* **Notes:** tinySA original: 320x240, tinySA Ultra and newer: 480x320  
+
 
 ### **clearconfig**
-* **Status:** Done
 * **Description:** Resets the configuration data to factory defaults
-* **Original Usage:** `clearconfig`
-* **Direct Library Function Call:** `clearconfig()`
+* **Original Usage:** `clear config`
+* **Direct Library Function Call:** `clear_config()`
 * **Example Return:** `b'Config and all calibration data cleared. \r\n Do reset manually to take effect. Then do touch calibration and save.\r'`
 * **Alias Functions:**
-    * 
+    * `clear_and_reset()`
 * **CLI Wrapper Usage:**
 * **Notes:** Requires password '1234'. Hardcoded. Other functions need to be used with this to complete the process.
 
+
 ### **color**
-* **Status:** Done
-* **Description:** Sets or gets the colors used
+* **Description:** Sets or gets colors of traces and other elements on the spectrum analyzer display. Colors must be in 24-bit RGB color value format.
 * **Original Usage:** `color [{id} {rgb24}]`
 * **Direct Library Function Call:** `color(ID=None|0..31, RGB=None(default:'0xF8FCF8')|'0x000000'..'0xFFFFFF')`
-* **Example Return:** If ID='None' used:  
+* **Example Return:** 
+   * If ID='None' used:  
 `0: 0x000000\r\n  1: 0xF8FCF8\r\n  2: 0x808080\r\n  3: 0xE0E4E0\r\n  4: 0x000000\r\n  5: 0xD0D0D0\r\n  6: 0xF8FC00\r\n  7: 0x40FC40\r\n  8: 0xF800F8\r\n  9: 0xF84040\r\n 10: 0x18E000\r\n 11: 0xF80000\r\n 12: 0x0000F8\r\n 13: 0xF8FCF8\r\n 14: 0x808080\r\n 15: 0x00FC00\r\n 16: 0x808080\r\n 17: 0x000000\r\n 18: 0xF8FCF8\r\n 19: 0x0000F8\r\n 20: 0xF88080\r\n 21: 0x00FC00\r\n 22: 0x888C88\r\n 23: 0xD8DCD8\r\n 24: 0x282828\r\n 25: 0xC0C4C0\r\n 26: 0xF8FCF8\r\n 27: 0x00FC00\r\n 28: 0x00FCF8\r\n 29: 0xF8FC00\r\n 30: 0x000000\r\n 31: 0x000000\r'`
+   * If ID = '15' used: `0x00FC00`
+``
 * **Alias Functions:**
-    * 
+    * `get_all_colors()`
+    * `get_marker_color(ID=Int|0..31)`
+    * `set_marker_color(ID=Int|0..31, col=rgb24)`
 * **CLI Wrapper Usage:**
-* **Notes:**  the hex value currently must be passed in as a string
+* **Notes:**  the rgb24 hex value currently must be passed in as a string
+
 
 ### **correction**
-* **Status:** Done
 * **Description:** Sets or gets the frequency level correction table
 * **Original Usage:** `correction {low|lna|ultra|ultra_lna|direct|direct_lna|harm|harm_lna|out|out_direct|out_adf|out_ultra|off|on} [{0-19} {frequency(Hz)} {value(dB)}]`
-* **Direct Library Function Call:** `correct(tableName, slot, freq, val)`
+* **Direct Library Function Call:** `correction(tableName, slot, freq, val)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * TODO!!
 * **CLI Wrapper Usage:**
 * **Notes:**  See [Correction Wiki](https://tinysa.org/wiki/pmwiki.php?n=Main.Correction). The current content of the table is shown by entering `correction low` without any arguments. The data in the table can be modified by specifying the slot number and the new values. There **MUST** be one entry in the low table for 30MHz and the correction for that frequency **MUST** be zero. 
 * **Future Work:** **Confirm table format across devices**. Value currently limited between -10 and 35, but this needs to be more specific.
 
 ### **dac**
-* **Status:** Done
 * **Description:** Sets or gets the dac value
 * **Original Usage:** `dac [0..4095]`
-* **Library Function Call(s):** `dac(val=None|0..4095)`
+* **Library Function Call(s):** `dac(val=None/Int|0..4095)`
 * **Example Return:** `b'usage: dac {value(0-4095)}\r\ncurrent value: 1922\r'`
 * **Alias Functions:**
-    * 
+    * `set_dac(val=Int|0...4095)`
+    * `get_dac()`
 * **CLI Wrapper Usage:**
 * **Notes:** 
 
 ### **data**
-* **Status:** Done
 * **Description:** Gets the trace data
 * **Original Usage:** `data 0..2`
 * **Direct Library Function Call:** `data(val=0|1|2)`
 * **Example Return:** `format bytearray(b'7.593750e+00\r\n-8.437500e+01\r\n-8.693750e+01\r\n...\r')`
 * **Alias Functions:**
-    * 
+    * `get_temp_data()`
+    * `get_stored_trace_data()`
+    * `dump_measurement_data()`
 * **CLI Wrapper Usage:**
 * **Notes:**   0 = temp value, 1 = stored trace, 2 = measurement. strength in decibels (dB) 
        
           
-### **deviceid**
-* **Status:** Done
+### **device_id**
 * **Description:** Sets or gets a user settable integer number ID that can be use to identify a specific tinySA connected to the PC
 * **Original Usage:** `deviceid [{number}]`
-* **Direct Library Function Call:** `deviceid(id=None|{int number})`
+* **Direct Library Function Call:** `deviceid(ID=None/Int)`
 * **Example Return:** `'deviceid 0\r'`
 * **Alias Functions:**
-    * 
+    * `get_device_id()`
+    * `set_device_id(ID=Int|0....)`
 * **CLI Wrapper Usage:**
 * **Notes:** 
+
+
+       
+# First Pass for Updates Done up to Here!!!!
 
 ### **direct**
 * **Status:** TODO
@@ -1345,13 +1385,7 @@ usart
 
 ## List of Commands Removed from Library
 
-### **abort**
-* **Status:** REMOVED. NOT ON DEVELOPER'S DUT
-* **Description:**  Sets the abortion enabled status (on/off) or aborts the previous command.
-* **Original Usage:** `abort [off|on]`
-* **Direct Library Function Call:** `abort(val=None|"off"|"on")` 
-* **Example Return:** ????
-* **Notes:** When used without parameters the previous command still running will be aborted. Abort must be enabled before using the "abort on" command. Additional error checking has been added with the 'verbose' option. 
+
 
 ### **lna2**
 * **Status:** REMOVED until more documentation is confirmed
@@ -1381,6 +1415,13 @@ usart
 
 ## Additional Library Functions for Advanced Use
 
+
+    def command(self, val):
+        # if the command isn't already a function,
+        #  use existing func setup to send command
+        writebyte = str(val) + '\r\n'
+        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        self.print_message("command() called with ::" + str(val))   
 
 
 
@@ -1515,6 +1556,8 @@ LNA -
 * [tinySA HomePage](https://tinysa.org/wiki/)  https://www.tinysa.org/wiki/
     * [tinySA PC control](https://tinysa.org/wiki/pmwiki.php?n=Main.PCSW) 
         * https://tinysa.org/wiki/pmwiki.php?n=Main.PCSW 
+    * [tinySA USB Interface page](https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface_)
+        * https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface
     * [tinySA list of general pages](https://tinysa.org/wiki/pmwiki.php?n=Main.PageList) 
         * https://tinysa.org/wiki/pmwiki.php?n=Main.PageList
 
@@ -1523,6 +1566,14 @@ LNA -
 * https://groups.io/g/tinysa/topic/tinysa_screen_capture_using/82218670
 * The firmware on github at https://github.com/erikkaashoek/tinySA
     * https://github.com/erikkaashoek/tinySA/blob/main/main.c
+
+
+* Websites that have been trawled through for random scraps of information:
+    * [https://www.passion-radio.fr/](https://www.passion-radio.fr/)
+        * They have a 'TinySA Menu Tree' PDF doc that has been very useful
+    * [The main TinySA GitHub](https://github.com/erikkaashoek/tinySA/)
+        * [main.c][https://github.com/erikkaashoek/tinySA/blob/434126dcc6eed40e4e9ba3d7ef67e17e0370c38f/main.c]
+
 
 ## Publications and Integration
 This API was written to support the work in:
@@ -1533,6 +1584,12 @@ Other publications featuring the code in this repo will be added as they become 
 
 ## Licensing
 
-The code in this repository has been released under GPL-2.0 for lack of better idea right now. This licensing does not take priority over the official releases and the decisions of the tinySA team.
+The code in this repository has been released under GPL-2.0 for lack of better idea right now (and to have something in place rather than nothing). This licensing does NOT take priority over the official releases and the decisions of the tinySA team. This licensing does NOT take priority for any of their products, including the devices that can be used with this software. 
+
+
+This software is released AS-IS, meaning that there may be bugs (especially as it is under development). 
+
+
+This software is UNOFFICIAL, meaning that the tinySA team does not offer tech support for it, does not maintain it, and has no responsibility for any of the contents. 
 
 
