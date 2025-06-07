@@ -851,6 +851,11 @@ class tinySA():
             msgbytes =  self.error_byte_return()
         return msgbytes
 
+    def set_level(self, val):
+        # alias for level()
+        return self.level(val)
+
+
     def level_change(self, val):
         # sets the output level delta for low output mode level sweep
         # usage: levelchange -70..+70
@@ -869,6 +874,11 @@ class tinySA():
             msgbytes =  self.error_byte_return()
         return msgbytes
 
+    def set_level_change(self, val):
+        # alias for level_change()
+        return self.level_change(val)
+
+
     def level_offset(self):
         # sets or dumps the level calibration data.
         # For the output corrections first ensure correct output 
@@ -881,22 +891,35 @@ class tinySA():
         # error = measured level - specified level
 
 
-        #explicitly allowed vals
-        accepted_vals =  ["off", "minh", "maxh", "maxd", 
-                          "aver4", "aver16", "quasip"]
-
         # usage: leveloffset low|high|switch [output] {error}
         msgbytes =  self.error_byte_return()
         self.print_message("Function does not exist yet. error checking needed")
         return None
 
-    def line(self):
-        # TODO: get documentation blurb for error checking
-        # usage: line off|{level}\
+    def line(self, val):
+        # Disables the horizontal line or sets it to a specific level.
+        # usage: line off|{level}
         # example return: ''
-        msgbytes =  self.error_byte_return()        
-        self.print_message("Function does not exist yet. error checking needed")
-        return None
+        if (val=="off"):
+            writebyte = 'line '+str(val)+'\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)    
+            self.print_message("horizontal line turned off")
+        elif (isinstance(val, int)) or (isinstance(val, float)):    
+            writebyte = 'line '+str(val)+'\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)    
+            self.print_message("horizontal line turned off")  
+        else:
+            self.print_message("ERROR: line takes arguments 'off' or {level\}")
+            msgbytes = self.error_byte_return()
+        return msgbytes
+    
+    def line_off(self):
+        # alias for line
+        return self.line("off")
+
+    def set_line(self, val):
+        # alias for line
+        return self.line(val)
 
     def load(self, val=0):
         # loads a previously stored preset,where 0 is the startup preset 
@@ -941,31 +964,29 @@ class tinySA():
 
 
     def lna2(self, val="auto"):
-        self.print_message("ERROR: lna2() removed until more documentation found")
-        return self.error_byte_return()
-        # # TODO: get documentation details for any error checking
-        # # usage: lna2 0..7|auto
-        # # example return: ''
+        # Set the second LNA usage off/on. 
+        # The Ultra Plus devices have a 2nd LNA at a higher frequency range.
+        # usage: lna2 0..7|auto
+        # example return: ''
 
-        # #explicitly allowed vals
-        # accepted_vals =  [0,1,2,3,4,5,6,7]
-        # #check input
-        # if (val == "auto") or (val in accepted_vals):
-        #     writebyte = 'lna2 '+str(val)+'\r\n'
-        #     msgbytes = self.tinySA_serial(writebyte, printBool=False)     
-        #     self.print_message("lna2() set to " + str(val))      
-        # else:
-        #     self.print_message("ERROR: lna2() takes vals [0 - 7]|auto")
-        #     msgbytes = self.error_byte_return()
-        # return msgbytes
+        #explicitly allowed vals
+        accepted_vals =  [0,1,2,3,4,5,6,7]
+        #check input
+        if (val == "auto") or (val in accepted_vals):
+            writebyte = 'lna2 '+str(val)+'\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)     
+            self.print_message("lna2() set to " + str(val))      
+        else:
+            self.print_message("ERROR: lna2() takes vals [0 - 7]|auto")
+            msgbytes = self.error_byte_return()
+        return msgbytes
 
     def set_lna2(self, val):
         #alias for lna2()
         return self.lna2(val) 
     
 
-    def marker(self):
-        # TODO 
+    def marker(self, ID, val):
         # sets or dumps marker info.
         # where id=1..4 index=0..num_points-1
         # Marker levels will use the selected unit.
@@ -977,40 +998,47 @@ class tinySA():
 
         # usage: marker {id} on|off|peak|{freq}|{index}
         # example return: ''
-                #explicitly allowed vals
+        #explicitly allowed vals
         accepted_vals =  ["on", "off", "peak"]
+        #check input
+        if (val in accepted_vals):
+            writebyte = 'marker ' + str(ID) + ' ' +str(val)+'\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)     
+            self.print_message("marker set to " + str(val))      
+        elif (isinstance(val, int)) or (isinstance(val, float)):  
+            writebyte = 'marker ' + str(ID) + ' ' +str(val)+'\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)     
+            self.print_message("marker set to " + str(val)) 
+        else:
+            self.print_message("ERROR: marker() takes ID=Int|0..4, and frequency or index in Int or Float")
+            msgbytes = self.error_byte_return()
+        return msgbytes
 
+    def marker_on(self, ID):
+        # alias for marker()
+        self.marker(ID, "on")
+    def marker_off(self, ID):
+        # alias for marker()
+        self.marker(ID, "off")
+    def marker_peak(self, ID):
+        # alias for marker()
+        self.marker(ID, "peak")
+    def marker_freq(self, ID, val):
+        # alias for marker()
+        self.marker(ID, val)
+    def marker_index(self, ID, val):
+        # alias for marker()
+        self.marker(ID, val)    
 
-        msgbytes =  self.error_byte_return()
-        self.print_message("Function does not exist yet. error checking needed")
-        return None
-    
-    def set_marker_at_freq(self, marker, freq):
-        # by freq
-        pass
-    def get_marker_value(self, val):
-        # by marker val 1-4
-        pass
-
-    def turn_on_marker(self, val):
-        # turn off marker by number
-        pass
-
-    def turn_off_marker(self, val):
-        pass
-
-
-
-
-    def menu(self):
+    def menu(self, val):
         # The menu command can be used to activate any menu item
         # usage: menu {#} [{#} [{#} [{#}]]]
         # example return: ''
 
-        #TODO: check documentation to see if there's any min/max vals 
-        # with those settings
-        self.print_message("Function does not exist yet. error checking needed")
-        return self.error_byte_return()
+        writebyte = 'menu ' + str(val) + '\r\n'
+        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        self.print_message("clicking menu button")
+        return msgbytes 
 
     def mode(self, val1="low", val2="input"):
         # sets the mode of the tinySA
@@ -1041,25 +1069,47 @@ class tinySA():
         # alias for mode()
         return self.mode("high", "input")
 
-    # def set_high_output_mode(self):
-    #     # alias for mode()
-    #     # TODO: ERROR CHECKING
-    #     return self.mode("high", "output")
+    def set_high_output_mode(self):
+        # alias for mode()
+        # TODO: ERROR CHECKING
+        return self.mode("high", "output")
 
-    def modulation(self):
+    def modulation(self, val):
         # sets the modulation in output mode
         # usage: modulation off|AM_1kHz|AM_10Hz|NFM|WFM|extern
         # example return: ''
 
-
         #explicitly allowed vals
-        accepted_vals =  ["off", "minh", "maxh", "maxd", 
-                          "aver4", "aver16", "quasip"]
+        accepted_vals =  ["off", "AM_1kHz", "AM_10Hz",
+                          "NFM", "WFM", "extern"]
+        #check input
+        if (val in accepted_vals):
+            writebyte = 'output '+str(val)+'\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)           
+        else:
+            self.print_message("ERROR: output() takes vals [on|off]")
+            msgbytes = self.error_byte_return()
+        return msgbytes
 
+    def set_mod_off(self):
+        # alias for modulation()
+        return self.modulation("off")
+    def set_mod_AM_1khz(self):
+        # alias for modulation()
+        return self.modulation("AM_1kHz")
+    def set_mod_AM_10Hz(self):
+        # alias for modulation()
+        return self.modulation("AM_10Hz")
+    def set_mod_NFM(self):
+        # alias for modulation()
+        return self.modulation("NFM")
+    def set_mod_WFM(self):
+        # alias for modulation()
+        return self.modulation("WFM")
+    def set_mod_extern(self):
+        # alias for modulation()
+        return self.modulation("extern")    
 
-        msgbytes =  self.error_byte_return()
-        self.print_message("Function does not exist yet. error checking needed")
-        return None
 
     def nf(self):
         # TODO: get documentation blurb to see if any error checking
@@ -1458,6 +1508,17 @@ class tinySA():
         msgbytes = self.tinySA_serial(writebyte, printBool=False) 
         self.print_message("listing files from sd card")
         return msgbytes 
+
+
+    def temp(self):
+        writebyte = 'k\r\n'
+        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        self.print_message("getting temperature")
+        return msgbytes 
+
+    def get_temp(self):
+        # alias for temp()
+        return self.temp()
 
 
     def text(self, val=""):

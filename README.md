@@ -846,124 +846,153 @@ Quick Link Table:
 * **CLI Wrapper Usage:**
 * **Notes:** 
 
-# First Pass for Updates Done up to Here!!!!
-
 ### **level**
-* **Status:** Done
 * **Description:** Sets the output level
 * **Original Usage:** `level -76..13`
-* **Direct Library Function Call:** `level(val=-76...13)`
+* **Direct Library Function Call:** `level(val=-Int|76...13)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * `set_level()`
 * **CLI Wrapper Usage:**
-* **Notes:** Not all values in the range are available.  
+* **Notes:** Not all values in the range are available.  Might be device dependent. 
 
 ### **levelchange**
-* **Status:** Done
 * **Description:** Sets the output level delta for low output mode level sweep
 * **Original Usage:** `levelchange -70..+70`
-* **Direct Library Function Call:** `levelchange(val=-70...70)`
+* **Direct Library Function Call:** `level_change(val=Int|-70...70)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * `set_level_change()`
 * **CLI Wrapper Usage:**
 * **Notes:**  
 
 ### **leveloffset**
-* **Status:** TODO
 * **Description:** Sets or gets the level calibration data
 * **Original Usage:** `leveloffset low|high|switch [output] {error}`
-* **Direct Library Function Call:**
+* **Direct Library Function Call:** `level_offset()`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * None
 * **CLI Wrapper Usage:**
-* **Notes:**  For the output corrections first ensure correct output levels at maximum output level. For the low output set the output to -50dBm and measure and correct the level with "leveloffset switch error" where For all output leveloffset commands measure the level with the leveloffset to zero and calculate error = measured level - specified level
+* **Notes:**  TODO. error checking needed
 
 ### **line**
-* **Status:** TODO
-* **Description:** 
+* **Description:** Disables the horizontal line or sets it to a specific level.
 * **Original Usage:**  `line off|{level}` 
-* **Direct Library Function Call:**
+* **Direct Library Function Call:** `line(val="off"|)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * `line_off()`
+    * `set_line(val=Int|Float)`
 * **CLI Wrapper Usage:**
 * **Notes:**   
 
 ### **load**
-* **Status:** Done
 * **Description:** Loads a previously stored preset to the connected device
 * **Original Usage:** `load 0..4`
 * **Direct Library Function Call:** `load(val=0|1|2|3|4)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * None
 * **CLI Wrapper Usage:**
 * **Notes:**  0 is the startup preset
 
 ### **lna**
-* **Status:** Done
-* **Description:** Set lna usage off/on
+* **Description:** Set LNA usage off/on. The Ultra Plus devices have a 2nd LNA at a higher frequency range.
 * **Original Usage:** `lna off|on` 
 * **Direct Library Function Call:** `lna(val="off"|"on")`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * `set_lna1_on()`
+    * `set_lna1_off()`
 * **CLI Wrapper Usage:**
 * **Notes:**  Should not be enabled when AGC is enabled - [tinySA wiki SETTINGS2](https://tinysa.org/wiki/pmwiki.php?n=Main.SETTINGS2)
+
+
+### **lna2**
+* **Status:** Set the second LNA usage off/on. The Ultra Plus devices have a 2nd LNA at a higher frequency range.
+* **Description:** ??
+* **Original Usage:** `lna2 0..7|auto`
+* **Direct Library Function Call:** `lna2(val="auto"|0..7)`
+* **Example Return:** empty bytearray
+* **Alias Functions:**
+    * `set_lna2(val="auto"|0..7)`
+* **CLI Wrapper Usage:**
+* **Notes:** 
+
+
 
 ### **marker**
 * **Status:** TODO
 * **Description:** sets or dumps marker info
-* **Original Usage:**  `marker {id} on|off|peak|{freq}| {index}`
-* **Direct Library Function Call:** `marker()`
+* **Original Usage:**  `marker {id} on|off|peak|{freq}|{index}`
+* **Direct Library Function Call:** `marker(ID=Int|0..4, val="on"|"off"|"peak")`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * `marker_on(ID=Int|1..4)`
+    * `marker_off(ID=Int|1..4)`
+    * `marker_peak(ID=Int|1..4)`
+    * `marker_freq(ID=Int|1..4)`
+    * `marker_index(ID=Int|1..4)`
 * **CLI Wrapper Usage:**
 * **Notes:**   where id=1..4 index=0..num_points-1
-Marker levels will use the selected unit Marker peak will activate the marker (if not done already), position the marker on the strongest signal and display the marker info The frequency must be within the selected sweep range mode 
+Marker levels will use the selected unit Marker peak will activate the marker (if not done already), position the marker on the strongest signal and display the marker info The frequency must be within the selected sweep range mode. Alias functions need error checking. 
+
 
 ### **menu**
-* **Status:** TODO
-* **Description:** The menu command can be used to activate any menu item based on the index of the menu item
+* **Description:** The menu command can be used to activate any menu item based on the index of the menu item. Numbers start with 1 at the top. 
 * **Original Usage:** `menu {#} [{#} [{#} [{#}]]]`
-* **Direct Library Function Call:** `menu([])`
-* **Example Return:** empty bytearray
+* **Direct Library Function Call:** `menu(val=Str)`
+* **Example Input:**
+    * `menu "6 2"` will toggle the waterfall option 
+* **Example Return:** unknown. depends on menu button 'clicked'
 * **Alias Functions:**
-    * 
+    * None
 * **CLI Wrapper Usage:**
-* **Notes:**  where # is the menu entry number starting with 1 at the top.
-Example: menu 6 2 will toggle the waterfall option 
-[tinySA Menu Tree](https://tinysa.org/wiki/pmwiki.php?n=TinySA4.MenuTree)
+* **Notes:**  [tinySA Menu Tree](https://tinysa.org/wiki/pmwiki.php?n=TinySA4.MenuTree) for more information. There's no error checking on this function due to the number of nested menus and buttons. 
 
 ### **mode**
-* **Status:** TODO
 * **Description:** Sets the mode of the tinySA
 * **Original Usage:** `mode low|high input|output`
-* **Direct Library Function Call:** `mode(freq)`
+* **Direct Library Function Call:** `mode(val1="low"|"high", val2="input"|"output")`
 * **Example Return:** empty bytearray
-* **Alias Functions:**
-    * 
+* **Alias Functions:** Currently no error checking.
+    * `set_low_input_mode()`
+    * `set_low_output_mode()`
+    * `set_high_input_mode()`
+    * `set_high_output_mode()`
 * **CLI Wrapper Usage:**
 * **Notes:**  [tinySA Wiki MODE](https://tinysa.org/wiki/pmwiki.php?n=Main.MODE)
-* LOW INPUT activates the 0.1-350MHz input mode
-* HIGH INPUT activates the 240MHz-960MHz input mode
-* LOW OUTPUT activates the 0.1-350MHz output mode
-* HIGH OUTPUT activates the 240MHz-960MHz output mode 
+    * LOW INPUT activates the 0.1-350MHz input mode
+    * HIGH INPUT activates the 240MHz-960MHz input mode
+    * LOW OUTPUT activates the 0.1-350MHz output mode
+    * HIGH OUTPUT activates the 240MHz-960MHz output mode 
+
 
 ### **modulation**
-* **Status:** TODO
 * **Description:** Set the modulation in output mode
 * **Original Usage:** `modulation off|AM_1kHz|AM_10Hz|NFM|WFM|extern`
-* **Direct Library Function Call:** `modulation()`
+* **Direct Library Function Call:** `modulation(val=off|AM_1kHz|AM_10Hz|NFM|WFM|extern)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * `set_mod_off()`
+    * `set_mod_AM_1khz()`
+    * `set_mod_AM_10Hz()`
+    * `set_mod_NFM()`
+    * `set_mod_WFM()`
+    * `set_mod_extern()`
 * **CLI Wrapper Usage:**
 * **Notes:** 
+    * OFF -  Turns modulation off. NO modulation 
+    * AM_1kHz - Set AM modulation 1 kHz
+    * AM_10Hz - Set AM modulation 10 Hz
+    * NFM - Narrow FM. sets narrow FM modulation. Width is about 3kHz. 
+    * WFM - wide FM modulation. 
+    * extern - disables the internal LO driving the mixer and enables the high input as mixer LO input. Minimum external LO input frequency is 5MHz. 
+    * [https://tinysa.org/wiki/pmwiki.php?n=Main.MODULATION](https://tinysa.org/wiki/pmwiki.php?n=Main.MODULATION)
+
+
+# First pass updated to here !!!!
 
 ### **nf**
 * **Status:** TODO
@@ -1392,14 +1421,6 @@ usart
 ## List of Commands Removed from Library
 
 
-
-### **lna2**
-* **Status:** REMOVED until more documentation is confirmed
-* **Description:** ??
-* **Original Usage:** `lna2 0..7|auto`
-* **Direct Library Function Call:** `lna2(val="auto"|0..7)`
-* **Example Return:** empty bytearray
-* **Notes:**
 
 ### **restart**
 * **Status:** REMOVED. Not recognized by DUT.
