@@ -141,10 +141,31 @@ To start, a serial connection between the tinySA and user PC device must be crea
 The tinySA_python currently has some autodetection capabilities, but these are new and not very complex. If multiple devices have the same VID, then the first one found is used. If you are connecting multiple devices to a user PC, then it is suggested to connect them manually (for now).
 
 
-
-
 ```python
 
+
+# import tinySA library
+# (NOTE: check library path relative to script path)
+from src.tinySA_python import tinySA 
+
+# create a new tinySA object    
+tsa = tinySA()
+
+# attempt to autoconnect
+found_bool, connected_bool = tsa.autoconnect()
+
+# if port found and connected, then complete task(s) and disconnect
+if connected_bool == True: # or  if success == True:
+    print("device connected")
+    tsa.set_verbose(True) #detailed messages
+    tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
+    msg = tsa.get_device_id() 
+    print(msg)
+    
+
+    tsa.disconnect()
+else:
+    print("ERROR: could not connect to port")
 
 
 ```
@@ -992,10 +1013,8 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
     * [https://tinysa.org/wiki/pmwiki.php?n=Main.MODULATION](https://tinysa.org/wiki/pmwiki.php?n=Main.MODULATION)
 
 
-# First pass updated to here !!!!
 
 ### **nf**
-* **Status:** TODO
 * **Description:** ??
 * **Original Usage:** ` `
 * **Direct Library Function Call:** ` `
@@ -1003,7 +1022,9 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Alias Functions:**
     * 
 * **CLI Wrapper Usage:**
-* **Notes:**  Check documentation on this to see if more options
+* **Notes:** 
+* The tinySA Ultra can measure, store, and validate the tinySA noise figure (NF). It can also measure amplifier (AMP) NF.  
+* "The NF is the degradation in dB of the SNR after the amplifier compared to before the amplifier." - [https://tinysa.org/wiki/pmwiki.php?n=Main.NoiseFactor](https://tinysa.org/wiki/pmwiki.php?n=Main.NoiseFactor)
 
 ### **output**
 * **Status:** Done
