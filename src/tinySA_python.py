@@ -320,11 +320,11 @@ class tinySA():
         # {Pixeldata}\r\n"
         # where all numbers are binary coded 2
         # bytes little endian. The Pixeldata is
-        # encoded as 2 bytes per pixel
+        # encoded as 2 bytes per pixel. similar to fill()
 
         writebyte = 'bulk\r\n'
         msgbytes = self.tinySA_serial(writebyte, printBool=False) 
-        self.print_message("capture() called for screen data")   
+        self.print_message("bulk() called for screen data")   
         return msgbytes
 
     def get_bulk_data(self):
@@ -629,14 +629,41 @@ class tinySA():
         # alias for device_id()
         return self.device_id(ID)
 
-
-    def direct(self):
-        # ??
+    def direct(self, val, freq):
+        # Output mode for generating a square wave signal between 830MHz and 1130MHz
         # usage: direct {start|stop|on|off} {freq(Hz)}
         # example return: ''
 
-        self.print_message("Function does not exist yet. error checking needed")
-        return None
+        #explicitly allowed vals
+        accepted_vals =  ["start", "stop",
+                           "on", "off"]
+        #check input
+        if (val=="on") or (val =="off"):
+            writebyte = 'direct '+str(val)+'\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)     
+            self.print_message("direct() set with " + str(val))
+        elif (val=="start") or (val=="stop"):
+            #TODO: add frequency checking here
+            writebyte = 'direct '+str(val)+' ' +str(freq)+ '\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)     
+            self.print_message("direct() set with " + str(val) + "frequency of " + str(freq))            
+        else:
+            self.print_message("ERROR: direct() takes val={'on', 'off', 'start', 'stop'}, freq=INT")
+            msgbytes = self.error_byte_return()
+        return msgbytes
+
+    def set_direct_on(self):
+        # alias for direct()
+        return self.direct("on")
+    def set_direct_off(self):
+        # alias for direct()
+        return self.direct("off")
+    def set_direct_start(self, freq):
+        # alias for direct()
+        return self.direct("start", freq)
+    def set_direct_stop(self, freq):
+        # alias for direct()
+        return self.direct("stop", freq)
 
     def ext_gain(self, val):
         # sets the external attenuation/amplification.
@@ -653,16 +680,27 @@ class tinySA():
             self.print_message("ERROR: ext_gain() takes vals [-100 - 100]")
             msgbytes = self.error_byte_return()
         return msgbytes
+    
+    def set_ext_gain(self, val):
+        # alias for ext_gain()
+        return self.ext_gain(val)
+
 
     def fill(self):
         # sent by tinySA when in auto refresh mode
         # format: "fill\r\n{X}{Y}{Width}{Height}
         # {Color}\r\n"
         # where all numbers are binary coded 2
-        # bytes little endian.
+        # bytes little endian. Similar ot bulk()
 
-        self.print_message("Function does not exist yet. error checking needed")
-        return None
+        writebyte = 'fill\r\n'
+        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        self.print_message("fill() called for screen data")   
+        return msgbytes
+    
+    def get_fill_data(self):
+        # alias for fill()
+        return self.fill()
 
     def freq(self, val):
         # pauses the sweep and sets the measurement frequency.
@@ -708,21 +746,38 @@ class tinySA():
         self.print_message("getting frequencies from the last sweep")
         return msgbytes
 
-    def get_frequencies(self):
+    def get_last_freqs(self):
         # get frequencies of last sweep
         return self.frequencies()
     
 
-
-    def hop(self):
+    def hop(self, start, stop, inc, outmask=None):
         # this is a measurement, maybe a sample measurement. format looks like hop freqval integer
-        # TODO: get documentation def of what the function is and the limits   
         # usage: hop {start(Hz)} {stop(Hz)} {step(Hz) | points} [outmask]
+        # outmask: 1 is frequency, 2 is level
         # example return: ''
 
-        self.print_message("Function does not exist yet. error checking needed")
+        if (isinstance(start, int)) and (isinstance(stop, int)) and (isinstance(inc, int)):
+            if (isinstance(outmask, int)) and (0<outmask<3):
+                writebyte = 'hop ' + str(start) + ' ' + str(stop) 
+                + ' ' + str(inc) + ' ' + str(outmask) + '\r\n'
+
+            elif outmask ==None:
+                writebyte = 'hop ' + str(start) + ' ' + str(stop) 
+                + ' ' + str(inc) + '\r\n'
+
+            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            self.print_message("sampling over frequency range")
+            return msgbytes
+
+        else: 
+            self.print_message("hop() takes arguments start=Int, stop=Int, inc=Int, outmask=None|Int")
+
         return None
     
+    def get_sample_pts(self, start, stop, pts):
+        # alias for hop()
+        return self.hop(start, stop, pts, outmask=1)
 
 
     def set_IF(self, val=0):
@@ -736,7 +791,7 @@ class tinySA():
             writebyte = 'if '+str(0)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)        
             self.print_message("setIF() set to auto")
-        elif ((433*10**6) <=val <=(435*10**6)):
+        elif ((433e6) <=val <=(435e6)):
             writebyte = 'if '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)                 
             self.print_message("setIF() set to "  + str(val))       
@@ -746,7 +801,6 @@ class tinySA():
         return msgbytes
 
     def set_IF1(self, val):
-        # TODO: get official documentation blurb
         # usage: if1 {975M..979M}\r\n977.555902MHz
         # example return: ''
 
@@ -755,7 +809,7 @@ class tinySA():
             writebyte = 'if1 '+str(0)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)      
             self.print_message("setIF1() set to auto")         
-        elif ((975*10**6) <=val <=(979*10**6)):
+        elif ((975e6) <=val <=(979e6)):
             writebyte = 'if1 '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)   
             self.print_message("setIF() set to "  + str(val))          
@@ -774,6 +828,11 @@ class tinySA():
         self.print_message("returning device info()")
         return msgbytes 
     
+    def get_info(self):
+        # alias for info()
+        return self.info()
+
+
     def level(self, val):
         # sets the output level. Not all values in the range are available
         # usage: level -76..13
@@ -1055,7 +1114,7 @@ class tinySA():
         if (val == "auto"):
             writebyte = 'rbw '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)                
-        elif (isinstance(val, int)) and (3*10**3<= val <=600*10**3):
+        elif (isinstance(val, int)) and (3e3<= val <=600e3):
             writebyte = 'rbw '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)           
         else:
