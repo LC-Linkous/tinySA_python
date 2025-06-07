@@ -69,6 +69,8 @@ There is also a very active tinySA community at [https://groups.io/g/tinysa](htt
 
 The end of this README will have some references and links to supporting material, but it is STRONGLY suggested to do some basic research and become familiar with your device before attempting to script or write code for it. 
 
+
+
 ## Requirements
 
 This project requires numpy, pandas and pyserial. 
@@ -715,132 +717,136 @@ Quick Link Table:
 * **Notes:** 
 
 
-       
-# First Pass for Updates Done up to Here!!!!
-
 ### **direct**
-* **Status:** TODO
-* **Description:** ??
+* **Description:** Output mode for generating a square wave signal between 830MHz and 1130MHz
 * **Original Usage:** `direct {start|stop|on|off} {freq(Hz)}`
-* **Direct Library Function Call:** `direct()`
+* **Direct Library Function Call:** `direct(val, freq=None|Int)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * `set_direct_on()`
+    * `set_direct_off()`
+    * `set_direct_start(freq=Int)`
+    * `set_direct_stop(freq=Int)`
 * **CLI Wrapper Usage:**
 * **Notes:** 
+    * NOTE: no frequency checking is done for this function yet.
+    * might be tinySA Ultra annd newer only.
+    * Related to NORMAL, DIRECT, ADF, and MIXER
+    * [https://tinysa.org/wiki/pmwiki.php?n=TinySA4.OutputCurveEdit](https://tinysa.org/wiki/pmwiki.php?n=TinySA4.OutputCurveEdit)
+
 
 ### **ext_gain**
-* **Status:** Done
 * **Description:** Sets the external attenuation/amplification
 * **Original Usage:** `ext_gain -100..100`
-* **Direct Library Function Call:** `ext_gain(val=-100...100)`
+* **Direct Library Function Call:** `ext_gain(val=Int|-100...100)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * `set_ext_gain(val=Int|-100...100)`
 * **CLI Wrapper Usage:**
 * **Notes:** * Works in both input and output mode
 
+
 ### **fill**
-* **Status:** TODO
 * **Description:** Sent by tinySA when in auto refresh mode
 * **Original Usage:**
-* **Library Function Call:**
+* **Direct Library Function Call:**
 * **Example Return:** `format: "fill\r\n{X}{Y}{Width}{Height} {Color}\r\n"`
 * **Alias Functions:**
-    * 
+    * `get_fill_data()`
 * **CLI Wrapper Usage:**
-* **Notes:**  All numbers returned are binary coded 2 bytes little endian. Similar to 'bulk'???
+* **Notes:**  All numbers returned are binary coded 2 bytes little endian. Similar to `bulk`
+
 
 ### **freq**
-* **Status:** Done
-* **Description:** Pauses the sweep and sets the measurement frequency in Hz.
+* **Description:** Pauses the sweep and sets the measurement frequency
 * **Original Usage:** `freq {frequency}`
-* **Direct Library Function Call:** `freq()`
+* **Direct Library Function Call:** `freq(val=Int)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * `set_freq(val=Int)`
 * **CLI Wrapper Usage:**
-* **Notes:**   
+* **Notes:** Might need to `resume` the sweep after this. Could be device dependent.   
+
 
 ### **freq_corr**
-* **Status:** Done
 * **Description:** Gets the frequency correction.
 * **Original Usage:** `freq_corr`
 * **Direct Library Function Call:**  `freq_corr()`
 * **Example Return:** `b'0 ppb\r'`
 * **Alias Functions:**
-    * 
+    * `get_frequency_correction()`
 * **CLI Wrapper Usage:**
 * **Notes:**  This command returns the frequency correction, in parts per billion (ppb).
 
+
+
 ### **frequencies**
-* **Status:** Done
 * **Description:** Gets the frequencies used by the last sweep
 * **Original Usage:** `frequencies`
 * **Direct Library Function Call:**  `frequencies()`
 * **Example Return:**  `b'1500000000\r\n... \r\n3000000000\r'`
 * **Alias Functions:**
-    * 
+    * `get_last_freqs()`
 * **CLI Wrapper Usage:**
 * **Notes:**   
 
+
 ### **help**
-* **Status:** TODO libraryHelp() 
+* **Status:** calls help function
 * **Description:** Gets a list of the available commands
 * **Original Usage:** `help`
-* **Library Function Calls:**
-    * `help(val=0|1)` 
-    * `tinySAHelp()`
-    * `libraryHelp()` 
+* **Direct Library Function Call:** `help(val=None|0|1)`
 * **Example Return:**   
 * **Alias Functions:**
-    * 
+    * `tinySAHelp()`
+* **Related Functions:**
+    * `libraryHelp()` 
 * **CLI Wrapper Usage:**
 * **Notes:**  0 = tinySAHelp(), 1=libraryHelp(). Both functions can also be called directly. libraryHelp() has more information about this library and the inputs. 
 
+
 ### **hop**
-* **Status:** TODO. needs error checking added
-* **Description:** Measures the input level at each of the indicated frequencies.
+* **Description:** Measures the input level at each of the indicated frequencies. This is a measurement over a range (ends inclusive), with a specified number of samples.
 * **Original Usage:** `hop {start(Hz)} {stop(Hz)} {step(Hz) | points}  [outmask]`
-* **Library Function Call:**
-* **Example Return:** empty bytearray
+* **Direct Library Function Call:** `hop(start=Int, stop=Int, inc=Int, use_pts=Bool)`
+* **Example Return:** e
 * **Alias Functions:**
-    * 
+    * `get_sample_pts(start=Int, stop=Int, inc=Int, use_pts=Bool)`
 * **CLI Wrapper Usage:**
-* **Notes:**  Ultra only. From [tinysa-org](https://tinysa-org.translate.goog/wiki/pmwiki.php?n=Main.USBInterface&_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en-US): if the 3rd parameter is below 450 it is assumed to be points, otherwise as step frequency Outmask selects if the frequency (1) or level (2) is output. 
+* **Notes:**  _Ultra only_. From [tinysa-org](https://tinysa-org.translate.goog/wiki/pmwiki.php?n=Main.USBInterface&_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en-US): if the 3rd parameter is below 450 it is assumed to be points, otherwise as step frequency Outmask selects if the frequency (1) or level (2) is output. 
+
 
 ### **if**
-* **Status:** Done
-* **Description:** Sets the intermediate frequency (IF) to automatic or a specific value
+* **Description:** Sets the intermediate frequency (IF) to automatic or a specific value, 433 Mhz to 435 MHz 
 * **Original Usage:** `if (0|433M..435M )`
-* **Direct Library Function Call:** `setIF(val=0|433M..435M|'auto')`
+* **Direct Library Function Call:** `set_IF(val=Int|0|433M..435M|'auto')`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * None
 * **CLI Wrapper Usage:**
 * **Notes:**  Val input of 0 is 'auto'. Added explicit 'auto' to match other library funcs.
 
 ### **if1**
-* **Status:** Done
-* **Description:** Sets intermediate frequency (IF) to a specific value
+* **Description:** Sets the intermediate frequency (IF) to automatic or a specific value, 975 Mhz to 979 MHz 
 * **Original Usage:** `if1 (975M..979M )`
-* **Direct Library Function Call:** `setIF1(val=0|975M..979M|'auto')`
+* **Direct Library Function Call:** `set_IF1(val=0|975M..979M|'auto')`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * None
 * **CLI Wrapper Usage:**
 * **Notes:**  Val input of 0 is 'auto'. Added explicit 'auto' to match other library funcs.
 
 ### **info**
-* **Status:** Done
 * **Description:** Displays various software/firmware and hardware information
 * **Original Usage:** `info`
 * **Direct Library Function Call:** `info()`
 * **Example Return:** `b'tinySA ULTRA\r\n2019-2024 Copyright @Erik Kaashoek\r\n2016-2020 Copyright edy555\r\nSW licensed under GPL. See: https://github.com/erikkaashoek/tinySA\r\nVersion: tinySA4_v1.-143-g864bb27\r\nBuild Time: Jan 10 2024 - 11:14:08\r\nKernel: 4.0.0\r\nCompiler: GCC 7.2.1 20170904 (release) [ARM/embedded-7-branch revision 255204]\r\nArchitecture: ARMv7E-M Core Variant: Cortex-M4F\r\nPort Info: Advanced kernel mode\r\nPlatform:STM32F303xC Analog & DSP\r'`
 * **Alias Functions:**
-    * 
+    * `get_info()`
 * **CLI Wrapper Usage:**
 * **Notes:** 
+
+# First Pass for Updates Done up to Here!!!!
 
 ### **level**
 * **Status:** Done
@@ -868,7 +874,7 @@ Quick Link Table:
 * **Status:** TODO
 * **Description:** Sets or gets the level calibration data
 * **Original Usage:** `leveloffset low|high|switch [output] {error}`
-* **Library Function Call:**
+* **Direct Library Function Call:**
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * 
@@ -879,7 +885,7 @@ Quick Link Table:
 * **Status:** TODO
 * **Description:** 
 * **Original Usage:**  `line off|{level}` 
-* **Library Function Call:**
+* **Direct Library Function Call:**
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * 
@@ -1040,7 +1046,7 @@ Example: menu 6 2 will toggle the waterfall option
 * **Status:** TODO
 * **Description:** does nothing
 * **Original Usage:** `remark [use any text]`
-* **Library Function Call:**
+* **Direct Library Function Call:**
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * 
@@ -1106,7 +1112,7 @@ Example: menu 6 2 will toggle the waterfall option
 * **Status:** TODO
 * **Description:** Performs a scan and optionally outputs the measured data
 * **Original Usage:** `scan {start(Hz)} {stop(Hz)} [points] [outmask]`
-* **Library Function Call:**
+* **Direct Library Function Call:**
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * 
@@ -1117,7 +1123,7 @@ Example: menu 6 2 will toggle the waterfall option
 * **Status:** TODO
 * **Description:** Performs a scan of unlimited amount of points and send the data in binary form
 * **Original Usage:** `scanraw {start(Hz)} {stop(Hz)} [points][option]`
-* **Library Function Call:**
+* **Direct Library Function Call:**
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * 
@@ -1132,7 +1138,7 @@ UNDERGROING TESTING
 * **Status:** TODO
 * **Description:** Deletes a specific file on the sd card
 * **Original Usage:** `sd_delete {filename}`
-* **Library Function Call:**
+* **Direct Library Function Call:**
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * 
@@ -1200,7 +1206,7 @@ UNDERGROING TESTING
 * **Status:** TODO
 * **Description:** Set sweep boundaries or execute a sweep
 * **Original Usage:** `sweep [(start|stop|center|span|cw {frequency}) | ({start(Hz)} {stop(Hz)} [0..290] ) ]`
-* **Library Function Call:**
+* **Direct Library Function Call:**
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * 
@@ -1211,7 +1217,7 @@ UNDERGROING TESTING
 * **Status:** TODO
 * **Description:** Sets the sweeptime
 * **Original Usage:** `sweep {time(Seconds)}`
-* **Library Function Call:**
+* **Direct Library Function Call:**
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * 
@@ -1277,7 +1283,7 @@ UNDERGROING TESTING
 * **Status:** TODO
 * **Description:** displays all or one trace information or sets trace related information
 * **Original Usage:** `trace [{0..2} | dBm|dBmV|dBuV| V|W |store|clear|subtract | (scale|reflevel) auto|{level}]`
-* **Library Function Call:**
+* **Direct Library Function Call:**
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * 
@@ -1288,7 +1294,7 @@ UNDERGROING TESTING
 * **Status:** TODO
 * **Description:** sets the trigger type or level
 * **Original Usage:** `trigger auto|normal|single|{level(dBm)}`
-* **Library Function Call:**
+* **Direct Library Function Call:**
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * 
@@ -1321,7 +1327,7 @@ UNDERGROING TESTING
 * **Status:** Done
 * **Description:** Get the current battery voltage
 * **Original Usage:** `vbat`
-* **Library Function Call:**
+* **Direct Library Function Call:**
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * 
@@ -1354,7 +1360,7 @@ UNDERGROING TESTING
 * **Status:** Done
 * **Description:** wait for a single sweep to finish and pauses sweep or waits for specified number of seconds
 * **Original Usage:** `wait [{seconds}]`
-* **Library Function Call:**
+* **Direct Library Function Call:**
 * **Example Return:** empty bytearray
 * **Notes:**
 
@@ -1362,7 +1368,7 @@ UNDERGROING TESTING
 * **Status:** TODO: documentation
 * **Description:**
 * **Original Usage:** `zero {level}\r\n174dBm`
-* **Library Function Call:**
+* **Direct Library Function Call:**
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * 
@@ -1518,9 +1524,10 @@ Very useful, important documentation can be found at:
 * The getting started [first use](https://tinysa.org/wiki/pmwiki.php?n=Main.FirstUse) page
 * Frequently asked questions (FAQs) can be found on the [Wiki FAQs page](https://tinysa.org/wiki/pmwiki.php?n=Main.FAQ)
 
+
 ### Vocab Check
 
-Running list of acronyms that get tossed around with little to no explanation. Googling is recommended if you are not familiar with these terms as they're essential to understanding device usage.
+Running list of words and acronyms that get tossed around with little to no explanation. Googling is recommended if you are not familiar with these terms as they're essential to understanding device usage.
 
 * **AGC** - Automatic Gain Control. This controls the overall dynamic range of the output when the input level(s) changes. 
 * **Baud** - Baud, or baud rate. The rate that information is transferred in a communication channel. A baud rate of 9600 means a max of 9600 bits per second is transmitted.
@@ -1529,6 +1536,7 @@ Running list of acronyms that get tossed around with little to no explanation. G
 * **DUT** - Device Under Test. Used here to refer to the singular device used while initially writing the API. 
 * **IF** - Intermediate Frequency. A frequency to which a carrier wave is shifted as an intermediate step in transmission or reception - [Wikipedia](https://en.wikipedia.org/wiki/Intermediate_frequency)
 * **LNA** - Low Noise Amplifier. An electronic component that amplifies a very low-power signal without significantly degrading its signal-to-noise ratio - [Wikipedia](https://en.wikipedia.org/wiki/Low-noise_amplifier)
+* **Outmask** - "outmask" refers to a setting that determines whether the device's output is a frequency or a level (power) signal. When the outmask is set to "1", the tinySA will output a frequency signal. When set to "2", the outmask will cause the tinySA to output a level signal, which is a measure of the signal's power or intensity
 * **RBW** - Resolution Bandwidth. Frequency span of the final filter (IF filter) that is applied to the input signal. Determines the fast-Fourier transform (FFT) bin size.
 * **S-parameters** -
 * **VNA** - Vector Network analyzer. A device that measures the network parameters of electrical networks (typically, s-parameters). Can measure both measures both amplitude and phase properties. The [wiki article on network analyzers]( https://en.wikipedia.org/wiki/Network_analyzer_(electrical)) covers the topic in detail.  
@@ -1545,6 +1553,22 @@ SA -
 Signal Generator - 
 
 LNA - 
+
+
+
+### Some General tinySA Notes
+
+These are notes collected from various references as this README documentation is built out. Some are obvious, some were not at the time.
+
+
+#### tinySA Basic
+
+
+
+#### tinySA Ultra
+
+In the tinySA Ultra mode, there are four output modes: Normal (below 830 MHz), Direct (between 830MHz and 1130MHz), Ultra, and Scan.
+
 
 
 
