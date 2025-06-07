@@ -143,7 +143,6 @@ The tinySA_python currently has some autodetection capabilities, but these are n
 
 ```python
 
-
 # import tinySA library
 # (NOTE: check library path relative to script path)
 from src.tinySA_python import tinySA 
