@@ -17,6 +17,7 @@
 ##--------------------------------------------------------------------------------------------------\
 
 import serial
+import serial.tools.list_ports # COM search method wants full path
 import numpy as np
 import re
 
@@ -122,11 +123,32 @@ class tinySA():
 ######################################################################
 
     def autoconnect(self, timeout=1):
-        # TODO
         # attempt to autoconnect to a detected port. 
-        # returns: True if successful, False otherwise
+        # returns: found_bool, connected_bool
+        # True if successful, False otherwise
 
-        return False
+        # List all available serial ports
+        ports = serial.tools.list_ports.comports()
+        # loop through the ports and print out info
+        for port_info in ports:
+
+            # print out which port we're trying
+            port = port_info.device 
+            self.print_message(f"Trying port: {port}")
+            vid = port_info.vid
+            pid = port_info.pid
+
+            # check if it's a tinySA or nanoVNA:
+            if (vid==None):
+                pass 
+            elif (hex(vid) == '0x483') and (hex(pid)=='0x5740'):
+                self.print_message(f"tinySA device identified at port: {port}")
+                connected_bool = self.connect(port, timeout)
+
+                return True, connected_bool
+
+
+        return False, False # no tinySA found, not connected
 
 
     def connect(self, port, timeout=1):
@@ -157,6 +179,33 @@ class tinySA():
             print(msgbytes) #overrides verbose for debug
 
         return msgbytes
+
+    
+    def get_serial_return(self):
+        # while there's a buffer, read in the returned message
+        # original buffer reading from: https://groups.io/g/tinysa/topic/tinysa_screen_capture_using/82218670
+
+        buffer = bytes()
+        while True:
+            if self.ser.in_waiting > 0:
+                buffer += self.ser.read(self.ser.in_waiting)
+                try:
+                    # split the stream to take a chunk at a time
+                    # get up to '>' of the prompt
+                    complete = buffer[:buffer.index(b'>')+1]  
+                    # leave the rest in buffer
+                    buffer = buffer[buffer.index(b'ch>')+1:]  
+                except ValueError:
+                    # this is an acceptable err, so can skip it and keep looping
+                    continue 
+                except Exception as err:
+                    # otherwise, something else is wrong
+                    self.print_message("ERROR: exception thrown while reading serial")
+                    self.print_message(err)
+                    return None
+                break
+        return bytearray(complete)
+
 
     def clean_return(self, data):
         # takes in a bytearray and removes 1) the text up to the first '\r\n' (includes the command), an 2) the ending 'ch>'
@@ -608,11 +657,11 @@ class tinySA():
         # usage: deviceid [{number}]
         # example return: bytearray(b'deviceid 12\r')
 
-        if id == None:
+        if ID == None:
             #get the device ID        
             writebyte = 'deviceid\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)   
-        elif isinstance(id, int):
+        elif isinstance(ID, int):
             writebyte = 'deviceid '+str(ID)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)   
             self.print_message("device ID set to " + str(ID))
@@ -909,7 +958,7 @@ class tinySA():
             msgbytes = self.tinySA_serial(writebyte, printBool=False)    
             self.print_message("horizontal line turned off")  
         else:
-            self.print_message("ERROR: line takes arguments 'off' or {level\}")
+            self.print_message("ERROR: line takes arguments 'off' or level")
             msgbytes = self.error_byte_return()
         return msgbytes
     
@@ -1113,7 +1162,7 @@ class tinySA():
 
     def nf(self):
         # TODO: get documentation blurb to see if any error checking
-        # usage: nf {value}\r\n5.000000000
+        # usage: nf {value}\r\n
         # example return: ''
         self.print_message("ERROR: caloutput() takes vals 1|2|3|4|10|15|30|\"off\"")
         writebyte = 'nf\r\n'
@@ -1794,13 +1843,17 @@ if __name__ == "__main__":
     # create a new tinySA object    
     tsa = tinySA()
     # attempt to connect to previously discovered serial port
-    success = tsa.connect(port='COM10')
+    #success = tsa.connect(port='COM10')
+
+    # attempt to autoconnect
+    found_bool, connected_bool = tsa.autoconnect()
 
     # if port open, then complete task(s) and disconnect
-    if success == True:
+    if connected_bool == True: # or  if success == True:
+        print("device connected")
         tsa.set_verbose(True) #detailed messages
         tsa.set_error_byte_return(True) #get explicit b'ERROR'
-        msg = tsa.wait() 
+        msg = tsa.get_device_id() 
         print(msg)
         
 
