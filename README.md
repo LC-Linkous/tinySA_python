@@ -214,14 +214,15 @@ bytearray(b'deviceid 0\r')
 
 ```python
 
-# import the library class
+# import the library class for the tinySA
+# (NOTE: check library path relative to script path)
 from src.tinySA_python import tinySA
 
 # create a new tinySA object    
 tsa = tinySA()
 
 # attempt to connect to previously discovered serial port
-success = tsa.connect(port='COM10')
+success = tsa.autoconnect()
 
 # if port open, then get device information and disconnect
 if success == False:
@@ -301,30 +302,31 @@ This example shows several types of common data requests:
 ```python
 
 # import the library class for the tinySA
+# (NOTE: check library path relative to script path)
 from src.tinySA_python import tinySA
 
 # create a new tinySA object    
 tsa = tinySA()
 # attempt to connect to previously discovered serial port
-success = tsa.connect(port='COM10')
+success = tsa.autoconnect()
 
 # if port open, then complete task(s) and disconnect
 if success == False:
     print("ERROR: could not connect to port")
 else:
     #detailed messages
-    tsa.setVerbose(True) #detailed messages
+    tsa.set_verbose(True) #detailed messages
 
     # get current trace data on screen
     msg = tsa.data(val=2) 
     print(msg)
 
     # set current device ID
-    msg = tsa.deviceid(3) 
+    msg = tsa.device_id(3) 
     print(msg)
 
     # get current device ID
-    msg = tsa.deviceid() 
+    msg = tsa.device_id() 
     print(msg)
     
     # get device information
@@ -345,6 +347,7 @@ else:
 
     tsa.disconnect()
 
+
 ```
 
 ### Saving Screen Images
@@ -354,7 +357,9 @@ else:
  This example truncates the last hex value, so a single padding `x00` value has been added. This will eventually be investigated, but it's not hurting the output right now.
 
 ```python
+
 # import the library class for the tinySA
+# (NOTE: check library path relative to script path)
 from src.tinySA_python import tinySA
 
 # imports FOR THE EXAMPLE
@@ -409,14 +414,14 @@ def convert_data_to_image(data_bytes, width, height):
 # create a new tinySA object    
 tsa = tinySA()
 # attempt to connect to previously discovered serial port
-success = tsa.connect(port='COM10')
+success = tsa.autoconnect()
 
 # if port closed, then return error message
 if success == False:
     print("ERROR: could not connect to port")
 else: # port open, complete task(s) and disconnect
     # detailed messages turned on
-    tsa.setVerbose(True) 
+    tsa.set_verbose(True) 
     # get the trace data
     data_bytes = tsa.capture() 
     print(data_bytes)
@@ -425,6 +430,7 @@ else: # port open, complete task(s) and disconnect
     # processing after disconnect (just for this example)
     # test with 480x320 resolution for tinySA Ultra
     convert_data_to_image(data_bytes, 480, 320)
+
 
 ```
 
@@ -498,7 +504,7 @@ else: # port open, complete task(s) and disconnect
 <p align="center">
         <img src="media/example_plot_SA_data.png" alt="Plot of On-screen Trace Data" height="350">
 </p>
-   <p align="center">Plotted On-Screen Trace Data of a Frequency Sweep from 100 kHz to 800 kHz</p>
+   <p align="center">Plotted On-Screen Trace Data of a Frequency Sweep from 100 kHz to 800 MHz</p>
 
 
 ## List of tinySA Commands and their Library Commands
@@ -1188,6 +1194,7 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Original Usage:** `scanraw {start(Hz)} {stop(Hz)} [points][option]` or `scanraw {start(Hz)} {stop(Hz)} [points] [unbuffered]` depending on the source
 * **Direct Library Function Call:**
 * **Example Return:** 
+    * Raw, unprocessed return for 15 pts: `b'scanraw 150000000 200000000 15 2\r\n{x"\nx3\nx4\nx\x15\nx6\nx\x07\nx)\nxj\nx\xfb\txm\nx]\nxO\nxp\nx\xb2\x0bx3\x0c}ch>'`
     * Example arg: `scanraw 150e6 200e6 5 1`
     * Results: `bytearray(b'{xS\nxd\nx\x98\nx]\nx\x02\x0c')`
     * Example arg: `scanraw 150e6 200e6 2`
