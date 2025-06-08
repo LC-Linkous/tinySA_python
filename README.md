@@ -1,6 +1,6 @@
 
 # tinySA_python
-## AN UNOFFICIAL Python Library for the tinySA
+## AN UNOFFICIAL Python Library for the tinySA Device Series
 
 # INPROGRESS. 
 ## From June 1 2025 - June 7 2025 there are NO promises of the stability of this project. 
@@ -8,28 +8,12 @@
 
 A Non-GUI Python API class for the tinySA series of devices. This repository uses official resources and documentation but is NOT endorsed by the official tinySA product or company. See the [references](#references) section for further reading. See the [official tinySA resources](https://www.tinysa.org/wiki/) for device features.
 
-Warning:
-* This was written using the tinySA Ultra, so it is currently device specific. This will change in the near future. 
-* configuration files are currently being added. until this is DONE, it's very likely there's a few bugs
-
-Currently integrated:
-* general commands and class structure
-* round 1 of default device preset configs
-    * tinySA Basic
-    * tinySA Ultra ZS405
-    * tinySA Ultra+ ZS406
-    * tinySA Ultra+ ZS407
 
 Working on it:
-* filling in unfinished args
+* filling in unfinished args and any new tinySA features
+* examples for: trace, scan, and rawscan
 * An argparse option + some example scripts
 
-TODO:
-* error checking
-* user config memory
-* SD cards
-* logging user input for replay
-* Config files to swap between the devices
 
 ## Table of Contents
 * [The tinySA Series of Devices](#the-tinysa-series-of-devices)
@@ -38,6 +22,9 @@ TODO:
 * [Error Handling](#error-handling)
 * [Example Implementations](#example-implementations)
     * [Finding the Serial Port](#finding-the-serial-port)
+        * [Autoconnection with the tinySA_python Library](#autoconnection-with-the-tinysa_python-library)
+        * [Manually Finding a Port on Windows](#manually-finding-a-port-on-windows)
+        * [Manually Finding a Port on Linux](#manually-finding-a-port-on-linux)
     * [Serial Message Return Format](#serial-message-return-format)
     * [Connecting and Disconnecting the Device](#connecting-and-disconnecting-the-device)
     * [Toggle Error Messages](#toggle-error-messages)
@@ -48,13 +35,12 @@ TODO:
     * [Plotting Data with Matplotlib](#plotting-data-with-matplotlib)
 * [List of tinySA Commands and their Library Commands](#list-of-tinysa-commands-and-their-library-commands)
 * [List of Commands Removed from Library](#list-of-commands-removed-from-library)
-* [Additional Library Commands](#additional-library-commands)
-* [Table of Command and Device Compatibility](#table-of-command-and-device-compatibility)
+* [Additional Library Functions for Advanced Use](#additional-library-functions-for-advanced-use)
 * [Notes for Beginners](#notes-for-beginners)
     * [Vocab Check](#vocab-check)
     * [Calibration Setup](#calibration-setup)
+    * [Some General tinySA Notes](#some-general-tinysa-notes)
 * [References](#references)
-* [Publications and Integration](#publications-and-integration)
 * [Licensing](#licensing)  
 
 ## The tinySA Series of Devices
@@ -171,11 +157,7 @@ else:
 
 
 
-
-
-
-
-#### Manually Finding a Port on Windows:
+#### Manually Finding a Port on Windows
 1)  Open _Device Manager_, scroll down to _Ports (COM & LPT)_, and expand the menu. There should be a _COM#_ port listing "USB Serial Device(COM #)". If your tinySA Ultra is set up to work with Serial, this will be it.
 
 2) This uses the pyserial library requirement already installed for this library. It probably also works on Linux systems, but has not been tested yet.
@@ -1558,90 +1540,6 @@ usart
 * **Notes:** If unfamiliar with device and operation, DO NOT USE THIS. There is no error checking and you will be interfacing with the tinySA device directly.
 
 
-
-## Table of Command and Device Compatibility
-
-This library was developed with the tinySA Ultra, and there's some commands that might have been added/dropped between devices. This table is a record of CURRENT known compatibility with THIS library, and to what level the PC can interact with the device. It is HIGHLY likely to NOT be complete. 
-
-If a last checked firmware version is known, that is included in the header in the parenthesis. 
-
-?? is for an unfinished TODO list item, not an unknown. When a function is complete its compatibility is added.
-
-|  Device Command  | tinySA Basic  | tinySA Ultra (ZS405)| tinySA Ultra + (ZS406)| | tinySA Ultra + (ZS407)|
-|------------------|-------------|----------------|------------------|------------------|
-| abort | |??| | |
-| actual_freq| | Get Only | | |
-| agc| | Set | | |
-| attenuate| | Set | | |
-| bulk| | ??| | |
-| calc| | Set | | |
-| caloutput| | Set | | |
-| capture| | Get| | |
-| clearconfig| | Reset | | |
-| color| | Set and Get | | |
-| correction| |Set and Get| | |
-| dac| |Set and Get | | |
-| data| | Get | | |
-| deviceid|| Set and Get | | |
-| direct| |??| | |
-| ext_gain| | Set | | |
-| fill| |??| | |
-| freq| |Set| | |
-| freq_corr| |Get | | |
-| frequencies| |Get | | |
-| help| |Get | | |
-| hop| No | ?? | | |
-| if| | Set | | |
-| if1| | Set | | |
-| info| | Get| | |
-| level| | Set | | |
-| levelchange| | Set| | |
-| leveloffset| | ??| | |
-| line| | ??| | |
-| load| |Load to Device| | |
-| lna| | Set | | |
-| marker| | ??| | |
-| menu| |?? | | |
-| mode| |??| | |
-| modulation| | ??| | |
-| nf| | ??| | |
-| output| |?? | | |
-| pause| | Set| | |
-| rbw| | ??| | |
-| recall| |Load to Device| | |
-| refresh| | | | |
-| release| | | | |
-| remark| | | | |
-| repeat| | | | |
-| reset| | | | |
-| resume| | | | |
-| save| | | | |
-| saveconfig| | | | |
-| scan| | | | |
-| scanraw| | | | |
-| sd_delete| | | | |
-| sd_list| |Get | | |
-| sd_read| | | | |
-| selftest| | | | |
-| spur| | | | |
-| status| | | | |
-| sweep| | | | |
-| sweeptime| | | | |
-| text| |Set| | |
-| threads| |Get| | |
-| touch| |??| | |
-| touchcal| |??| | |
-| touchtest| | | | |
-| trace| | | | |
-| trigger| | | | |
-| ultra| | | | |
-| usart_cfg| | | | |
-| vbat| | | | |
-| vbat_offset| | | | |
-| version| | | | |
-| wait| | | | |
-| zero| | | | |
-
 ## Notes for Beginners
 
 This is a brief section for anyone that might have jumped in with a bit too much ambition. It is highly suggested to _read the manual_. 
@@ -1683,14 +1581,14 @@ Signal Generator -
 LNA - 
 
 
+### Calibration Setup
+
+The cable MUST be connected between the two ports BEFORE starting the calibration. 
+
 
 ### Some General tinySA Notes
 
 These are notes collected from various references as this README documentation is built out. Some are obvious, some were not at the time.
-
-
-#### tinySA Basic
-
 
 
 #### tinySA Ultra
@@ -1699,9 +1597,6 @@ In the tinySA Ultra mode, there are four output modes: Normal (below 830 MHz), D
 
 
 
-
-
-### Calibration Setup
 
 ## References
 
@@ -1727,21 +1622,13 @@ In the tinySA Ultra mode, there are four output modes: Normal (below 830 MHz), D
         * [main.c][https://github.com/erikkaashoek/tinySA/blob/434126dcc6eed40e4e9ba3d7ef67e17e0370c38f/main.c]
 
 
-## Publications and Integration
-This API was written to support the work in:
-
-L. Linkous, E. Karincic, M. Suche and E. Topsakal, "Reinforcement Learning Controlled Mechanically Reconfigurable Antennas," 2025 United States National Committee of URSI National Radio Science Meeting (USNC-URSI NRSM), Boulder, CO, USA, 2025
-
-Other publications featuring the code in this repo will be added as they become public.
-
 ## Licensing
 
-The code in this repository has been released under GPL-2.0 for lack of better idea right now (and to have something in place rather than nothing). This licensing does NOT take priority over the official releases and the decisions of the tinySA team. This licensing does NOT take priority for any of their products, including the devices that can be used with this software. 
+The code in this repository has been released under GPL-2.0 for right now (and to have something in place rather than nothing). This licensing does NOT take priority over the official releases and the decisions of the tinySA team. This licensing does NOT take priority for any of their products, including the devices that can be used with this software. 
 
 
 This software is released AS-IS, meaning that there may be bugs (especially as it is under development). 
 
 
 This software is UNOFFICIAL, meaning that the tinySA team does not offer tech support for it, does not maintain it, and has no responsibility for any of the contents. 
-
 
