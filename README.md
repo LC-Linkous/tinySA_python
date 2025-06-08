@@ -812,8 +812,7 @@ Quick Link Table:
 
 
 ### **help**
-* **Status:** calls help function
-* **Description:** Gets a list of the available commands
+* **Description:** Gets a list of the available commands. Can be used to call tiySA help directly, or the library help
 * **Original Usage:** `help`
 * **Direct Library Function Call:** `help(val=None|0|1)`
 * **Example Return:**   
@@ -869,7 +868,7 @@ Quick Link Table:
 ### **level**
 * **Description:** Sets the output level
 * **Original Usage:** `level -76..13`
-* **Direct Library Function Call:** `level(val=-Int|76...13)`
+* **Direct Library Function Call:** `level(val=Int|-76...13)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * `set_level()`
@@ -923,15 +922,14 @@ Quick Link Table:
 * **Direct Library Function Call:** `lna(val="off"|"on")`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * `set_lna1_on()`
-    * `set_lna1_off()`
+    * `set_lna_on()`
+    * `set_lna_off()`
 * **CLI Wrapper Usage:**
 * **Notes:**  Should not be enabled when AGC is enabled - [tinySA wiki SETTINGS2](https://tinysa.org/wiki/pmwiki.php?n=Main.SETTINGS2)
 
 
 ### **lna2**
-* **Status:** Set the second LNA usage off/on. The Ultra Plus devices have a 2nd LNA at a higher frequency range.
-* **Description:** ??
+* **Description:** Set the second LNA usage off/on. The Ultra Plus devices have a 2nd LNA at a higher frequency range.
 * **Original Usage:** `lna2 0..7|auto`
 * **Direct Library Function Call:** `lna2(val="auto"|0..7)`
 * **Example Return:** empty bytearray
@@ -943,7 +941,6 @@ Quick Link Table:
 
 
 ### **marker**
-* **Status:** TODO
 * **Description:** sets or dumps marker info
 * **Original Usage:**  `marker {id} on|off|peak|{freq}|{index}`
 * **Direct Library Function Call:** `marker(ID=Int|0..4, val="on"|"off"|"peak")`
@@ -1014,149 +1011,172 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 
 
 ### **nf**
-* **Description:** ??
-* **Original Usage:** ` `
-* **Direct Library Function Call:** ` `
-* **Example Return:** empty bytearray
+* **Description:** get the noise floor in dB
+* **Original Usage:** `nf {val=None|??}`
+* **Direct Library Function Call:** `nf(val=None)`
+* **Example Return:** `b'usage: nf {value}\r\n4.000000000\r'`
 * **Alias Functions:**
-    * 
+    * `get_nf()`
 * **CLI Wrapper Usage:**
 * **Notes:** 
-* The tinySA Ultra can measure, store, and validate the tinySA noise figure (NF). It can also measure amplifier (AMP) NF.  
+* The tinySA Ultra can measure, store, and validate the tinySA noise figure (NF). It can also measure amplifier (AMP) NF. 
+* While it is possible to set this value progamatically, until more documentation is online it is recommended to only GET the nf value. 
 * "The NF is the degradation in dB of the SNR after the amplifier compared to before the amplifier." - [https://tinysa.org/wiki/pmwiki.php?n=Main.NoiseFactor](https://tinysa.org/wiki/pmwiki.php?n=Main.NoiseFactor)
 
+
 ### **output**
-* **Status:** Done
-* **Description:** Sets the output on or off
+* **Description:** Sets the output mode on or off
 * **Original Usage:** `output on|off`
 * **Direct Library Function Call:** `output(val="off"|"on")`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * `set_output_on()`
+    * `set_output_off()`
 * **CLI Wrapper Usage:**
 * **Notes:** 
 
+
 ### **pause**
-* **Status:** Done
 * **Description:** Pauses the sweeping in either input or output mode
 * **Original Usage:** `pause`
 * **Direct Library Function Call:** `pause()`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * None
 * **CLI Wrapper Usage:**
 * **Notes:** 
 
+
 ### **rbw**
-* **Status:** Done
 * **Description:** sets the rbw to either automatic or a specific value
-* **Original Usage:** `rbw auto|3..600`
-* **Direct Library Function Call:** `rbw(val="auto"|3..600)`
+* **Original Usage:** `rbw auto|3..600` or `rbw 0.2..850|auto`
+* **Direct Library Function Call:** `rbw(val="auto"|Int)`
 * **Example Return:**  empty bytearray
 * **Alias Functions:**
-    * 
+    * `set_rbw_auto()`
 * **CLI Wrapper Usage:**
-* **Notes:**  the number specifies the target rbw in kHz. Frequencies listed in official documentation: 3 kHz, 10 kHz, 30 kHz, 100 kHz, 300 kHz, 600 kHz     
+* **Notes:**  
+* The number specifies the target rbw in kHz. 
+* Frequencies listed in tinySA Basic documentation: 3 kHz, 10 kHz, 30 kHz, 100 kHz, 300 kHz, 600 kHz. [https://tinysa.org/wiki/pmwiki.php?n=Main.RBW](https://tinysa.org/wiki/pmwiki.php?n=Main.RBW)
+* Frequencies listed in the tinySA Ultra documentation: auto, 200Hz, 1kHz 3 kHz, 10 kHz, 30 kHz, 100 kHz, 300 kHz, 600 kHz 850 kHz. [https://tinysa.org/wiki/pmwiki.php?n=TinySA4.RBW](https://tinysa.org/wiki/pmwiki.php?n=TinySA4.RBW)
+* If you set a value not in the list, the tinySA (NOT this library) will default to the next highest value. 
+
 
 ### **recall**
-* **Status:** Done
 * **Description:** Loads a previously stored preset from the device
 * **Original Usage:** ` recall 0..4`
 * **Direct Library Function Call:** `recal(val=0|1|2|3|4)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * None
 * **CLI Wrapper Usage:**
 * **Notes:** Same functionality as `load()`. 0 is the startup preset.
 
+
 ### **refresh**
-* **Status:** Done
 * **Description:** Enables or disables the auto refresh mode
 * **Original Usage:** `refresh on|off`
 * **Direct Library Function Call:** `refresh(val="off"|"on")`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * `refresh_on()`
+    * `refresh_off()`
 * **CLI Wrapper Usage:**
 * **Notes:** 
 
+
 ### **release**
-* **Status:** Done
 * **Description:** Triggers a signal for the removal/release of the touch screen
 * **Original Usage:** `release`
 * **Direct Library Function Call:** `release()`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * None
 * **CLI Wrapper Usage:**
 * **Notes:** 
 
+
 ### **remark**
-* **Status:** TODO
-* **Description:** does nothing
+* **Description:** does nothing, per official documentation
 * **Original Usage:** `remark [use any text]`
-* **Direct Library Function Call:**
+* **Direct Library Function Call:** `remark(val=Str)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * None
 * **CLI Wrapper Usage:**
-* **Notes:**  ?? included due to documentation 
+* **Notes:** 
+* [https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface](https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface)
+* potential use: adding comments to scripts and denoting that the line does nothing with `remark` as the first word.
+
 
 ### **repeat**
-* **Status:** Done
 * **Description:** Sets the number of (re)measurements that should be taken at every frequency
 * **Original Usage:** ` repeat 1..1000`
-* **Direct Library Function Call:** `repeat(val=1.1000)`
+* **Direct Library Function Call:** `repeat(val=Int|1..1000)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * None
 * **CLI Wrapper Usage:**
 * **Notes:**  increasing the repeat reduces the noise per frequency, repeat 1 is the normal scanning mode. Has int(val) conversion.
 
+
 ### **reset**
-* **Status:** Done
 * **Description:** Resets the tinySA
 * **Original Usage:** `reset`
 * **Direct Library Function Call:** `reset()`
 * **Example Return:** empty bytearray, serial error message. depends on the system.
 * **Alias Functions:**
-    * 
+    * `reset_device()`
 * **CLI Wrapper Usage:**
-* **Notes:**  Disconnects the serial.
+* **Notes:**  Disconnects the serial too.
+
+
+### **restart**
+* **Description:** Restarts the  tinySA after the specified number of seconds
+* **Original Usage:** `restart {seconds}`
+* **Direct Library Function Call:** `restart(val=0...)`
+* **Example Return:** empty bytearray
+* **Alias Functions:**
+    * `restart_device()`
+    * `cancel_restart()`
+* **CLI Wrapper Usage:**
+* **Notes:** 
+    *  Has not worked in testing on development DUT, but appears to work on some devices online.
+    *  0 seconds stops the restarting process. 
+
 
 ### **resume**
-* **Status:** Done
 * **Description:** Resumes the sweeping in either input or output mode
 * **Original Usage:** `resume`
 * **Direct Library Function Call:** `resume()`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * None
 * **CLI Wrapper Usage:**
 * **Notes:** 
 
+
 ### **save**
-* **Status:** Done
 * **Description:** Saves the current setting to a preset
 * **Original Usage:** `save 0..4`
 * **Direct Library Function Call:** `save(val=0..4)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * None
 * **CLI Wrapper Usage:**
 * **Notes:**  where 0 is the startup preset
 
 ### **saveconfig**
-* **Status:** Done
 * **Description:** Saves the device configuration data
 * **Original Usage:** `saveconfig`
-* **Direct Library Function Call:** `saveconfig()`
+* **Direct Library Function Call:** `save_config()`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * None
 * **CLI Wrapper Usage:**
-* **Notes:** 
+* **Notes:** Takes no arguments.
  
+
 ### **scan**
 * **Status:** TODO
 * **Description:** Performs a scan and optionally outputs the measured data
@@ -1184,50 +1204,57 @@ From Documentation 2: The measured data is the level in dBm and is send as '{' (
 UNDERGROING TESTING
    
 ### **sd_delete**
-* **Status:** TODO
 * **Description:** Deletes a specific file on the sd card
 * **Original Usage:** `sd_delete {filename}`
-* **Direct Library Function Call:**
-* **Example Return:** empty bytearray
+* **Direct Library Function Call:** `sd_delete(val=Str)`
+* **Example Return:** 
+    * For successful delete: `bytearray(b'delete: -0.bmp OK\r'`
+    * If a file is not deleted: `bytearray(b'')`
 * **Alias Functions:**
-    * 
+    * None
 * **CLI Wrapper Usage:**
 * **Notes:** 
 
 ### **sd_list**
-* **Status:** Done
 * **Description:** Displays list of filenames with extension and sizes
 * **Original Usage:** `sd_list`
 * **Direct Library Function Call:** `sd_list()`
 * **Example Return:** format example: `-0.bmp 307322`
 * **Alias Functions:**
-    * 
+    * None
 * **CLI Wrapper Usage:**
 * **Notes:** 
   
 ### **sd_read**
-* **Status:**  TODO
 * **Description:** Reads a specific file on the sd card
 * **Original Usage:** `sd_read {filename}`
-* **Direct Library Function Call:** `sd_read(filename)`
-* **Example Return:** empty bytearray
+* **Direct Library Function Call:** `sd_read(val=Str)`
+* **Example Return:**  
+    * `bytearray(b'z\xb0\x04\x00BMz\xb0\x04\x00\x00\x00\x00\x00z\x00\x00\x00l\x00......x10\x84\x10')`
+    * If file does not exist on SD card, then `bytearray(b'err: (4) no file\r')` will be returned. 
 * **Alias Functions:**
-    * 
+    * None
 * **CLI Wrapper Usage:**
-* **Notes:** 
+* **Notes:** The error return message is built into the device, but has not been exhuastively tested with this library. 
 
 ### **selftest**
-* **Status:** Done
-* **Description:** performs one or all selftests
+* **Description:** performs one or all selftests. 
 * **Original Usage:** `selftest 0 0..9`, `selftest (1-3) [arg]`
 * **Direct Library Function Call:** `selftest(val=0..9)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * `all_self_tests()`
 * **CLI Wrapper Usage:**
-* **Notes:**  MUST have cable connected to RF and CAL
+* **Notes:**  
+    * MUST have cable connected to RF and CAL. 
+    * The prompt for TOUCH still happens after
+    * 0 runs all self tests. 
+    * Upper number of tests is likely tied to whatever the device actually has. Limited documentation.
+    * Other integers appear to rerun specific tests, but there is no confirmation on the screen or returned information.
   
     
+# first pass of edits up to here!!!
+
 ### **spur**
 * **Status:** Done
 * **Description:** Enables or disables spur reduction
@@ -1441,14 +1468,6 @@ usart
 ## List of Commands Removed from Library
 
 
-
-### **restart**
-* **Status:** REMOVED. Not recognized by DUT.
-* **Description:** Restarts the  tinySA after the specified number of seconds
-* **Original Usage:** `restart {seconds}`
-* **Direct Library Function Call:** `restart(val=0...)`
-* **Example Return:** empty bytearray
-* **Notes:** where 0 seconds stops the restarting process. has int(val) conversion until it's clear if float() causes issues.
 
 ### **sweep_voltage**
 * **Status:** REMOVED
