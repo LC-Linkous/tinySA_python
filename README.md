@@ -1178,31 +1178,43 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
  
 
 ### **scan**
-* **Status:** TODO
 * **Description:** Performs a scan and optionally outputs the measured data
 * **Original Usage:** `scan {start(Hz)} {stop(Hz)} [points] [outmask]`
 * **Direct Library Function Call:**
-* **Example Return:** empty bytearray
+* **Example Return:** 
+    * Example arg: `scan 0 2e6 5 1`
+    * Results: `bytearray(b'0 \r\n1 \r\n1 \r\n2 \r\n2 \r')`
+    * Example arg: `scan 0 2e6 5 2`
+    * Results: `bytearray(b'5.843750e+00 0.000000000 \r\n5.343750e+00 0.000000000 \r\n4.843750e+00 0.000000000 \r\n4.843750e+00 0.000000000 \r\n4.843750e+00 0.000000000 \r')`
+    * Example arg: `scan 0 2e6 5 3`
+    * Results: `bytearray(b'0 5.375000e+00 0.000000000 \r\n1 5.875000e+00 0.000000000 \r\n1 5.375000e+00 0.000000000 \r\n2 5.375000e+00 0.000000000 \r\n2 5.375000e+00 0.000000000 \r')`
+    * Example arg: `scan 0 2e6 5 4`
+    * Results: `bytearray(b'5.343750e+00 0.000000000 \r\n5.843750e+00 0.000000000 \r\n5.843750e+00 0.000000000 \r\n5.343750e+00 0.000000000 \r\n5.843750e+00 0.000000000 \r')`
 * **Alias Functions:**
-    * 
+    * None, but see`plotting_scan.py` example
 * **CLI Wrapper Usage:**
-* **Notes:**  where the outmask is a binary OR of 1=frequencies, 2=measured data, 4=stored data and points is maximum 290
+* **Notes:**  
+    * `[points]` is the number of points in the scan. The MAX points is device dependent. Basic is 290, Ultra is 450 .
+    * `[outmask]`  1=frequencies, 2=measured data, 4=stored data. 3 not in documentation, but appears to blend 1 and 2.
+    * Documentation says outmask is "a binary OR of.", but there doesn't appear to be any binary math involved. 
 
 ### **scanraw**
-* **Status:** TODO
-* **Description:** Performs a scan of unlimited amount of points and send the data in binary form
-* **Original Usage:** `scanraw {start(Hz)} {stop(Hz)} [points][option]`
+* **Description:** Performs a scan of unlimited amount of points and sends the data in binary form
+* **Original Usage:** `scanraw {start(Hz)} {stop(Hz)} [points][option]` or `scanraw {start(Hz)} {stop(Hz)} [points] [unbuffered]` depending on the source
 * **Direct Library Function Call:**
-* **Example Return:** empty bytearray
+* **Example Return:** 
+    * Example arg: `scanraw 150e6 200e6 5 1`
+    * Results: `bytearray(b'{xS\nxd\nx\x98\nx]\nx\x02\x0c')`
+    * Example arg: `scanraw 150e6 200e6 2`
+    * Results: `bytearray(b'{xs\nxu\nx\x8a\nx^\nx\xf2\x0b')`
 * **Alias Functions:**
-    * 
+    *  None, but see`plotting_scanraw.py` example
 * **CLI Wrapper Usage:**
-* **Notes:** From Documentation 1: The measured data is send as '{' ('x' MSB LSB)*points '}' where the 16 bit data is scaled by 32.
+* **Notes:** 
+    * **WARNING: the parsing documentation doesn't appear to return data consistent with measurements on the tinySA screen. UNDERGROING TESTING** 
+    * "The measured data is the level in dBm and is send as '{' ('x' MSB LSB)*points '}'. To get the dBm level from the 16 bit data, divide by 32 and subtract 128 for the tinySA and 174 for the tinySA Ultra. The option, when present, can be either 0,1,2 or 3 being the sum of 1=unbuffered and 2=continuous." - [https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface](https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface) 
 
-From Documentation 2: The measured data is the level in dBm and is send as '{' ('x' MSB LSB)*points '}'. To get the dBm level from the 16 bit data, divide by 32 and subtract 128 for the tinySA and 174 for the tinySA Ultra. The option, when present, can be either 0,1,2 or 3 being the sum of 1=unbuffered and 2=continuous 
-
-UNDERGROING TESTING
-   
+  
 ### **sd_delete**
 * **Description:** Deletes a specific file on the sd card
 * **Original Usage:** `sd_delete {filename}`
@@ -1235,7 +1247,7 @@ UNDERGROING TESTING
 * **Alias Functions:**
     * None
 * **CLI Wrapper Usage:**
-* **Notes:** The error return message is built into the device, but has not been exhuastively tested with this library. 
+* **Notes:** The error return message is built into the device, but has not been exhaustively tested with this library. 
 
 ### **selftest**
 * **Description:** performs one or all selftests. 
@@ -1252,106 +1264,122 @@ UNDERGROING TESTING
     * Upper number of tests is likely tied to whatever the device actually has. Limited documentation.
     * Other integers appear to rerun specific tests, but there is no confirmation on the screen or returned information.
   
-    
-# first pass of edits up to here!!!
 
 ### **spur**
-* **Status:** Done
 * **Description:** Enables or disables spur reduction
 * **Original Usage:** `spur on|off`
 * **Direct Library Function Call:** `spur(val="off"|"on")`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * `spur_on()`
+    * `spur_off()`
 * **CLI Wrapper Usage:**
 * **Notes:** 
  
 
 ### **status**
-* **Status:** Done
 * **Description:** Displays the current device status (paused/resumed)
 * **Original Usage:** `status`
 * **Direct Library Function Call:** `status()`
 * **Example Return:** `b'Resumed'`
 * **Alias Functions:**
-    * 
+    * `get_status()`
 * **CLI Wrapper Usage:**
 * **Notes:** 
 
 ### **sweep**
-* **Status:** TODO
 * **Description:** Set sweep boundaries or execute a sweep
-* **Original Usage:** `sweep [(start|stop|center|span|cw {frequency}) | ({start(Hz)} {stop(Hz)} [0..290] ) ]`
-* **Direct Library Function Call:**
-* **Example Return:** empty bytearray
+* **Original Usage:** `sweep [(start|stop|center|span|cw {frequency}) | ({start(Hz)} {stop(Hz)} [0..MAX PTS] ) ]`
+* **Direct Library Function Call:** `config_sweep(argName=start|stop|center|span|cw, val=Int|Float)` AND `preform_sweep(start, stop, pts)`
+* **Example Return:** 
+    * empty bytearray `b''`
+    * bytearray(b'0 800000000 450\r')
 * **Alias Functions:**
-    * 
+    * `get_sweep_params()`
+    * `set_sweep_start(val=FREQ)`
+    * `set_sweep_stop(val=FREQ)`
+    * `set_sweep_center(val=FREQ)`
+    * `set_sweep_span(val=Int|Float)`
+    * `set_sweep_cw(val=Int|Float)`
+    * `run_sweep(start=FREQ, stop=FREQ, pts=INT)`
 * **CLI Wrapper Usage:**
-* **Notes:**  sweep without arguments lists the current sweep settings, the frequencies specified should be within the permissible range. The sweep commands apply both to input and output modes
+* **Notes:**  sweep without arguments lists the current sweep settings, the frequencies specified should be within the permissible range. The sweep commands apply both to input and output modes. MAX PTS is device dependent; 290 for tinySA Basic and 450 for tinySA Ultra and newer
+* sweep start {frequency}: sets the start frequency of the sweep.
+* sweep stop {frequency}: sets the stop frequency of the sweep.
+* sweep center {frequency}: sets the center frequency of the sweep.
+* sweep span {frequency}: sets the span of the sweep.
+* sweep cw {frequency}: sets the continuous wave frequency (zero span sweep). 
+* sweep {start(Hz)} {stop(Hz)} [0..MAX PTS]: sets the start and stop frequencies, and optionally the number of points in the sweep
+ 
 
 ### **sweeptime**
-* **Status:** TODO
-* **Description:** Sets the sweeptime
-* **Original Usage:** `sweep {time(Seconds)}`
+* **Description:** Sets the time between each sweep.
+* **Original Usage:** `sweeptime {time(Seconds)}`
 * **Direct Library Function Call:**
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * None
 * **CLI Wrapper Usage:**
 * **Notes:** the time specified may end in a letter where  m=mili and u=micro
 
+### **temperature**
+* **Description:** Get the temperature from the device
+* **Original Usage:** `k`
+* **Direct Library Function Call:** `temp()`
+* **Example Return:** `bytearray(b'43.25\r')`
+* **Alias Functions:**
+    * `get_temp()`
+* **CLI Wrapper Usage:**
+* **Notes:** single letter command. might not work on tinySA Basic model.
+
+
 ### **text**
-* **Status:**  Done
 * **Description:** specifies the text entry for the active keypad 
 * **Original Usage:** `text keypadtext `
 * **Direct Library Function Call:** `text(val="")`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * None
 * **CLI Wrapper Usage:**
 * **Notes:**  where keypadtext is the text used. Example: text 12M. Currently does not work for entering file names. 
 
 ### **threads**
-* **Status:** Done
 * **Description:** lists information of the threads in the tinySA
 * **Original Usage:** `threads`
 * **Direct Library Function Call:** `threads()`
 * **Example Return:** `b'stklimit|        |stk free|    addr|refs|prio|    state|        name\r\n20000200|2000054C|00000248|200016A8|   0| 128|  CURRENT|        main\r\n20001530|2000157C|0000008C|20001650|   0|   1|    READY|        idle\r\n200053D8|200056C4|00000250|200059B0|   0| 127|    READY|       sweep\r'`
 * **Alias Functions:**
-    * 
+    * None
 * **CLI Wrapper Usage:**
 * **Notes:** 
 
 ### **touch**
-* **Status:** Done
 * **Description:** sends the coordinates of a touch
 * **Original Usage:** `touch {X coordinate} {Y coordinate}`
 * **Direct Library Function Call:** `touch(x=0,y=0)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * `preform_touch(x=Int, y=Int)`
 * **CLI Wrapper Usage:**
 * **Notes:**  The upper left corner of the screen is "0 0"
 
 ### **touchcal**
-* **Status:** Done
 * **Description:** starts the touch calibration
 * **Original Usage:** `touchcal`
-* **Direct Library Function Call:** `touchcal()`
+* **Direct Library Function Call:** `touch_cal()`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * `start_touch_cal()`
 * **CLI Wrapper Usage:**
-* **Notes:**  is there a way to cancel this?
+* **Notes:**  
 
 ### **touchtest**
-* **Status:** Done
 * **Description:** starts the touch test
 * **Original Usage:** `touchtest`
-* **Direct Library Function Call:** `touchtest()`
+* **Direct Library Function Call:** `touch_test()`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * `start_touch_test()`
 * **CLI Wrapper Usage:**
 * **Notes:**  instructions on screen "touch panel, draw lines, press button to complete"
 
@@ -1367,89 +1395,99 @@ UNDERGROING TESTING
 * **Notes:** 
 
 ### **trigger**
-* **Status:** TODO
 * **Description:** sets the trigger type or level
-* **Original Usage:** `trigger auto|normal|single|{level(dBm)}`
-* **Direct Library Function Call:**
+* **Original Usage:** `trigger auto|normal|single|{level(dBm)}` or `trigger {value}\r\ntrigger {auto|normal|single}\r`
+* **Direct Library Function Call:** `trigger(val="auto"|"normal"|"single"|None, freq=None|Int)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * `trigger_auto()`
+    * `trigger_normal()`
+    * `trigger_single()`
+    * `trigger_level(FREQ)`
 * **CLI Wrapper Usage:**
 * **Notes:**  the trigger level is always set in dBm
 
 ### **ultra**
-* **Status:** Done
-* **Description:** turn on/config tiny SA ultra mode
+* **Description:** turn on/off/config tiny SA ultra mode features
 * **Original Usage:** `ultra off|on|auto|start|harm {freq}`
 * **Direct Library Function Call:** `ultra(val="on"|"off")`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * `set_ultra_on()`
+    * `set_ultra_off()`
+    * `set_ultra_auto()`
+    * `set_ultra_start(val=FREQ)`
+    * `set_ultra_harmonic(val=FREQ)`
 * **CLI Wrapper Usage:**
-* **Notes:**  limited input until more documentation found
+* **Notes:**  
+    * ultra on: enable ultra mode
+    * ultra off {freq}: disable ultra mode
+    * ultra auto: let the tinySA decide 
+    * ultra start {freq}: set ultra start frequency to a specific frequency in MHz
+    * ultra harm {freq}: enables harmonic mode and set the frequency to which the harmonic filter is tuned. NO ERROR CHECKING FOR THIS in library
+    * 
+
 
 ### **usart_cfg**
-* **Status:** Done
 * **Description:** Get port current baud rate/ gets the current serial config
 * **Original Usage:** `usart_cfg`
 * **Direct Library Function Call:** `usart_cfg()`
 * **Example Return:** `b'Serial: 115200 baud\r'`
 * **Alias Functions:**
-    * 
+    * `usart_cfg()`
 * **CLI Wrapper Usage:**
 * **Notes:**  default is 115,200
 
 ### **vbat**
-* **Status:** Done
 * **Description:** Get the current battery voltage
 * **Original Usage:** `vbat`
 * **Direct Library Function Call:**
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * `get_vbat()`
 * **CLI Wrapper Usage:**
 * **Notes:** 
 
 ### **vbat_offset**
-* **Status:** Done
 * **Description:** Sets or gets the battery offset value
 * **Original Usage:** `vbat_offset [{0..4095}]`
 * **Direct Library Function Call:** `vbat_offset(val=None|0..4095)`
 * **Example Return:** `b'300\r'`
 * **Alias Functions:**
-    * 
+    * `get_vbat_offset()`
+    * `set_vbat_offset(val=Int)`
 * **CLI Wrapper Usage:**
 * **Notes:** 
 
 ### **version**
-* **Status:** Done
 * **Description:** returns the version text
 * **Original Usage:** `version`
 * **Direct Library Function Call:** `version()` 
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * `get_version()`
 * **CLI Wrapper Usage:**
 * **Notes:** 
 
 ### **wait**
-* **Status:** Done
 * **Description:** wait for a single sweep to finish and pauses sweep or waits for specified number of seconds
 * **Original Usage:** `wait [{seconds}]`
 * **Direct Library Function Call:**
 * **Example Return:** empty bytearray
-* **Notes:**
+* **Alias Functions:**
+    * None
+* **CLI Wrapper Usage:**
+* **Notes:** Without an argument, this puts device in the WAIT state and it needs to manually RESUME
 
 ### **zero**
-* **Status:** TODO: documentation
-* **Description:**
+* **Description:** get or set the zero offset in dBm
 * **Original Usage:** `zero {level}\r\n174dBm`
-* **Direct Library Function Call:**
+* **Direct Library Function Call:** `zero(val=None|Int)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * 
+    * `get_zero_offset()`
 * **CLI Wrapper Usage:**
-* **Notes:** 
+* **Notes:** If unfamiliar with device and operation, DO NOT CHANGE THIS VALUE.
 
 
 ''' Full list of help commands

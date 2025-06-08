@@ -52,6 +52,8 @@ class tinySA():
 
         #select device vars - hardcoding for the Ultra for now
         self.deviceType = "ULTRA_ZS405"
+        # device params
+        self.maxPoints = 450
         # spectrum analyzer
         self.minSADeviceFreq = 100e3  #100 kHz
         self.maxSADeviceFreq = 5.3e9 #5.3 GHz
@@ -204,8 +206,39 @@ class tinySA():
                     self.print_message(err)
                     return None
                 break
+            
         return bytearray(complete)
 
+
+    def read_until_end_marker(self, end_marker=b'}', timeout=5.0):
+        # scan and scan raw might return early with tinySA_serial
+        # so this is written to 
+        import time
+        
+        buffer = bytes()
+        start_time = time.time()
+        
+        while True:
+            if self.ser.in_waiting > 0:
+                buffer += self.ser.read(self.ser.in_waiting)
+                
+                # Check if we have the end marker
+                if end_marker in buffer:
+                    # Find the position after the end marker
+                    end_pos = buffer.find(end_marker) + len(end_marker)
+                    complete = buffer[:end_pos]
+                    # Keep any remaining data for next read
+                    self.remaining_buffer = buffer[end_pos:]
+                    return bytearray(complete)
+            
+            # Timeout check
+            if time.time() - start_time > timeout:
+                self.print_message(f"WARNING: Timeout waiting for end marker {end_marker}")
+                break
+            
+            time.sleep(0.01)
+        
+        return bytearray(buffer)
 
     def clean_return(self, data):
         # takes in a bytearray and removes 1) the text up to the first '\r\n' (includes the command), an 2) the ending 'ch>'
@@ -1390,37 +1423,51 @@ class tinySA():
         self.print_message("save_config() called")
         return msgbytes
 
-
-
-
-    def scan(self):
-        # TODO: documentation for err checking
+    def scan(self, start, stop, pts=250, outmask=None):
         # Performs a scan and optionally outputs the measured data.
         # usage: scan {start(Hz)} {stop(Hz)} [points] [outmask]
             # where the outmask is a binary OR of:
             # 1=frequencies, 2=measured data,
-            # 4=stored data and points is maximum is 290
-        self.print_message("Function does not exist yet. error checking needed")
-        return None
+            # 4=stored data and max points is device dependent
+
+        if (0<=start) and (start < stop) and (pts <= self.maxPoints):
+            if outmask == None:
+                writebyte = 'scan '+str(start)+' '+str(stop)+' '+str(pts)+'\r\n'
+            else: 
+                 writebyte = 'scan '+str(start)+' '+str(stop)+' '+str(pts)+ ' '+str(outmask)+'\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
+            self.print_message("scanning...")           
+        else:
+            self.print_message("ERROR: scan takes START STOP PTS OUTMASK as args. Check doc for format and limits")
+            msgbytes = self.error_byte_return()
+        return msgbytes
     
-    def run_scan(self):
-        # 
-        pass
 
-
-
-
-    def scan_raw(self):
-        # TODO: documentation for err checking
+    def scan_raw(self, start, stop, pts=250, unbuf=1):
         # performs a scan of unlimited amount of points 
-        # and send the data in binary form
-        # usage: scanraw {start(Hz)} {stop(Hz)} [points]
-            # The measured data is send as:
+        # and sends the data in binary form
+        # usage: scanraw {start(Hz)} {stop(Hz)} [points] [unbuffered]
+            # The measured data is sent as:
             #  '{' ('x' MSB LSB)*points '}' 
-            # where the 16 bit data is scaled by 32.
+            #  where the 16 bit data is scaled by 32 & shifted based on device.
+            # the README has examples for processing
 
-        self.print_message("Function does not exist yet. error checking needed")
-        return None
+        if (0<=start) and (start < stop) and (pts <= self.maxPoints):
+            if (unbuf == 1) or (unbuf==2):
+                # not currently doing 3
+                writebyte = 'scanraw '+str(start)+' '+str(stop)+' '+str(pts)+ ' '+str(unbuf)+'\r\n'
+
+                # write out to serial, get message back, clean up, return
+                self.print_message("scanning...")  
+                msgbytes = self.tinySA_serial(writebyte, printBool=False)
+                return msgbytes
+            else:
+                self.print_message("ERROR: unrecognized UBUF for scanraw")
+                msgbytes = self.error_byte_return()
+        else:
+            self.print_message("ERROR: scanraw takes START STOP PTS UNBUF as args. Check doc for format and limits")
+            msgbytes = self.error_byte_return()
+        return msgbytes
     
     def sd_delete(self, val):
         # delete a specific file on the sd card
@@ -1486,10 +1533,10 @@ class tinySA():
             msgbytes = self.error_byte_return()
         return msgbytes
     
-    def set_spur_on(self):
+    def spur_on(self):
         # alias for spur()
         return self.spur("on")
-    def set_spur_off(self):
+    def spur_off(self):
         # alias for spur()
         return self.spur("off")
     
@@ -1503,9 +1550,14 @@ class tinySA():
         self.print_message("getting device status() paused/resumed")
         return msgbytes
 
+    def get_status(self):
+        # alias for status()
+        return self.get_status()
+
     
-    def sweep(self, argName=None, val=None): # pts=None):
-            # Set sweep boundaries or execute a sweep.
+    def config_sweep(self, argName=None, val=None): 
+            # split call for SWEEP
+            # Set sweep boundaries.
             # Sweep without arguments lists the current sweep 
             # settings. The frequencies specified should be 
             # within the permissible range. The sweep commands 
@@ -1513,7 +1565,13 @@ class tinySA():
             # usage: 
             # sweep [(start|stop|center|span|cw {frequency}) | 
             #   ({start(Hz)} {stop(Hz)} [0..290])]
-            # # example return:  
+            # EXAMPLES:
+            # sweep start {frequency}: sets the start frequency of the sweep.
+            # sweep stop {frequency}: sets the stop frequency of the sweep.
+            # sweep center {frequency}: sets the center frequency of the sweep.
+            # sweep span {frequency}: sets the span of the sweep.
+            # sweep cw {frequency}: sets the continuous wave frequency (zero span sweep). 
+            # # example return:  b'' 
 
         # explicitly allowed vals
         accepted_table_args = ["start", "stop", "center", 
@@ -1540,23 +1598,36 @@ class tinySA():
             msgbytes = self.error_byte_return()
 
         return msgbytes
-
+    
+    def get_sweep_params(self):
+        # alias for config_sweep() 
+        return self.config_sweep()
     def set_sweep_start(self, val):
-        return self.sweep("start", val)
-    
+        # alias for config_sweep() 
+        return self.config_sweep("start", val)
     def set_sweep_stop(self, val):
-        return self.sweep("stop", val)
-    
+        # alias for config_sweep() 
+        return self.config_sweep("stop", val)
     def set_sweep_center(self, val):
-        return self.sweep("center", val)
-    
+        # alias for config_sweep() 
+        return self.config_sweep("center", val)
     def set_sweep_span(self, val):
-        return self.sweep("span", val)
-    
+        # alias for config_sweep() 
+        return self.config_sweep("span", val)
     def set_sweep_cw(self, val):
-        return self.sweep("cw", val)    
-
-    def set_sweep_range(self, startVal=None, stopVal=None):
+        # alias for config_sweep() 
+        return self.config_sweep("cw", val)   
+    
+    def run_sweep(self, startVal=None, stopVal=None, pts=250):
+            # split call for SWEEP
+            # Execute sweep.
+            # The frequencies specified should be 
+            # within the permissible range. The sweep commands 
+            # apply both to input and output modes        
+            # usage: 
+            # sweep [(start|stop|center|span|cw {frequency}) | 
+            #   ({start(Hz)} {stop(Hz)} [0..290])]
+            # # example return:  
         if (startVal==None) or (stopVal==None):
             self.print_message("ERROR: sweep start and stop need non-empty values")
             msgbytes = self.error_byte_return()
@@ -1564,28 +1635,33 @@ class tinySA():
             self.print_message("ERROR: sweep start must be less than sweep stop value")
             msgbytes = self.error_byte_return()
         else:
-            # start
-            msgbytes1 = self.set_sweep_start(startVal)
-            # stop
-            msgbytes2 = self.set_sweep_stop(stopVal)
-            # combine (for now)
-            msgbytes = msgbytes1 + "\n" + msgbytes2
+            #do stuff, error checking needed
+            self.print_message("sweeping...")
+            writebyte = 'sweep '+str(startVal)+' '+str(stopVal)+' '+str(pts)+'1\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
+
         return msgbytes 
 
-    def sweep_time(self):
-        # TODO
+    def sweep_time(self, val):
         # sets the sweeptime
         # usage: sweep {time(Seconds)}the time
         # specified may end in a letter where
         # m=mili and u=micro
-        self.print_message("Function does not exist yet. error checking needed")
-        writebyte = 'sd_list\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
-        self.print_message("listing files from sd card")
-        return msgbytes 
+        # example return:  b''
+        
+        
+        # needs some error checking
 
+        writebyte = 'sweeptime '+str(val)+'\r\n'
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)   
+        self.print_message("sweeptime set to " + str(val))
+        return msgbytes
 
     def temp(self):
+        # gets the temperature
+        # usage: k   (NOTE: single letter command)
+        # example return:
+        #  b'43.25\r'
         writebyte = 'k\r\n'
         msgbytes = self.tinySA_serial(writebyte, printBool=False) 
         self.print_message("getting temperature")
@@ -1597,9 +1673,10 @@ class tinySA():
 
 
     def text(self, val=""):
-        # TODO
-        self.print_message("Function does not exist yet. error checking needed")
-        
+        # specifies the text entry for the active keypad 
+        # usage: text(val="")
+        # example return: b''
+       
         if len(str(val))>0:
             writebyte = 'text ' + str(val) +'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False) 
@@ -1640,6 +1717,11 @@ class tinySA():
         msgbytes = self.tinySA_serial(writebyte, printBool=False) 
         self.print_message("setting the touch() (" + str(x)+"," + str(y) + ")")
         return msgbytes 
+    
+    def preform_touch(self, x, y):
+        #alias for touch()
+        return self.touch(x,y)
+
 
     def touch_cal(self):
         # starts the touch calibration
@@ -1678,29 +1760,56 @@ class tinySA():
         self.print_message("Function does not exist yet. error checking needed")
         return None
 
-    def trigger(self):
-        #TODO
+    def trigger(self, val, freq=None):
         # sets the trigger type or level
-        # usage: trigger auto|normal|single| 
-        # {level(dBm)}
-        # the trigger level is always set in dBm
+        # usage: trigger auto|normal|single|{level(dBm)}
+        # the trigger level is always set in dBm and is the only numerical input
         # example return:  
+        # #explicitly allowed vals
+        accepted_vals =  ["auto", "normal", "single"]        
 
-        self.print_message("Function does not exist yet. error checking needed")
-        return None
+        if val in accepted_vals:
+            writebyte = 'trigger ' + str(val) +'\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            self.print_message("setting trigger to " + str(val))
+        elif val==None and isinstance(freq,int):
+            writebyte = 'trigger ' + str(freq) +'\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            self.print_message("setting trigger level (dBm) to " + str(freq))
+        else:
+            self.print_message("ERROR: trigger takes inputs auto|normal|single|{level(dBm)}")
+            msgbytes = self.error_byte_return()
+        return msgbytes
+    
+    def trigger_auto(self):
+        # alias for trigger
+        return self.trigger("auto")
+    def trigger_normal(self):
+        # alias for trigger
+        return self.trigger("normal")    
+    def trigger_single(self):
+        # alias for trigger
+        return self.trigger("single")
+    def trigger_level(self, val):
+        # alias for trigger
+        return self.trigger(None, val)    
 
     def ultra(self, val="off", freq=None):
         # turn on/config tiny SA ultra mode
         # usage: ultra off|on|auto|start|harm {freq}
         # example return: bytearray(b'')
 
-        # #explicitly allowed vals
-        accepted_vals =  ["off", "on"] #, "auto", "start", "harm"]        
+        # explicitly allowed vals
+        accepted_vals =  ["off", "on", "auto", "start", "harm"]        
 
-        if val in accepted_vals:
+        if val in ["off", "on", "auto"]:
             writebyte = 'ultra ' + str(val) +'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False) 
             self.print_message("configuring ultra() " + str(val))
+        elif val in ["start", "harm"]:
+            writebyte = 'ultra ' + str(val) + ' ' + str(freq) +'\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            self.print_message("configuring ultra() " + str(val) + " at " + str(freq))
         else:
             self.print_message("ERROR: ultra() currently only takes on/off as args")
             msgbytes = self.error_byte_return()
@@ -1716,11 +1825,11 @@ class tinySA():
     def set_ultra_auto(self):
         return self.ultra("auto")
     
-    def set_ultra_start(self):
-        return self.ultra("start")
+    def set_ultra_start(self, val):
+        return self.ultra("start", val)
        
-    def set_ultra_harmonic(self):
-        return self.ultra("harm")
+    def set_ultra_harmonic(self, val):
+        return self.ultra("harm", val)
 
     def usart_cfg(self):
         # gets the current serial config
@@ -1731,6 +1840,11 @@ class tinySA():
         msgbytes = self.tinySA_serial(writebyte, printBool=False) 
         self.print_message("usart_cfg() returning config vals")
         return msgbytes
+    
+    def get_usart_cfg(self):
+        #alias for usart_cfg()
+        return self.usart_cfg()
+
 
     def vbat(self):
         # displays the battery voltage
@@ -1766,6 +1880,10 @@ class tinySA():
     def get_vbat_offset(self):
         # alias for vbat_offset()
         return self.vbat_offset()
+    def set_vbat_offset(self, val):
+        # alias for vbat_offset()
+        return self.vbat_offset(val)
+
 
     def version(self):
         # displays the version text
@@ -1782,7 +1900,10 @@ class tinySA():
         return self.version()
 
     def wait(self, val=0):
-        # TODO
+        # wait for a single sweep to finish and pauses
+        #  sweep or waits for specified number of seconds
+        # usage: wait [{seconds}]
+        # example return:
 
         if val == None:
             writebyte = 'wait\r\n'
@@ -1795,15 +1916,28 @@ class tinySA():
         else:
             self.print_message("ERROR: wait() takes None or positive ints")
             msgbytes = self.error_byte_return()
+        return msgbytes
 
-
-    def zero(self):
-        # TODO: get info on exactly what this is, does, and the format
+    def zero(self, val):
+        #get or set the zero offset in dBm
+        # DO NOT CHANGE if unfamiliar with device and offset
         # usage: zero {level}\r\n174dBm
         # example return:
 
-        self.print_message("Function does not exist yet. error checking needed")
-        return None
+        if val == None:
+            writebyte = 'zero\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            self.print_message("returning zero offset")
+        else:
+            writebyte = 'zero ' + str(val) + '\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            self.print_message("device zero offset is " + str(val) + " dBm.")
+
+        return msgbytes
+    
+    def get_zero_offset(self):
+        # alias function for zero
+        return self.zero()
 
 
 ######################################################################
