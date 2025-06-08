@@ -296,7 +296,7 @@ class tinySA():
         accepted_vals =  ["off", "on"]        
 
         #check input
-        if (val in accepted_vals): #toggle state
+        if (str(val) in accepted_vals): #toggle state
             writebyte = 'abort '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False) 
             if val == "on":
@@ -362,7 +362,7 @@ class tinySA():
         #explicitly allowed vals
         accepted_vals =  np.arange(0, 8, 1) # max exclusive
         #check input
-        if (val == "auto") or (val in accepted_vals):
+        if (str(val) == "auto") or (val in accepted_vals):
             writebyte = 'agc '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)     
             self.print_message("agc() set with " + str(val))
@@ -383,7 +383,7 @@ class tinySA():
         #explicitly allowed vals
         accepted_vals =  np.arange(0, 31, 1) # max exclusive
         #check input
-        if (val == "auto") or (val in accepted_vals):
+        if (str(val) == "auto") or (val in accepted_vals):
             writebyte = 'attenuate '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("attenuate() set with " + str(val))           
@@ -424,7 +424,7 @@ class tinySA():
         accepted_vals =  ["off", "minh", "maxh", "maxd", 
                           "aver4", "aver16", "quasip"]
         #check input
-        if (val in accepted_vals):
+        if (str(val) in accepted_vals):
             writebyte = 'calc '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)     
             self.print_message("calc() set with " + str(val))
@@ -454,7 +454,7 @@ class tinySA():
         # example return: bytearray(b'')
 
         #explicitly allowed vals
-        accepted_vals =  ["off", 1,2,3,4,10,15,30]
+        accepted_vals =  ["off", 'off', 1,2,3,4,10,15,30]
         #check input
         if (val in accepted_vals):
             writebyte = 'caloutput '+str(val)+'\r\n'
@@ -675,7 +675,7 @@ class tinySA():
             msgbytes = self.error_byte_return()
         return msgbytes
     
-    def get_temp_data(self):
+    def get_temporary_data(self):
         # alias func for data()
         return self.data(val=0)
     def get_stored_trace_data(self):
@@ -721,11 +721,11 @@ class tinySA():
         accepted_vals =  ["start", "stop",
                            "on", "off"]
         #check input
-        if (val=="on") or (val =="off"):
+        if (str(val)=="on") or (str(val) =="off"):
             writebyte = 'direct '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)     
             self.print_message("direct() set with " + str(val))
-        elif (val=="start") or (val=="stop"):
+        elif (str(val)=="start") or (str(val)=="stop"):
             #TODO: add frequency checking here
             writebyte = 'direct '+str(val)+' ' +str(freq)+ '\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)     
@@ -1029,7 +1029,7 @@ class tinySA():
         #explicitly allowed vals
         accepted_vals =  ["on", "off"]
         #check input
-        if (val in accepted_vals):
+        if (str(val) in accepted_vals):
             writebyte = 'lna '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)   
             self.print_message("lna() set to " + str(val))        
@@ -1078,13 +1078,18 @@ class tinySA():
         # 2) position the marker on the strongest signal, and
         # 3) display the marker info.
         # The frequency must be within the selected sweep range
-
         # usage: marker {id} on|off|peak|{freq}|{index}
         # example return: ''
+
         #explicitly allowed vals
         accepted_vals =  ["on", "off", "peak"]
         #check input
-        if (val in accepted_vals):
+        if ID == None: 
+            self.print_message("ERROR: marker() takes ID=Int|0..4")
+            msgbytes = self.error_byte_return()
+            return msgbytes
+
+        if (str(val) in accepted_vals):
             writebyte = 'marker ' + str(ID) + ' ' +str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)     
             self.print_message("marker set to " + str(val))      
@@ -1166,7 +1171,7 @@ class tinySA():
         accepted_vals =  ["off", "AM_1kHz", "AM_10Hz",
                           "NFM", "WFM", "extern"]
         #check input
-        if (val in accepted_vals):
+        if (str(val) in accepted_vals):
             writebyte = 'output '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)           
         else:
@@ -1217,7 +1222,7 @@ class tinySA():
         # explicitly allowed vals
         accepted_vals =  ["on", "off"]
         #check input
-        if (val in accepted_vals):
+        if (str(val) in accepted_vals):
             writebyte = 'output '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)           
         else:
@@ -1291,7 +1296,7 @@ class tinySA():
         #explicitly allowed vals
         accepted_vals =  ["on", "off"]
         #check input
-        if (val in accepted_vals):
+        if (str(val) in accepted_vals):
             writebyte = 'refresh '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("refresh() set to " + str(val))           
@@ -1453,8 +1458,7 @@ class tinySA():
             # the README has examples for processing
 
         if (0<=start) and (start < stop) and (pts <= self.maxPoints):
-            if (unbuf == 1) or (unbuf==2):
-                # not currently doing 3
+            if (unbuf == 1) or (unbuf==2) or (unbuf==3):
                 writebyte = 'scanraw '+str(start)+' '+str(stop)+' '+str(pts)+ ' '+str(unbuf)+'\r\n'
 
                 # write out to serial, get message back, clean up, return
@@ -1468,6 +1472,9 @@ class tinySA():
             self.print_message("ERROR: scanraw takes START STOP PTS UNBUF as args. Check doc for format and limits")
             msgbytes = self.error_byte_return()
         return msgbytes
+    
+    def continious_scanraw(self):
+        pass # the continious scan might need to be handled differently
     
     def sd_delete(self, val):
         # delete a specific file on the sd card
@@ -1524,7 +1531,7 @@ class tinySA():
         # explicitly allowed vals
         accepted_vals =  ["on", "off"]
         #check input
-        if (val in accepted_vals):
+        if (str(val) in accepted_vals):
             writebyte = 'spur '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("spur() set to " + str(val))           
@@ -1748,17 +1755,180 @@ class tinySA():
     def start_touch_test(self):
         return self.touch_test()
 
-    def trace(self):
-        # TODO: get documentation for err checking
-        # displays all or one trace information
+    def trace_select(self, ID):
+        # split call for TRACE. select an available trace
+        if (isinstance(ID, int)) and ID >=0:
+            writebyte = 'trace '+ str(ID) +'\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            self.print_message("selecting trace")
+        else:
+            self.print_message("ERROR: trace numbers must be integers greater than 0. see device documentation for max")
+            msgbytes = self.error_byte_return()
+        return msgbytes
+    
+    def trace_units(self, val):
+        # split call for TRACE. set the units for the traces
+        # explicitly allowed vals
+        accepted_vals =  ["dBm", "dBmV", "dBuV", "V", "W", "Vpp", "RAW"]
+
+        if (str(val) in accepted_vals):
+            writebyte = 'trace '+ str(val) +'\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            self.print_message("setting trace units to " + str(val))
+        else:
+            self.print_message("ERROR: trace vals can be 'dBm'|'dBmV'|'dBuV'|'RAW'|'V'|'Vpp'|'W'")
+            msgbytes = self.error_byte_return()
+        return msgbytes
+
+    def trace_scale(self, val="auto"):
+        # split call for TRACE. scales a trace/traces.
+        writebyte = 'trace scale' + str(val) + '\r\n'
+        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        self.print_message("scaling trace")
+        return msgbytes
+
+    def trace_reflevel(self, val="auto"):
+        # split call for TRACE. sets the reference level of a trace
+        writebyte = 'trace reflevel' + str(val) + '\r\n'
+        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        self.print_message("setting reference level of trace")
+        return msgbytes
+
+    def trace_value(self, ID):
+        # split call for TRACE. gets values of trace
+
+        writebyte = 'trace' + str(ID) + 'value \r\n'
+        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        self.print_message("getting raw trace values")
+        return msgbytes
+
+    def trace_toggle(self, ID, val="on"):
+        # split call for TRACE. toggle trace ON or OFF
+        # full description: displays all or one trace information
         # or sets trace related information
         # usage: 
         # trace [ {0..2} | 
         # dBm|dBmV|dBuV|V|W |store|clear|subtract | (scale|
         # reflevel) auto|{level}
         # example return: 
-        self.print_message("Function does not exist yet. error checking needed")
-        return None
+
+        accepted_vals = ["on", "off"]
+
+        if (isinstance(ID,int)) and (str(val) in accepted_vals):
+            writebyte = 'trace' + str(ID) + ' ' +str(val)+ '\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            self.print_message("toggling trace " +str(val))
+        else:
+            self.print_message("ERROR: trace ID is an Int, val='on'|'off'")
+            msgbytes = self.error_byte_return()
+
+        return msgbytes
+
+    def trace_subtract(self, ID1, ID2):
+        # split call for TRACE. subtracts a trace/traces. 
+        # subtract ID1 FROM ID2
+
+        if (isinstance(ID1,int)) and (isinstance(ID2,int)):
+            writebyte = 'trace' + str(ID1) + ' subtract ' +str(ID2)+ '\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            self.print_message("subtracting traces")
+        else:
+            self.print_message("ERROR: trace IDs must be Ints")
+            msgbytes = self.error_byte_return()
+
+        return msgbytes
+
+    def trace_copy(self, ID1, ID2):
+        # split call for TRACE. copies a trace/traces. 
+
+        if (isinstance(ID1,int)) and (isinstance(ID2,int)):
+            writebyte = 'trace' + str(ID1) + ' subtract ' +str(ID2)+ '\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            self.print_message("copying traces")
+        else:
+            self.print_message("ERROR: trace IDs must be Ints")
+            msgbytes = self.error_byte_return()
+
+        return msgbytes
+
+    def trace_freeze(self, ID):
+        # split call for TRACE. freezes a trace
+
+        if (isinstance(ID,int)):
+            writebyte = 'trace' + str(ID) + ' freeze\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            self.print_message("freezing trace")
+        else:
+            self.print_message("ERROR: trace ID must be Ints")
+            msgbytes = self.error_byte_return()
+
+        return msgbytes
+
+
+    def trace_clear(self, val):
+        # split call for TRACE. clears a trace/traces. doesnt seem to take inputs
+        # full description: displays all or one trace information
+        # or sets trace related information
+        # usage: 
+        # trace [ {0..2} | 
+        # dBm|dBmV|dBuV|V|W |store|clear|subtract | (scale|
+        # reflevel) auto|{level}
+        # example return: 
+
+        writebyte = 'trace ' + str(val) + 'clear \r\n'
+        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        self.print_message("clearing trace(s)")
+        return msgbytes
+
+
+
+
+
+
+
+
+    def trace_freeze(self, ID):
+        # split call for TRACE. sets the reference level of a trace
+        # full description: displays all or one trace information
+        # or sets trace related information
+        # usage: 
+        # trace [ {0..2} | 
+        # dBm|dBmV|dBuV|V|W |store|clear|subtract | (scale|
+        # reflevel) auto|{level}
+        # example return: 
+
+        writebyte = 'trace' + str(ID) + 'freeze \r\n'
+        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        self.print_message("freezing trace")
+        return msgbytes
+
+
+
+
+
+    def trace_action(self, ID, val):
+        # split call for TRACE. toggle trace ON or OFF
+        # full description: displays all or one trace information
+        # or sets trace related information
+        # usage: 
+        # trace [ {0..2} | 
+        # dBm|dBmV|dBuV|V|W |store|clear|subtract | (scale|
+        # reflevel) auto|{level}
+        # example return: 
+
+        accepted_vals = ["copy","freeze","subtract","view","value"]
+
+        if (isinstance(ID,int)) and (str(val) in accepted_vals):
+            writebyte = 'trace' + str(ID) + ' ' +str(val)+ '\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            self.print_message("setting trace action")
+        else:
+            self.print_message("ERROR: trace vals can be 'copy'|'freeze'|'subtract'|'view'|'value' and ID is an Int")
+            msgbytes = self.error_byte_return()
+
+        return msgbytes
+
+
 
     def trigger(self, val, freq=None):
         # sets the trigger type or level
@@ -1768,7 +1938,7 @@ class tinySA():
         # #explicitly allowed vals
         accepted_vals =  ["auto", "normal", "single"]        
 
-        if val in accepted_vals:
+        if str(val) in accepted_vals:
             writebyte = 'trigger ' + str(val) +'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False) 
             self.print_message("setting trigger to " + str(val))
@@ -1802,11 +1972,11 @@ class tinySA():
         # explicitly allowed vals
         accepted_vals =  ["off", "on", "auto", "start", "harm"]        
 
-        if val in ["off", "on", "auto"]:
+        if str(val) in ["off", "on", "auto"]:
             writebyte = 'ultra ' + str(val) +'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False) 
             self.print_message("configuring ultra() " + str(val))
-        elif val in ["start", "harm"]:
+        elif str(val) in ["start", "harm"]:
             writebyte = 'ultra ' + str(val) + ' ' + str(freq) +'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False) 
             self.print_message("configuring ultra() " + str(val) + " at " + str(freq))

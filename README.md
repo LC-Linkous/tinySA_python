@@ -381,7 +381,7 @@ from PIL import Image
 import struct
 
 def convert_data_to_image(data_bytes, width, height):
-    # this is not a particularly pretty example, and the data_bytes is sometimes a byte short (TODO:fix)
+    # this is not a particularly pretty example, and the data_bytes is sometimes a byte short 
 
     # calculate the expected data size
     expected_size = width * height * 2  # 16 bits per pixel (RGB565), 2 bytes per pixel
@@ -696,10 +696,11 @@ Quick Link Table:
 * **Direct Library Function Call:** `correction(tableName, slot, freq, val)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * TODO!!
+    * This function is complex enough that it is recommended to use the `command()` function for options not covered by the `correction(...)` library function
 * **CLI Wrapper Usage:**
 * **Notes:**  See [Correction Wiki](https://tinysa.org/wiki/pmwiki.php?n=Main.Correction). The current content of the table is shown by entering `correction low` without any arguments. The data in the table can be modified by specifying the slot number and the new values. There **MUST** be one entry in the low table for 30MHz and the correction for that frequency **MUST** be zero. 
 * **Future Work:** **Confirm table format across devices**. Value currently limited between -10 and 35, but this needs to be more specific.
+
 
 ### **dac**
 * **Description:** Sets or gets the dac value
@@ -718,11 +719,13 @@ Quick Link Table:
 * **Direct Library Function Call:** `data(val=0|1|2)`
 * **Example Return:** `format bytearray(b'7.593750e+00\r\n-8.437500e+01\r\n-8.693750e+01\r\n...\r')`
 * **Alias Functions:**
-    * `get_temp_data()`
+    * `get_temporary_data()` 
     * `get_stored_trace_data()`
     * `dump_measurement_data()`
 * **CLI Wrapper Usage:**
-* **Notes:**   0 = temp value, 1 = stored trace, 2 = measurement. strength in decibels (dB) 
+* **Notes:**   
+    * 0 = temp value, 1 = stored trace, 2 = measurement. strength in decibels (dB) 
+    * `get_temporary_data` not to be confused with `get_temp`, which returns temperature
        
           
 ### **device_id**
@@ -1384,15 +1387,35 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Notes:**  instructions on screen "touch panel, draw lines, press button to complete"
 
 ### **trace**
-* **Status:** TODO
-* **Description:** displays all or one trace information or sets trace related information
-* **Original Usage:** `trace [{0..2} | dBm|dBmV|dBuV| V|W |store|clear|subtract | (scale|reflevel) auto|{level}]`
+* **Description:** displays all or one trace information or sets trace related information. INCOMPLETE due to how many combinations are possible.
+* **Original Usage:** 
+    * from help message return`bytearray(b'trace {dBm|dBmV|dBuV|RAW|V|Vpp|W}\r\ntrace {scale|reflevel} auto|{value}\r\ntrace [{trace#}] value\r\ntrace [{trace#}] {copy|freeze|subtract|view|value} {trace#}|off|on|[{index} {value}]\r')`
+    * general structure for commands: `trace [{trace#}] {copy|freeze|subtract|view|value} {trace#}|off|on|[{index} {value}]`
+    * from earlier documentation: `trace [{0..2} | dBm|dBmV|dBuV| V|W |store|clear|subtract | (scale|reflevel) auto|{level}]`  
 * **Direct Library Function Call:**
-* **Example Return:** empty bytearray
-* **Alias Functions:**
+    * `trace_toggle(ID=Int|0..2..4, val="on"|"off")`
+    * `trace_select(ID=Int|0..2..4)`
+    * `trace_units(val="dBm"|"dBmV"|"dBuV"|"RAW"|"V"|"Vpp"|"W")`
+    * `trace_scale(val="auto"|Int|Float)`
+    * `trace_reflevel(val="auto"|Int|Float)`
+    * `trace_value(ID=Int)`
+    * `trace_subtract(ID1=Int, ID2=Int)`
+    * `trace_copy(ID1=Int, ID2=Int)`    
+* **Example Return:** 
+     * empty bytearray  `b''`
+     * `select_trace(1)`: 
+        * `bytearray(b'1: dBm 0.000000000 10.000000000 \r')`
+    * `trace_value(1)`:
+        * `bytearray(b'trace 1 value 0 -91.13\r\ntrace 1 value 1 -92.59\r\ntrace 1 value 2 -93.09\r\ntrace 1 value 3 -89.59.....\r\ntrace 1 value 448 -84.78\r\ntrace 1 value 449 -85.25\r')`  (returns MAX POINTS number of readings. PTS not currently settable)
     * 
+* **Alias Functions:**
+    * None, see direct library function calls
+    * it is also suggested to use the `command()` function to preform more complex actions because this is a complicated command structure
 * **CLI Wrapper Usage:**
-* **Notes:** 
+* **Notes:** For readability, this command was split into multiple functions intitially rather than using complex alias functions. There is a mismatch of information of commands between versions, so this library uses the documentation returned by the device. 
+    * `select_trace()`: tinySA Ultra has 4 traces to choose from. Other devices may have other numbers of traces.
+    * `trace_reflevel(...)` : adjusts the reference level of a trace. Levels are specified in dB(m) and can be specified using a floating point notation. E.g. 10 or 2.5 [https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface](https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface)
+
 
 ### **trigger**
 * **Description:** sets the trigger type or level
@@ -1425,7 +1448,7 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
     * ultra auto: let the tinySA decide 
     * ultra start {freq}: set ultra start frequency to a specific frequency in MHz
     * ultra harm {freq}: enables harmonic mode and set the frequency to which the harmonic filter is tuned. NO ERROR CHECKING FOR THIS in library
-    * 
+    
 
 
 ### **usart_cfg**
@@ -1506,9 +1529,7 @@ usart
 ## List of Commands Removed from Library
 
 
-
 ### **sweep_voltage**
-* **Status:** REMOVED
 * **Description:** Sets the sweep voltage 
 * **Original Usage:** `sweep_voltage {0-3.3}`
 * **Direct Library Function Call:** `sweep_voltage()`
@@ -1519,13 +1540,22 @@ usart
 
 ## Additional Library Functions for Advanced Use
 
-
-    def command(self, val):
-        # if the command isn't already a function,
-        #  use existing func setup to send command
-        writebyte = str(val) + '\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
-        self.print_message("command() called with ::" + str(val))   
+### **command**
+* **Description:** override library functions to run commands on the tinySA device directly. 
+* **Original Usage:** None. 
+* **Direct Library Function Call:** `command(val=Str)`
+* **Example Usage:**:
+    * example: `command("version")`
+    * return: `b'tinySA4_v1.4-143-g864bb27\r\nHW Version:V0.4.5.1.1 \r'`
+    * example: `command("trace 1")`
+    * return: `b'1: dBm 0.000000000 10.000000000 \r'`    
+    * example: `command("scan 150e6 200e6 5 2")`
+    * return: `b'5.750000e+00 0.000000000 \r\n6.250000e+00 0.000000000 \r\n6.750000e+00 0.000000000 \r\n6.250000e+00 0.000000000 \r\n6.750000e+00 0.000000000 \r'`        
+* **Example Return:** command dependent
+* **Alias Functions:**
+    * None
+* **CLI Wrapper Usage:**
+* **Notes:** If unfamiliar with device and operation, DO NOT USE THIS. There is no error checking and you will be interfacing with the tinySA device directly.
 
 
 
