@@ -42,10 +42,11 @@ else: # if port found and connected, then complete task(s) and disconnect
     # detailed messages turned on
     tsa.set_verbose(True) 
     # set scan values
-    start = 150e6   # 150 MHz
-    stop = 200e6    # 200 MHz
-    pts = 450       # for tinySA Ultra
-    outmask = 2     # get measured data (y axis)
+    # set scan values
+    start = int(1e9)  # 1 GHz
+    stop = int(3e9)   # 3 GHz
+    pts = 450         # sample points
+    outmask = 2       # get measured data (y axis)
     # scan
     data_bytes = tsa.scan(start, stop, pts, outmask)
 
@@ -62,8 +63,7 @@ else: # if port found and connected, then complete task(s) and disconnect
 
     # plot
     plt.plot(freq_arr, data_arr)
-    plt.xlabel("frequency")
-    plt.ylabel("measured data in dBm")
-    plt.title("tinySA scan plot")
+    plt.xlabel("Frequency (Hz)")
+    plt.ylabel("Measured Data (dBm)")
+    plt.title("tinySA Scan Plot")
     plt.show()
-
