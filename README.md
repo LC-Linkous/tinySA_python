@@ -441,14 +441,19 @@ else: # port open, complete task(s) and disconnect
 
 ### Plotting Data with Matplotlib
 
+** Example 1: Plot using On-Screen Trace Data and Frequencies**
 This example plots the last/current sweep of data from the tinySA device. 
 `data()` gets the trace data. `frequencies()` gets the frequency values used. 
 `byteArrayToNumArray(byteArr)` takes in the returned trace data and frequency 
 bytearrays and converts them to arrays that are then plotted using `matplotlib`
 
+This example works because `data()` returns a trace, which is goign to be the same dimensionality of the `frequencies()` return because they have the same `RBW`
+
 ```python
-# import the library class for the tinySA
-from src.tinySA_python import tinySA
+
+# import tinySA library
+# (NOTE: check library path relative to script path)
+from src.tinySA_python import tinySA 
 
 # import matplotlib FOR THE EXAMPLE
 import matplotlib.pyplot as plt
@@ -466,14 +471,14 @@ def byteArrayToNumArray(byteArr, enc="utf-8"):
 # create a new tinySA object    
 tsa = tinySA()
 # attempt to connect to previously discovered serial port
-success = tsa.connect(port='COM10')
+success = tsa.autoconnect()
 
 # if port closed, then return error message
 if success == False:
     print("ERROR: could not connect to port")
 else: # port open, complete task(s) and disconnect
     # detailed messages turned on
-    tsa.setVerbose(True) 
+    tsa.set_verbose(True) 
     # get the trace data
     data_bytes = tsa.data() 
     print(data_bytes)
@@ -493,8 +498,8 @@ else: # port open, complete task(s) and disconnect
 
     # add labels and title
     plt.xlabel('Frequency (Hz)')
-    plt.ylabel('Signal Strength (dB)')
-    plt.title('Plot of Last Data Sweep')
+    plt.ylabel('Measured Data (dBm)')
+    plt.title('tinySA Trace Plot')
 
     # show the plot
     plt.show()
@@ -502,9 +507,95 @@ else: # port open, complete task(s) and disconnect
 ```
 
 <p align="center">
-        <img src="media/example_plot_SA_data.png" alt="Plot of On-screen Trace Data" height="350">
+        <img src="media/example1_plot_SA_data.png" alt="Plot of On-screen Trace Data" height="350">
 </p>
    <p align="center">Plotted On-Screen Trace Data of a Frequency Sweep from 100 kHz to 800 MHz</p>
+
+
+** Example 2: Plot using Scan Data and Frequencies**
+
+This example uses `scan()` to take a data measurement of data that DOES NOT need to been on the screen, unlike **Example 1** above. Then, the frequencies on the x-axis are calculated between the `start` and `stop` frequencies using the `number of points`. This is done because `frequencies()` would have the values of the last scan, which are connected to `RBW` and not the `number of points`. 
+This example plots the last/current sweep of data from the tinySA device. 
+
+ 
+```python
+
+# import tinySA library
+# (NOTE: check library path relative to script path)
+from src.tinySA_python import tinySA 
+
+
+# imports FOR THE EXAMPLE
+import numpy as np
+import matplotlib.pyplot as plt
+
+def convert_data_to_arrays(start, stop, pts, data):
+    # using the start and stop frequencies, and the number of points, 
+
+    freq_arr = np.linspace(start, stop, pts) # note that the decimals might go out to many places. 
+                                                # you can truncate this because its only used 
+                                                # for plotting in this example
+
+    # As of the Jan. 2024 build in some data returned with SWEEP or SCAN calls there is error data.  
+    # https://groups.io/g/tinysa/topic/tinasa_ultra_sweep_command/104194367  
+    # this shows up as "-:.000000e+01".
+    # TEMP fix - replace the colon character with a -10. This puts the 'filled in' points around the noise floor.
+    # more advanced filtering should be applied for actual analysis.
+    data1 =bytearray(data.replace(b"-:.0", b"-10.0"))
+    
+    # get both values in each row returned (for reference)
+    #data_arr = [list(map(float, line.split())) for line in data.decode('utf-8').split('\n') if line.strip()] 
+   
+    # get first value in each returned row
+    data_arr = [float(line.split()[0]) for line in data1.decode('utf-8').split('\n') if line.strip()]
+
+    return freq_arr, data_arr
+
+
+# create a new tinySA object    
+tsa = tinySA()
+# attempt to autoconnect
+found_bool, connected_bool = tsa.autoconnect()
+
+# if port closed, then return error message
+if connected_bool == False:
+    print("ERROR: could not connect to port")
+else: # if port found and connected, then complete task(s) and disconnect
+    # detailed messages turned on
+    tsa.set_verbose(True) 
+    # set scan values
+    # set scan values
+    start = int(1e9)  # 1 GHz
+    stop = int(3e9)   # 3 GHz
+    pts = 450         # sample points
+    outmask = 2       # get measured data (y axis)
+    # scan
+    data_bytes = tsa.scan(start, stop, pts, outmask)
+
+    print(data_bytes)
+
+    tsa.resume() #resume so screen isn't still frozen
+
+    tsa.disconnect()
+
+    # processing after disconnect (just for this example)
+
+    # convert data to 2 arrays
+    freq_arr, data_arr = convert_data_to_arrays(start, stop, pts, data_bytes)
+
+    # plot
+    plt.plot(freq_arr, data_arr)
+    plt.xlabel("Frequency (Hz)")
+    plt.ylabel("Measured Data (dBm)")
+    plt.title("tinySA Scan Plot")
+    plt.show()
+    
+```
+<p align="center">
+        <img src="media/example2_plot_SA_data.png" alt="Plot of Scan Data" height="350">
+</p>
+   <p align="center">Plotted Scan Data of a Frequency Sweep from 1.5 GHz  to 3 GHz</p>
+
 
 
 ## List of tinySA Commands and their Library Commands
@@ -1171,7 +1262,7 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 ### **scan**
 * **Description:** Performs a scan and optionally outputs the measured data
 * **Original Usage:** `scan {start(Hz)} {stop(Hz)} [points] [outmask]`
-* **Direct Library Function Call:**
+* **Direct Library Function Call:** `scan(start, stop, pts, outmask)`
 * **Example Return:** 
     * Example arg: `scan 0 2e6 5 1`
     * Results: `bytearray(b'0 \r\n1 \r\n1 \r\n2 \r\n2 \r')`
