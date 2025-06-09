@@ -16,7 +16,6 @@ Working on it:
 * filling in unfinished args and any new tinySA features
     * scanraw has some byte return errors
     * trigger needs more alias funcs to cover full functionality
-* examples for: trace, scan, and rawscan
 * An argparse option + some example scripts
 
 
