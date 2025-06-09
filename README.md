@@ -2,15 +2,20 @@
 # tinySA_python
 ## AN UNOFFICIAL Python Library for the tinySA Device Series
 
-# INPROGRESS. 
-## From June 1 2025 - June 7 2025 there are NO promises of the stability of this project. 
-## Several major feature changes + a documentation overhaul are happening.
-
 A Non-GUI Python API class for the tinySA series of devices. This repository uses official resources and documentation but is NOT endorsed by the official tinySA product or company. See the [references](#references) section for further reading. See the [official tinySA resources](https://www.tinysa.org/wiki/) for device features.
 
 
+This library covers most documented commands for the tinySA device series. The documentation is sorted based on the serial command, with some provided usage examples. While some error checking exists in both the device and the library, it is not exhaustive. It is strongly suggested to read the official documentation before attempting to script with your device.
+
+Done:
+* library commands for common args
+* documentation for original command usage and library functions
+* examples for basic functionality 
+
 Working on it:
 * filling in unfinished args and any new tinySA features
+    * scanraw has some byte return errors
+    * trigger needs more alias funcs to cover full functionality
 * examples for: trace, scan, and rawscan
 * An argparse option + some example scripts
 
@@ -33,6 +38,7 @@ Working on it:
     * [Getting Data from Active Screen](#getting-data-from-active-screen)
     * [Saving Screen Images](#saving-screen-images)
     * [Plotting Data with Matplotlib](#plotting-data-with-matplotlib)
+    * [Accessing the tinySA Directly](#accessing-the-tinysa-directly)
 * [List of tinySA Commands and their Library Commands](#list-of-tinysa-commands-and-their-library-commands)
 * [List of Commands Removed from Library](#list-of-commands-removed-from-library)
 * [Additional Library Functions for Advanced Use](#additional-library-functions-for-advanced-use)
@@ -594,7 +600,46 @@ else: # if port found and connected, then complete task(s) and disconnect
 <p align="center">
         <img src="media/example2_plot_SA_data.png" alt="Plot of Scan Data" height="350">
 </p>
-   <p align="center">Plotted Scan Data of a Frequency Sweep from 1.5 GHz  to 3 GHz</p>
+   <p align="center">Plotted Scan Data of a Frequency Sweep from 1 GHz  to 3 GHz</p>
+
+
+
+### Accessing the tinySA Directly
+
+In some cases, this library may not cover all possible command versions, or new features might not be included yet. The tinySA can be accessed directly using the `command()` function. There is NO ERROR CHECKING on this function. It takes the full argument, just as if arguments were entered on the command line. 
+
+```python
+# import tinySA library
+# (NOTE: check library path relative to script path)
+from src.tinySA_python import tinySA 
+
+
+# create a new tinySA object    
+tsa = tinySA()
+# attempt to autoconnect
+found_bool, connected_bool = tsa.autoconnect()
+
+# if port closed, then return error message
+if connected_bool == False:
+    print("ERROR: could not connect to port")
+else: # if port found and connected, then complete task(s) and disconnect
+    # detailed messages turned on
+    tsa.set_verbose(True) 
+    # set scan values
+    start = 150e6   # 150 MHz
+    stop = 200e6    # 200 MHz
+    pts = 450       # for tinySA Ultra
+    outmask = 1     # get measured data (y axis)
+    # scan
+    data_bytes = tsa.command("scan 150e6 200e6 5 2")
+
+    print(data_bytes)
+
+    tsa.resume() #resume 
+
+    tsa.disconnect()
+
+```
 
 
 
