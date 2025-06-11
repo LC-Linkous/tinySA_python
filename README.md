@@ -14,9 +14,10 @@ Done:
 
 Working on it:
 * filling in unfinished args and any new tinySA features
-    * scanraw has some byte return errors
+    * scan and scanraw occasionally throw back bad data. handled in an example, but actual fix in progress
     * trigger needs more alias funcs to cover full functionality
 * An argparse option + some example scripts
+* Beginner notes, vocab, and some examples for common usage
 
 
 ## Table of Contents
@@ -446,7 +447,7 @@ else: # port open, complete task(s) and disconnect
 
 ### Plotting Data with Matplotlib
 
-** Example 1: Plot using On-Screen Trace Data and Frequencies**
+**Example 1: Plot using On-Screen Trace Data and Frequencies**
 This example plots the last/current sweep of data from the tinySA device. 
 `data()` gets the trace data. `frequencies()` gets the frequency values used. 
 `byteArrayToNumArray(byteArr)` takes in the returned trace data and frequency 
@@ -517,7 +518,7 @@ else: # port open, complete task(s) and disconnect
    <p align="center">Plotted On-Screen Trace Data of a Frequency Sweep from 100 kHz to 800 MHz</p>
 
 
-** Example 2: Plot using Scan Data and Frequencies**
+**Example 2: Plot using Scan Data and Frequencies**
 
 This example uses `scan()` to take a data measurement of data that DOES NOT need to been on the screen, unlike **Example 1** above. Then, the frequencies on the x-axis are calculated between the `start` and `stop` frequencies using the `number of points`. This is done because `frequencies()` would have the values of the last scan, which are connected to `RBW` and not the `number of points`. 
 
@@ -602,7 +603,7 @@ else: # if port found and connected, then complete task(s) and disconnect
    <p align="center">Plotted Scan Data of a Frequency Sweep from 1 GHz  to 3 GHz</p>
 
 
-** Example 3: Plot using SCAN and SCANRAW Data and Calculated Frequencies**
+**Example 3: Plot using SCAN and SCANRAW Data and Calculated Frequencies**
 
 This example uses `scan()` and `scanraw()` to take a data measurement of data that DOES NOT need to been on the screen, unlike **Example 1** above. Then, the frequencies on the x-axis are calculated between the `start` and `stop` frequencies using the `number of points`. This is done because `frequencies()` would have the values of the last scan, which are connected to `RBW` and not the `number of points`. 
 
@@ -1746,18 +1747,14 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Notes:** If unfamiliar with device and operation, DO NOT CHANGE THIS VALUE.
 
 
-''' Full list of help commands
+```python
+ Full list of help commands
 commands: freq time dac nf saveconfig clearconfig zero sweep pause resume wait repeat status caloutput save recall trace trigger marker line usart_cfg vbat_offset color if if1 lna2 agc actual_freq freq_corr attenuate level sweeptime leveloffset levelchange modulation rbw mode spur lna direct ultra load ext_gain output deviceid correction calc menu text remark
 
 Other commands: version reset data frequencies scan hop scanraw test touchcal touchtest usart capture refresh touch release vbat help info selftest sd_list sd_read sd_delete threads
-'''
 
-The list of commands from 'help' that are still 'unknown' or don’t appear to have an impact on the tinySA via this Python API:
+```
 
-'''
-usart
-
-'''
 
 ## List of Commands Removed from Library
 
@@ -1813,23 +1810,38 @@ Running list of words and acronyms that get tossed around with little to no expl
 * **DUT** - Device Under Test. Used here to refer to the singular device used while initially writing the API. 
 * **IF** - Intermediate Frequency. A frequency to which a carrier wave is shifted as an intermediate step in transmission or reception - [Wikipedia](https://en.wikipedia.org/wiki/Intermediate_frequency)
 * **LNA** - Low Noise Amplifier. An electronic component that amplifies a very low-power signal without significantly degrading its signal-to-noise ratio - [Wikipedia](https://en.wikipedia.org/wiki/Low-noise_amplifier)
-* **Outmask** - "outmask" refers to a setting that determines whether the device's output is a frequency or a level (power) signal. When the outmask is set to "1", the tinySA will output a frequency signal. When set to "2", the outmask will cause the tinySA to output a level signal, which is a measure of the signal's power or intensity
+* **Outmask** - "outmask" refers to a setting that determines additional formatting or optional features that are not a core argument for a command.
+    * For example, with the **hop** command, this value controls whether the device's output is a frequency or a level (power) signal. When the outmask is set to "1", the tinySA will output a frequency signal. When set to "2", the outmask will cause the tinySA to output a level signal, which is a measure of the signal's power or intensity
 * **RBW** - Resolution Bandwidth. Frequency span of the final filter (IF filter) that is applied to the input signal. Determines the fast-Fourier transform (FFT) bin size.
-* **S-parameters** - are a way to characterize the behavior of radio frequency (RF) networks and components. They describe how much of a signal is reflected, transmitted or transfered between PORTS. In case of s11 (s-one-one), the return loss of a single antenna or port is measured. In s12 (s-one-two) or s21 (s-two-one), the interaction between ports is measured. 
-* **VNA** - Vector Network analyzer. A device that measures the network parameters of electrical networks (typically, s-parameters). Can measure both measures both amplitude and phase properties. The [wiki article on network analyzers]( https://en.wikipedia.org/wiki/Network_analyzer_(electrical)) covers the topic in detail.  
+* **SDR*** - Software Defined Radio. This is a software (computer) controlled radio system capable of sending and receiving RF signals. This type of device uses software to control functions such as  modulation, demodulation, filtering, and other signal processing tasks. Messages (packets) can be sent and received with this device.
+* **Signal Generator** - Signal Analyzer. A device that measures the magnitude of an input signal vs frequency. It shows signal as a spectrum.
+ - used to create various types of repeating or non-repeating electronic signals for testing and evaluating electronic devices and systems
+* **S-parameters** - are a way to characterize the behavior of radio frequency (RF) networks and components. They describe how much of a signal is reflected, transmitted or transferred between PORTS. In case of s11 (s-one-one), the return loss of a single antenna or port is measured. In s12 (s-one-two) or s21 (s-two-one), the interaction between ports is measured. 
+* **SA** - Signal Analyzer. A device that measures the magnitude of an input signal vs frequency. It shows signal as a spectrum.
+* **SNA** - Scalar Network Analyzer. A device that measures amplitude as it passes through the device. It can be used to determine gain, attenuation, or frequency response.  
+* **VNA** - Vector Network Analyzer. A device that measures the network parameters of electrical networks (typically, s-parameters). Can measure both measures both amplitude and phase properties. The [wiki article on network analyzers]( https://en.wikipedia.org/wiki/Network_analyzer_(electrical)) covers the topic in detail.  
 
-### VNA vs. SA vs. LNA vs. SNA vs. Signal Generator
+
+### VNA vs. SA vs. LNA vs. SNA vs. SDR vs Signal Generator
 aka “what am I looking at and did I buy the right thing?”
  
-VNA – a vector network analyzer (VNA) measures parameters such as s-parameters, impedence and reflection coefficience of an RF device. 
 
-SNA – a scalar network analyzer (SNA) measures amplitude as it passes through the device. It can be used to determine gain, attenuation, or frequency response. 
+**tinySA Vs. NanoVNA **: The tinySA and NanoVNA look a lot alike, and have some similar code, but they are NOT the same device. They are designed to measure different things. The tinySA is a signal analyzer (SA) while the v is a vector network analyzer (VNA). Both have signal generation capabilities, but the tinySA (currently) has expanded features for generating signals. This library was made for the tinySA line of devices. There might be some compatibility with the NanoVNA, but this is not currently supported or under development.
 
-SA - a signal analyzer (SA) measures the magnitude of an input signal vs frequency. It shows signal as a spectrum. 
+**SA** - a signal analyzer (SA) measures the magnitude of an external input signal vs frequency. It shows signal as a spectrum. The signal source does not need to be directly, physically connected to the SA, which allows for analysis of the wireless spectrum. This is the primary functionality of the tinySA, but it does have other features (such as signal generation). 
 
-Signal Generator - used to create various types of repeating or non-repeating electronic signals for testing and evaluating electronic devices and systems
+**VNA** – a vector network analyzer (VNA) measures parameters such as s-parameters, impedance and reflection coefficient of a radio frequency (RF) device under test (DUT). A VNA is used to characterize the transmission and reflection properties of the DUT by generating a stimulus signal and then measuring the device's response. This can be used to characterize and measure the behavior of RF devices and individual components. 
+    * ["What is a Vector Network Analyzer and How Does it Work?" - Tektronix ](https://www.tek.com/en/documents/primer/what-vector-network-analyzer-and-how-does-it-work)
+    * [NanoVNA @ https://nanovna.com/](https://nanovna.com/)
 
-LNA - an electronic component designed to amplify weak incoming signals with minimal noise addition, thus improving the signal-to-noise ratio (SNR). This hardware is often attatched (or built in) to the devices aboce
+
+**Signal Generator** - A signal generator is used to create various types of repeating or non-repeating electronic signals for testing and evaluating electronic devices and systems. These can be used for calibration, design, or testing. Some signal generators will only have sine, square, or pulses, while others allow for AM and FM modulation (which begins to crossover into SDR territory)
+
+**SNA** – a scalar network analyzer (SNA) measures amplitude as it passes through the device. It can be used to determine gain, attenuation, or frequency response. scalar network analyzers are less expensive than VNAs because they only measure the magnitude of the signal, not the phase.
+
+**SDR** - a software defined radio (SDR) is a software (computer) controlled radio system capable of sending and receiving RF signals. This type of device uses software to control functions such as  modulation, demodulation, filtering, and other signal processing tasks. Messages  can be sent and received with this device. 
+
+**LNA** - an electronic component designed to amplify weak incoming signals with minimal noise addition, thus improving the signal-to-noise ratio (SNR). This hardware is often attached (or built in) to the devices above. It is not a stand-alone device for signal generation or analysis. 
 
 
 ### Calibration Setup
@@ -1859,18 +1871,25 @@ In the tinySA Ultra mode, there are four output modes: Normal (below 830 MHz), D
     * [tinySA list of general pages](https://tinysa.org/wiki/pmwiki.php?n=Main.PageList) 
         * https://tinysa.org/wiki/pmwiki.php?n=Main.PageList
 
-* [http://athome.kaashoek.com/tinySA/python/ ]( http://athome.kaashoek.com/tinySA/python/ )
+* [http://athome.kaashoek.com/tinySA/python/]( http://athome.kaashoek.com/tinySA/python/ )
 * [official pyserial](https://pypi.org/project/pyserial/) https://pypi.org/project/pyserial/
 * https://groups.io/g/tinysa/topic/tinysa_screen_capture_using/82218670
-* The firmware on github at https://github.com/erikkaashoek/tinySA
+* The firmware on GitHub at https://github.com/erikkaashoek/tinySA
     * https://github.com/erikkaashoek/tinySA/blob/main/main.c
 
 
-* Websites that have been trawled through for random scraps of information:
+* Websites that have been trawled through for random bits of information:
     * [https://www.passion-radio.fr/](https://www.passion-radio.fr/)
         * They have a 'TinySA Menu Tree' PDF doc that has been very useful
     * [The main TinySA GitHub](https://github.com/erikkaashoek/tinySA/)
-        * [main.c][https://github.com/erikkaashoek/tinySA/blob/434126dcc6eed40e4e9ba3d7ef67e17e0370c38f/main.c]
+        * [main.c](https://github.com/erikkaashoek/tinySA/blob/434126dcc6eed40e4e9ba3d7ef67e17e0370c38f/main.c)
+
+
+* Hardware, S-parameters and 2 port networks:
+ * ["What is a Vector Network Analyzer and How Does it Work?" - Tektronix ](https://www.tek.com/en/documents/primer/what-vector-network-analyzer-and-how-does-it-work)
+ * [https://en.wikipedia.org/wiki/Scattering_parameters](https://en.wikipedia.org/wiki/Scattering_parameters)
+ * [https://www.microwaves101.com/encyclopedias/s-parameters](https://www.microwaves101.com/encyclopedias/s-parameters)
+ * ["Network Theory - Two-Port Networks" - tutorialspoint.com](https://www.tutorialspoint.com/network_theory/network_theory_twoport_networks.htm)
 
 
 ## Licensing
