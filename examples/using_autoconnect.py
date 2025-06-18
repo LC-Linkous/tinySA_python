@@ -1,3 +1,16 @@
+#! /usr/bin/python3
+
+##-------------------------------------------------------------------------------\
+#   tinySA_python
+#   './examples/using_autoconnect.py'
+#   This is a visual comparison of SCAN and SCANRAW to work out some errors in 
+#   the decode process given that the tinySA is still running during the read, 
+#   we don't expect SCAN and SCANRAW to be exactly the same, but they 
+#   should be relatively similar values when SCANRAW is decoded
+#
+#   Last update: June 18, 2025
+##-------------------------------------------------------------------------------\
+
 # import tinySA library
 # (NOTE: check library path relative to script path)
 from src.tinySA_python import tinySA 
@@ -5,14 +18,18 @@ from src.tinySA_python import tinySA
 # create a new tinySA object    
 tsa = tinySA()
 
+# set the return message preferences 
+tsa.set_verbose(True) #detailed messages
+tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
+
+
 # attempt to autoconnect
 found_bool, connected_bool = tsa.autoconnect()
 
 # if port found and connected, then complete task(s) and disconnect
-if connected_bool == True: # or  if success == True:
+if connected_bool == True: 
     print("device connected")
-    tsa.set_verbose(True) #detailed messages
-    tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
+
     msg = tsa.get_device_id() 
     print(msg)
     
