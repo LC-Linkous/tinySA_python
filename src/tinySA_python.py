@@ -135,7 +135,7 @@ class tinySA():
 
             # print out which port we're trying
             port = port_info.device 
-            self.print_message(f"Trying port: {port}")
+            self.print_message(f"Checking port: {port}")
             vid = port_info.vid
             pid = port_info.pid
 
