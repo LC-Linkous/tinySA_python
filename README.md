@@ -85,15 +85,18 @@ numpy
 pandas
 matplotlib
 pillow
+pyQt5
 
 ```
 
 For anyone unfamiliar with using requirements files, or having issues with the libraries, these can also be installed manually in the terminal (we recommend a Python virtual environment) with:
 
 ```python
-pip install pyserial numpy pandas matplotlib pillow
+pip install pyserial numpy pandas matplotlib pillow pyQt5
 
 ```
+
+`pyQt5` is used with `matplotlib` to draw the figures. It needs to be installed in Linux systems to follow the examples included in tinySA_python, but is not needed on all Windows machines.
 
 
 
@@ -807,7 +810,7 @@ else: # if port found and connected, then complete task(s) and disconnect
     stop = 200e6    # 200 MHz
     pts = 450       # for tinySA Ultra
     outmask = 1     # get measured data (y axis)
-    
+
     # scan
     data_bytes = tsa.command("scan 150e6 200e6 5 2")
 
