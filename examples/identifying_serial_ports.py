@@ -1,7 +1,15 @@
-# This is a quick example of how to ID serial ports manually if you're running
-# into issues with autoconnect or connecting in general.
-# This is not a streamlined process, 
-# it's meant to demonstrate to new users what this process looks like
+#! /usr/bin/python3
+
+##-------------------------------------------------------------------------------\
+#   tinySA_python
+#   './examples/identifying_serial_ports.py'
+#   This is a quick example of how to ID serial ports manually if you're running
+#   into issues with autoconnect or connecting in general.
+#   This example is not a streamlined process, 
+#   it's meant to demonstrate to new users what this process looks like
+#
+#   Last update: June 18, 2025
+##-------------------------------------------------------------------------------\
 
 
 # import serial tools to identify the ports
@@ -65,7 +73,4 @@ for port_info in ports:
         print("#########################################")
         break
     
-
-
-
 
