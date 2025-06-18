@@ -11,6 +11,7 @@ Done:
 * library commands for common args
 * documentation for original command usage and library functions
 * examples for basic functionality 
+* some Debian-flavored Linux testing
 
 Working on it:
 * filling in unfinished args and any new tinySA features
@@ -120,7 +121,7 @@ Some error checking includes:
 
 ## Example Implementations
 
-This library has been tested on Windows, but not yet on Unix systems. The primary difference should be the format of the serial port connection, but there may be smaller bugs in format that have not been detected yet. 
+This library was developed on Windows and has been lightly tested on Linux. The main difference (so far) has been in the permissions for first access of the serial port, but there may be smaller bugs in format that have not been detected yet. 
 
 ### Finding the Serial Port
 
@@ -142,14 +143,18 @@ from src.tinySA_python import tinySA
 # create a new tinySA object    
 tsa = tinySA()
 
+# set the return message preferences 
+tsa.set_verbose(True) #detailed messages
+tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
+
+
 # attempt to autoconnect
 found_bool, connected_bool = tsa.autoconnect()
 
 # if port found and connected, then complete task(s) and disconnect
-if connected_bool == True: # or  if success == True:
+if connected_bool == True: 
     print("device connected")
-    tsa.set_verbose(True) #detailed messages
-    tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
+
     msg = tsa.get_device_id() 
     print(msg)
     
@@ -195,8 +200,36 @@ Port: COM10, Description: USB Serial Device (COM10), Hardware ID: USB VID:PID=04
 #### Manually Finding a Port on Linux
 
 ```python
-TODO
+
+import serial.tools.list_ports
+
+ports = serial.tools.list_ports.comports()
+
+for port, desc, hwid in ports:
+    print(f"Port: {port}, Description: {desc}, Hardware ID: {hwid}")
+
 ```
+
+```python
+
+Port: /dev/ttyS0, Description: n/a, Hardware ID: n/a
+Port: /dev/ttyS3, Description: n/a, Hardware ID: n/a
+Port: /dev/ttyS2, Description: n/a, Hardware ID: n/a
+Port: /dev/ttyS1, Description: n/a, Hardware ID: n/a
+Port: /dev/ttyACM0, Description: tinySA4, Hardware ID: USB VID:PID=0483:5740 SER=400 LOCATION=3-3:1.0
+
+```
+
+This method identified the `/dev/ttyACM0`. Now, when attempting to use the autoconnect feature, the following error was initially returned:
+
+```python
+[Errno 13] could not open port /dev/ttyACM0: [Errno 13] Permission denied: '/dev/ttyACM0'
+
+```
+
+This was due to not having permission to access the port. In this case, this error was solved by opening a terminal and executing `sudo chmod a+rw /dev/ttyACM0`. Should this issue be persistent, other solutions related to user groups and access will need to be investigated.  
+
+
 
 
 ### Serial Message Return Format
@@ -227,6 +260,11 @@ from src.tinySA_python import tinySA
 # create a new tinySA object    
 tsa = tinySA()
 
+# set the return message preferences 
+tsa.set_verbose(True) #detailed messages
+tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
+
+
 # attempt to connect to previously discovered serial port
 success = tsa.autoconnect()
 
@@ -239,6 +277,7 @@ else:
     tsa.disconnect()
 
 ```
+
 Example output for this method is as follows:
 
 ```python
@@ -313,6 +352,12 @@ from src.tinySA_python import tinySA
 
 # create a new tinySA object    
 tsa = tinySA()
+
+# set the return message preferences 
+tsa.set_verbose(True) #detailed messages
+tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
+
+
 # attempt to connect to previously discovered serial port
 success = tsa.autoconnect()
 
@@ -320,9 +365,7 @@ success = tsa.autoconnect()
 if success == False:
     print("ERROR: could not connect to port")
 else:
-    #detailed messages
-    tsa.set_verbose(True) #detailed messages
-
+   
     # get current trace data on screen
     msg = tsa.data(val=2) 
     print(msg)
@@ -419,6 +462,12 @@ def convert_data_to_image(data_bytes, width, height):
 
 # create a new tinySA object    
 tsa = tinySA()
+
+# set the return message preferences 
+tsa.set_verbose(True) #detailed messages
+tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
+
+
 # attempt to connect to previously discovered serial port
 success = tsa.autoconnect()
 
@@ -426,8 +475,8 @@ success = tsa.autoconnect()
 if success == False:
     print("ERROR: could not connect to port")
 else: # port open, complete task(s) and disconnect
-    # detailed messages turned on
-    tsa.set_verbose(True) 
+
+
     # get the trace data
     data_bytes = tsa.capture() 
     print(data_bytes)
@@ -476,6 +525,12 @@ def byteArrayToNumArray(byteArr, enc="utf-8"):
 
 # create a new tinySA object    
 tsa = tinySA()
+
+# set the return message preferences 
+tsa.set_verbose(True) #detailed messages
+tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
+
+
 # attempt to connect to previously discovered serial port
 success = tsa.autoconnect()
 
@@ -483,8 +538,7 @@ success = tsa.autoconnect()
 if success == False:
     print("ERROR: could not connect to port")
 else: # port open, complete task(s) and disconnect
-    # detailed messages turned on
-    tsa.set_verbose(True) 
+
     # get the trace data
     data_bytes = tsa.data() 
     print(data_bytes)
@@ -560,6 +614,12 @@ def convert_data_to_arrays(start, stop, pts, data):
 
 # create a new tinySA object    
 tsa = tinySA()
+
+# set the return message preferences 
+tsa.set_verbose(True) #detailed messages
+tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
+
+
 # attempt to autoconnect
 found_bool, connected_bool = tsa.autoconnect()
 
@@ -567,14 +627,13 @@ found_bool, connected_bool = tsa.autoconnect()
 if connected_bool == False:
     print("ERROR: could not connect to port")
 else: # if port found and connected, then complete task(s) and disconnect
-    # detailed messages turned on
-    tsa.set_verbose(True) 
-    # set scan values
+
     # set scan values
     start = int(1e9)  # 1 GHz
     stop = int(3e9)   # 3 GHz
     pts = 450         # sample points
     outmask = 2       # get measured data (y axis)
+
     # scan
     data_bytes = tsa.scan(start, stop, pts, outmask)
 
@@ -647,6 +706,12 @@ def convert_data_to_arrays(start, stop, pts, data):
 
 # create a new tinySA object    
 tsa = tinySA()
+
+# set the return message preferences 
+tsa.set_verbose(True) #detailed messages
+tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
+
+
 # attempt to autoconnect
 found_bool, connected_bool = tsa.autoconnect()
 
@@ -654,8 +719,6 @@ found_bool, connected_bool = tsa.autoconnect()
 if connected_bool == False:
     print("ERROR: could not connect to port")
 else: # if port found and connected, then complete task(s) and disconnect
-    # detailed messages turned on
-    tsa.set_verbose(True) 
 
     # set scan values
     start = int(150e6)   # 150 MHz
@@ -725,6 +788,12 @@ from src.tinySA_python import tinySA
 
 # create a new tinySA object    
 tsa = tinySA()
+
+# set the return message preferences 
+tsa.set_verbose(True) #detailed messages
+tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
+
+
 # attempt to autoconnect
 found_bool, connected_bool = tsa.autoconnect()
 
@@ -732,13 +801,13 @@ found_bool, connected_bool = tsa.autoconnect()
 if connected_bool == False:
     print("ERROR: could not connect to port")
 else: # if port found and connected, then complete task(s) and disconnect
-    # detailed messages turned on
-    tsa.set_verbose(True) 
+
     # set scan values
     start = 150e6   # 150 MHz
     stop = 200e6    # 200 MHz
     pts = 450       # for tinySA Ultra
     outmask = 1     # get measured data (y axis)
+    
     # scan
     data_bytes = tsa.command("scan 150e6 200e6 5 2")
 
