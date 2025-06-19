@@ -44,6 +44,22 @@ def convert_data_to_arrays(start, stop, pts, data):
     # get first value in each returned row
     data_arr = [float(line.split()[0]) for line in data1.decode('utf-8').split('\n') if line.strip()]
 
+    # NOTE: if repeated read errors with utf-8 occur, uncomment the below as an alternative to the
+    # line above. This will show you what value is being returned that caused the problem. It may
+    # indicate a different problem with the serial connection permissions
+
+    # data_arr = []
+    # for i, line in enumerate(data1.decode('utf-8').split('\n')):
+    #     print(f"Line {i}: '{line}'")  # Show the raw line
+    #     line = line.strip()
+    #     if line:
+    #         try:
+    #             value = float(line.split()[0])
+    #             data_arr.append(value)
+    #             # print(f"  Parsed float: {value}")
+    #         except ValueError as e:
+    #             print(f"  Could not convert line to float: {line} — Error: {e}")
+
     return freq_arr, data_arr
 
 
@@ -77,6 +93,12 @@ else: # if port found and connected, then complete task(s) and disconnect
     # SCAN RAW
     scanraw_data_bytes = tsa.scan_raw(start, stop, pts, outmask)
 
+
+    # for subsequent reads, the tinySA does freeze while preforming SCANRAW
+    # if there's an error, the screen will stay frozen (for reading).
+    # So start it again so new data can be taken
+    tsa.resume()
+
     # disconnect because we don't need the tinySA to process data
     tsa.disconnect()
 
@@ -92,22 +114,33 @@ else: # if port found and connected, then complete task(s) and disconnect
         # 'xH'*pts: a repetition of the format 'xH' once per point.
         # 'x': represents a pad byte, which is ignored
         # 'H': represents an unsigned short integer (2 bytes)
-    processed_scanraw = struct.unpack( '<' + 'xH'*pts, bin_scanraw ) # ignore trailing '}ch> '
-    processed_scanraw = np.array(processed_scanraw, dtype=np.uint16 ).reshape(-1, 1) #unit8 has overflow error
+    
+    expected_len = 3 * pts
+    actual_len = len(bin_scanraw)
+    print(f"Expected length: {expected_len}, Actual length: {actual_len}")
+    
+    if actual_len == expected_len:
+        # SCANRAW has returned the expected amount of data for the read. 
+        # sometimes this function (and not SCAN) does not read the buffer properly
+        # a fix is in progress for LINUX systems. it works fine for Windows
+        processed_scanraw = struct.unpack( '<' + 'xH'*pts, bin_scanraw ) # ignore trailing '}ch> '
+        processed_scanraw = np.array(processed_scanraw, dtype=np.uint16 ).reshape(-1, 1) #unit8 has overflow error
 
-    # CONVERT to dBm Power
-    # take the processed binary data and convert it to dBm. 
-    # The equation is from tinySA.org & official documentation
-    SCALE_FACTOR = 174  # tinySA Basic: 128, tinySA Ultra and newer is 174
-    dBm_data = processed_scanraw / 32 - SCALE_FACTOR
-    print(dBm_data)
+        # CONVERT to dBm Power
+        # take the processed binary data and convert it to dBm. 
+        # The equation is from tinySA.org & official documentation
+        SCALE_FACTOR = 174  # tinySA Basic: 128, tinySA Ultra and newer is 174
+        dBm_data = processed_scanraw / 32 - SCALE_FACTOR
+        print(dBm_data)
 
-    # plot
-    plt.plot(freq_arr, data_arr, label= 'SCAN data')
-    plt.plot(freq_arr, dBm_data, label= 'SCANRAW data')
-    plt.xlabel("frequency (hz)")
-    plt.ylabel("measured data (dBm)")
-    plt.title("tinySA SCAN and SCANRAW data")
-    plt.legend()
-    plt.show()
+        # plot
+        plt.plot(freq_arr, data_arr, label= 'SCAN data')
+        plt.plot(freq_arr, dBm_data, label= 'SCANRAW data')
+        plt.xlabel("frequency (hz)")
+        plt.ylabel("measured data (dBm)")
+        plt.title("tinySA SCAN and SCANRAW data")
+        plt.legend()
+        plt.show()
+    else:
+        print("SCANRAW did not return the expected amount of data for the read")
 
