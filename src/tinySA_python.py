@@ -214,9 +214,6 @@ class tinySA():
             
         return bytearray(complete)
 
-    def scan_raw_get_serial(self, pts):
-        pass
-
 
     def read_until_end_marker(self, end_marker=b'}', timeout=10.0):
         # scan and scan raw might return early with tinySA_serial

@@ -17,6 +17,7 @@ Working on it:
 * filling in unfinished args and any new tinySA features
     * scan and scanraw occasionally throw back bad data. handled in an example, but actual fix in progress
     * trigger needs more alias funcs to cover full functionality
+* scanraw serial FROM DEVICE issues with the buffer. This is being explored see Example #3 in [Plotting Data with Matplotlib](#plotting-data-with-matplotlib) for details. 
 * An argparse option + some example scripts
 * Beginner notes, vocab, and some examples for common usage
 
@@ -671,6 +672,16 @@ This example uses `scan()` and `scanraw()` to take a data measurement of data th
 
 Extra processing needs to be done to get `dBm power` from `scanraw()`.
 
+
+NOTE FOR LINUX USERS: the serial read with SCANRAW is finicky. It's also ONLY with this function on Linux. Reading the serial buffer after SCANRAW failed in several situations:
+1. Requesting data too quickly after the last read 
+    * Expected, as the tinySA needs to resume and re-measure.
+2. Requesting data when the screen is frozen 
+    * Mildly expected, user error can trigger this too. Turns out in some situations, the frozen screen is not the same as a `pause`, and there is no data to flush from the buffer because no more data has been taken. This is either a safe error state, a feature of how SCANRAW works, or potentially a bug with the device/firmware/this library. Using the `resume()` function after this will restart measurements.
+3. {UNKNOWN}. There are several conditions that can cause issues, but it's unclear what 'symptoms' go to which problems
+    * On the first few reads after the tinySA has been turned on and operational for at least 1 minute.
+    * After sitting unused for more than a few minutes the returned buffer is < 50% the expected  size or more than 5x the expected size. This is AFTER the flush command. 
+
  
 ```python
 # import tinySA library
@@ -703,6 +714,22 @@ def convert_data_to_arrays(start, stop, pts, data):
    
     # get first value in each returned row
     data_arr = [float(line.split()[0]) for line in data1.decode('utf-8').split('\n') if line.strip()]
+
+    # NOTE: if repeated read errors with utf-8 occur, uncomment the below as an alternative to the
+    # line above. This will show you what value is being returned that caused the problem. It may
+    # indicate a different problem with the serial connection permissions
+
+    # data_arr = []
+    # for i, line in enumerate(data1.decode('utf-8').split('\n')):
+    #     print(f"Line {i}: '{line}'")  # Show the raw line
+    #     line = line.strip()
+    #     if line:
+    #         try:
+    #             value = float(line.split()[0])
+    #             data_arr.append(value)
+    #             # print(f"  Parsed float: {value}")
+    #         except ValueError as e:
+    #             print(f"  Could not convert line to float: {line} — Error: {e}")
 
     return freq_arr, data_arr
 
@@ -737,6 +764,12 @@ else: # if port found and connected, then complete task(s) and disconnect
     # SCAN RAW
     scanraw_data_bytes = tsa.scan_raw(start, stop, pts, outmask)
 
+
+    # for subsequent reads, the tinySA does freeze while preforming SCANRAW
+    # if there's an error, the screen will stay frozen (for reading).
+    # So start it again so new data can be taken
+    tsa.resume()
+
     # disconnect because we don't need the tinySA to process data
     tsa.disconnect()
 
@@ -752,24 +785,35 @@ else: # if port found and connected, then complete task(s) and disconnect
         # 'xH'*pts: a repetition of the format 'xH' once per point.
         # 'x': represents a pad byte, which is ignored
         # 'H': represents an unsigned short integer (2 bytes)
-    processed_scanraw = struct.unpack( '<' + 'xH'*pts, bin_scanraw ) # ignore trailing '}ch> '
-    processed_scanraw = np.array(processed_scanraw, dtype=np.uint16 ).reshape(-1, 1)
+    
+    expected_len = 3 * pts
+    actual_len = len(bin_scanraw)
+    print(f"Expected length: {expected_len}, Actual length: {actual_len}")
+    
+    if actual_len == expected_len:
+        # SCANRAW has returned the expected amount of data for the read. 
+        # sometimes this function (and not SCAN) does not read the buffer properly
+        # a fix is in progress for LINUX systems. it works fine for Windows
+        processed_scanraw = struct.unpack( '<' + 'xH'*pts, bin_scanraw ) # ignore trailing '}ch> '
+        processed_scanraw = np.array(processed_scanraw, dtype=np.uint16 ).reshape(-1, 1) #unit8 has overflow error
 
-    # CONVERT to dBm Power
-    # take the processed binary data and convert it to dBm. 
-    # The equation is from tinySA.org & official documentation
-    SCALE_FACTOR = 174  # tinySA Basic: 128, tinySA Ultra and newer is 174
-    dBm_data = processed_scanraw / 32 - SCALE_FACTOR
-    print(dBm_data)
+        # CONVERT to dBm Power
+        # take the processed binary data and convert it to dBm. 
+        # The equation is from tinySA.org & official documentation
+        SCALE_FACTOR = 174  # tinySA Basic: 128, tinySA Ultra and newer is 174
+        dBm_data = processed_scanraw / 32 - SCALE_FACTOR
+        print(dBm_data)
 
-    # plot
-    plt.plot(freq_arr, data_arr, label= 'SCAN data')
-    plt.plot(freq_arr, dBm_data, label= 'SCANRAW data')
-    plt.xlabel("frequency (hz)")
-    plt.ylabel("measured data (dBm)")
-    plt.title("tinySA SCAN and SCANRAW data")
-    plt.legend()
-    plt.show()
+        # plot
+        plt.plot(freq_arr, data_arr, label= 'SCAN data')
+        plt.plot(freq_arr, dBm_data, label= 'SCANRAW data')
+        plt.xlabel("frequency (hz)")
+        plt.ylabel("measured data (dBm)")
+        plt.title("tinySA SCAN and SCANRAW data")
+        plt.legend()
+        plt.show()
+    else:
+        print("SCANRAW did not return the expected amount of data for the read")
 
 ```
 <p align="center">
@@ -1509,7 +1553,7 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 ### **scanraw**
 * **Description:** Performs a scan of unlimited amount of points and sends the data in binary form
 * **Original Usage:** `scanraw {start(Hz)} {stop(Hz)} [points][option]` or `scanraw {start(Hz)} {stop(Hz)} [points] [unbuffered]` depending on the source
-* **Direct Library Function Call:**
+* **Direct Library Function Call:** `scan_raw(start=Int|Float, stop=Int|Float, pts=Int|Float, unbuf=1)`
 * **Example Return:** 
     * Raw, unprocessed return for 15 pts: `b'scanraw 150000000 200000000 15 2\r\n{x"\nx3\nx4\nx\x15\nx6\nx\x07\nx)\nxj\nx\xfb\txm\nx]\nxO\nxp\nx\xb2\x0bx3\x0c}ch>'`
     * Example arg: `scanraw 150e6 200e6 5 1`
