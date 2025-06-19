@@ -55,7 +55,7 @@ class tinySA():
         self.maxPoints = 450
         # spectrum analyzer
         self.minSADeviceFreq = 100e3  #100 kHz
-        self.maxSADeviceFreq = 5.3e9 #5.3 GHz
+        self.maxSADeviceFreq = 11e9 #5.3 GHz for normal operation, but 12 GHz for edge of harmonics
         # signal generator
         self.minSGDeviceFreq = 100e3  #100 kHz
         self.maxSGDeviceFreq = 960e6 #960 MHz
@@ -1881,11 +1881,6 @@ class tinySA():
 
 
 
-
-
-
-
-
     def trace_freeze(self, ID):
         # split call for TRACE. sets the reference level of a trace
         # full description: displays all or one trace information
@@ -1900,8 +1895,6 @@ class tinySA():
         msgbytes = self.tinySA_serial(writebyte, printBool=False) 
         self.print_message("freezing trace")
         return msgbytes
-
-
 
 
 
