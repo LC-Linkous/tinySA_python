@@ -1,3 +1,14 @@
+#! /usr/bin/python3
+
+##-------------------------------------------------------------------------------\
+#   tinySA_python
+#   './examples/plotting_scan.py'
+#   A short example using matplotlib to plot requested SCAN data
+#
+#   Last update: June 18, 2025
+##-------------------------------------------------------------------------------\
+
+
 # import tinySA library
 # (NOTE: check library path relative to script path)
 from src.tinySA_python import tinySA 
@@ -19,6 +30,7 @@ def convert_data_to_arrays(start, stop, pts, data):
     # this shows up as "-:.000000e+01".
     # TEMP fix - replace the colon character with a -10. This puts the 'filled in' points around the noise floor.
     # more advanced filtering should be applied for actual analysis.
+    
     data1 =bytearray(data.replace(b"-:.0", b"-10.0"))
     
     # get both values in each row returned (for reference)
@@ -32,6 +44,11 @@ def convert_data_to_arrays(start, stop, pts, data):
 
 # create a new tinySA object    
 tsa = tinySA()
+
+# set the return message preferences 
+tsa.set_verbose(True) #detailed messages
+tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
+
 # attempt to autoconnect
 found_bool, connected_bool = tsa.autoconnect()
 
@@ -39,14 +56,12 @@ found_bool, connected_bool = tsa.autoconnect()
 if connected_bool == False:
     print("ERROR: could not connect to port")
 else: # if port found and connected, then complete task(s) and disconnect
-    # detailed messages turned on
-    tsa.set_verbose(True) 
-    # set scan values
     # set scan values
     start = int(1e9)  # 1 GHz
     stop = int(3e9)   # 3 GHz
     pts = 450         # sample points
     outmask = 2       # get measured data (y axis)
+
     # scan
     data_bytes = tsa.scan(start, stop, pts, outmask)
 

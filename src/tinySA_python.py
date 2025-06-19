@@ -135,7 +135,7 @@ class tinySA():
 
             # print out which port we're trying
             port = port_info.device 
-            self.print_message(f"Trying port: {port}")
+            self.print_message(f"Checking port: {port}")
             vid = port_info.vid
             pid = port_info.pid
 
@@ -169,9 +169,15 @@ class tinySA():
         self.ser.close()
 
 
-    def tinySA_serial(self, writebyte, printBool=False):
+    def tinySA_serial(self, writebyte, printBool=False, pts=None):
         # write out to serial, get message back, clean up, return
         
+        # clear INPUT buffer
+        self.ser.reset_input_buffer()
+        # clear OUTPUT buffer
+        self.ser.reset_output_buffer()
+
+
         self.ser.write(bytes(writebyte, 'utf-8'))
         msgbytes = self.get_serial_return()
         msgbytes = self.clean_return(msgbytes)
@@ -209,7 +215,7 @@ class tinySA():
         return bytearray(complete)
 
 
-    def read_until_end_marker(self, end_marker=b'}', timeout=5.0):
+    def read_until_end_marker(self, end_marker=b'}', timeout=10.0):
         # scan and scan raw might return early with tinySA_serial
         # so this is written to 
         import time
@@ -1462,7 +1468,7 @@ class tinySA():
 
                 # write out to serial, get message back, clean up, return
                 self.print_message("scanning...")  
-                msgbytes = self.tinySA_serial(writebyte, printBool=False)
+                msgbytes = self.tinySA_serial(writebyte, printBool=False, pts=pts) #pts added for error checking
                 return msgbytes
             else:
                 self.print_message("ERROR: unrecognized UBUF for scanraw")

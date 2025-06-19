@@ -11,11 +11,13 @@ Done:
 * library commands for common args
 * documentation for original command usage and library functions
 * examples for basic functionality 
+* some Debian-flavored Linux testing
 
 Working on it:
 * filling in unfinished args and any new tinySA features
     * scan and scanraw occasionally throw back bad data. handled in an example, but actual fix in progress
     * trigger needs more alias funcs to cover full functionality
+* scanraw serial FROM DEVICE issues with the buffer. This is being explored see Example #3 in [Plotting Data with Matplotlib](#plotting-data-with-matplotlib) for details. 
 * An argparse option + some example scripts
 * Beginner notes, vocab, and some examples for common usage
 
@@ -84,15 +86,18 @@ numpy
 pandas
 matplotlib
 pillow
+pyQt5
 
 ```
 
 For anyone unfamiliar with using requirements files, or having issues with the libraries, these can also be installed manually in the terminal (we recommend a Python virtual environment) with:
 
 ```python
-pip install pyserial numpy pandas matplotlib pillow
+pip install pyserial numpy pandas matplotlib pillow pyQt5
 
 ```
+
+`pyQt5` is used with `matplotlib` to draw the figures. It needs to be installed in Linux systems to follow the examples included in tinySA_python, but is not needed on all Windows machines.
 
 
 
@@ -120,7 +125,7 @@ Some error checking includes:
 
 ## Example Implementations
 
-This library has been tested on Windows, but not yet on Unix systems. The primary difference should be the format of the serial port connection, but there may be smaller bugs in format that have not been detected yet. 
+This library was developed on Windows and has been lightly tested on Linux. The main difference (so far) has been in the permissions for first access of the serial port, but there may be smaller bugs in format that have not been detected yet. 
 
 ### Finding the Serial Port
 
@@ -142,14 +147,18 @@ from src.tinySA_python import tinySA
 # create a new tinySA object    
 tsa = tinySA()
 
+# set the return message preferences 
+tsa.set_verbose(True) #detailed messages
+tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
+
+
 # attempt to autoconnect
 found_bool, connected_bool = tsa.autoconnect()
 
 # if port found and connected, then complete task(s) and disconnect
-if connected_bool == True: # or  if success == True:
+if connected_bool == True: 
     print("device connected")
-    tsa.set_verbose(True) #detailed messages
-    tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
+
     msg = tsa.get_device_id() 
     print(msg)
     
@@ -195,8 +204,36 @@ Port: COM10, Description: USB Serial Device (COM10), Hardware ID: USB VID:PID=04
 #### Manually Finding a Port on Linux
 
 ```python
-TODO
+
+import serial.tools.list_ports
+
+ports = serial.tools.list_ports.comports()
+
+for port, desc, hwid in ports:
+    print(f"Port: {port}, Description: {desc}, Hardware ID: {hwid}")
+
 ```
+
+```python
+
+Port: /dev/ttyS0, Description: n/a, Hardware ID: n/a
+Port: /dev/ttyS3, Description: n/a, Hardware ID: n/a
+Port: /dev/ttyS2, Description: n/a, Hardware ID: n/a
+Port: /dev/ttyS1, Description: n/a, Hardware ID: n/a
+Port: /dev/ttyACM0, Description: tinySA4, Hardware ID: USB VID:PID=0483:5740 SER=400 LOCATION=3-3:1.0
+
+```
+
+This method identified the `/dev/ttyACM0`. Now, when attempting to use the autoconnect feature, the following error was initially returned:
+
+```python
+[Errno 13] could not open port /dev/ttyACM0: [Errno 13] Permission denied: '/dev/ttyACM0'
+
+```
+
+This was due to not having permission to access the port. In this case, this error was solved by opening a terminal and executing `sudo chmod a+rw /dev/ttyACM0`. Should this issue be persistent, other solutions related to user groups and access will need to be investigated.  
+
+
 
 
 ### Serial Message Return Format
@@ -227,6 +264,11 @@ from src.tinySA_python import tinySA
 # create a new tinySA object    
 tsa = tinySA()
 
+# set the return message preferences 
+tsa.set_verbose(True) #detailed messages
+tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
+
+
 # attempt to connect to previously discovered serial port
 success = tsa.autoconnect()
 
@@ -239,6 +281,7 @@ else:
     tsa.disconnect()
 
 ```
+
 Example output for this method is as follows:
 
 ```python
@@ -313,6 +356,12 @@ from src.tinySA_python import tinySA
 
 # create a new tinySA object    
 tsa = tinySA()
+
+# set the return message preferences 
+tsa.set_verbose(True) #detailed messages
+tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
+
+
 # attempt to connect to previously discovered serial port
 success = tsa.autoconnect()
 
@@ -320,9 +369,7 @@ success = tsa.autoconnect()
 if success == False:
     print("ERROR: could not connect to port")
 else:
-    #detailed messages
-    tsa.set_verbose(True) #detailed messages
-
+   
     # get current trace data on screen
     msg = tsa.data(val=2) 
     print(msg)
@@ -419,6 +466,12 @@ def convert_data_to_image(data_bytes, width, height):
 
 # create a new tinySA object    
 tsa = tinySA()
+
+# set the return message preferences 
+tsa.set_verbose(True) #detailed messages
+tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
+
+
 # attempt to connect to previously discovered serial port
 success = tsa.autoconnect()
 
@@ -426,8 +479,8 @@ success = tsa.autoconnect()
 if success == False:
     print("ERROR: could not connect to port")
 else: # port open, complete task(s) and disconnect
-    # detailed messages turned on
-    tsa.set_verbose(True) 
+
+
     # get the trace data
     data_bytes = tsa.capture() 
     print(data_bytes)
@@ -476,6 +529,12 @@ def byteArrayToNumArray(byteArr, enc="utf-8"):
 
 # create a new tinySA object    
 tsa = tinySA()
+
+# set the return message preferences 
+tsa.set_verbose(True) #detailed messages
+tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
+
+
 # attempt to connect to previously discovered serial port
 success = tsa.autoconnect()
 
@@ -483,8 +542,7 @@ success = tsa.autoconnect()
 if success == False:
     print("ERROR: could not connect to port")
 else: # port open, complete task(s) and disconnect
-    # detailed messages turned on
-    tsa.set_verbose(True) 
+
     # get the trace data
     data_bytes = tsa.data() 
     print(data_bytes)
@@ -560,6 +618,12 @@ def convert_data_to_arrays(start, stop, pts, data):
 
 # create a new tinySA object    
 tsa = tinySA()
+
+# set the return message preferences 
+tsa.set_verbose(True) #detailed messages
+tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
+
+
 # attempt to autoconnect
 found_bool, connected_bool = tsa.autoconnect()
 
@@ -567,14 +631,13 @@ found_bool, connected_bool = tsa.autoconnect()
 if connected_bool == False:
     print("ERROR: could not connect to port")
 else: # if port found and connected, then complete task(s) and disconnect
-    # detailed messages turned on
-    tsa.set_verbose(True) 
-    # set scan values
+
     # set scan values
     start = int(1e9)  # 1 GHz
     stop = int(3e9)   # 3 GHz
     pts = 450         # sample points
     outmask = 2       # get measured data (y axis)
+
     # scan
     data_bytes = tsa.scan(start, stop, pts, outmask)
 
@@ -609,6 +672,16 @@ This example uses `scan()` and `scanraw()` to take a data measurement of data th
 
 Extra processing needs to be done to get `dBm power` from `scanraw()`.
 
+
+NOTE FOR LINUX USERS: the serial read with SCANRAW is finicky. It's also ONLY with this function on Linux. Reading the serial buffer after SCANRAW failed in several situations:
+1. Requesting data too quickly after the last read 
+    * Expected, as the tinySA needs to resume and re-measure.
+2. Requesting data when the screen is frozen 
+    * Mildly expected, user error can trigger this too. Turns out in some situations, the frozen screen is not the same as a `pause`, and there is no data to flush from the buffer because no more data has been taken. This is either a safe error state, a feature of how SCANRAW works, or potentially a bug with the device/firmware/this library. Using the `resume()` function after this will restart measurements.
+3. {UNKNOWN}. There are several conditions that can cause issues, but it's unclear what 'symptoms' go to which problems
+    * On the first few reads after the tinySA has been turned on and operational for at least 1 minute.
+    * After sitting unused for more than a few minutes the returned buffer is < 50% the expected  size or more than 5x the expected size. This is AFTER the flush command. 
+
  
 ```python
 # import tinySA library
@@ -642,11 +715,33 @@ def convert_data_to_arrays(start, stop, pts, data):
     # get first value in each returned row
     data_arr = [float(line.split()[0]) for line in data1.decode('utf-8').split('\n') if line.strip()]
 
+    # NOTE: if repeated read errors with utf-8 occur, uncomment the below as an alternative to the
+    # line above. This will show you what value is being returned that caused the problem. It may
+    # indicate a different problem with the serial connection permissions
+
+    # data_arr = []
+    # for i, line in enumerate(data1.decode('utf-8').split('\n')):
+    #     print(f"Line {i}: '{line}'")  # Show the raw line
+    #     line = line.strip()
+    #     if line:
+    #         try:
+    #             value = float(line.split()[0])
+    #             data_arr.append(value)
+    #             # print(f"  Parsed float: {value}")
+    #         except ValueError as e:
+    #             print(f"  Could not convert line to float: {line} — Error: {e}")
+
     return freq_arr, data_arr
 
 
 # create a new tinySA object    
 tsa = tinySA()
+
+# set the return message preferences 
+tsa.set_verbose(True) #detailed messages
+tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
+
+
 # attempt to autoconnect
 found_bool, connected_bool = tsa.autoconnect()
 
@@ -654,8 +749,6 @@ found_bool, connected_bool = tsa.autoconnect()
 if connected_bool == False:
     print("ERROR: could not connect to port")
 else: # if port found and connected, then complete task(s) and disconnect
-    # detailed messages turned on
-    tsa.set_verbose(True) 
 
     # set scan values
     start = int(150e6)   # 150 MHz
@@ -670,6 +763,12 @@ else: # if port found and connected, then complete task(s) and disconnect
 
     # SCAN RAW
     scanraw_data_bytes = tsa.scan_raw(start, stop, pts, outmask)
+
+
+    # for subsequent reads, the tinySA does freeze while preforming SCANRAW
+    # if there's an error, the screen will stay frozen (for reading).
+    # So start it again so new data can be taken
+    tsa.resume()
 
     # disconnect because we don't need the tinySA to process data
     tsa.disconnect()
@@ -686,24 +785,35 @@ else: # if port found and connected, then complete task(s) and disconnect
         # 'xH'*pts: a repetition of the format 'xH' once per point.
         # 'x': represents a pad byte, which is ignored
         # 'H': represents an unsigned short integer (2 bytes)
-    processed_scanraw = struct.unpack( '<' + 'xH'*pts, bin_scanraw ) # ignore trailing '}ch> '
-    processed_scanraw = np.array(processed_scanraw, dtype=np.uint16 ).reshape(-1, 1)
+    
+    expected_len = 3 * pts
+    actual_len = len(bin_scanraw)
+    print(f"Expected length: {expected_len}, Actual length: {actual_len}")
+    
+    if actual_len == expected_len:
+        # SCANRAW has returned the expected amount of data for the read. 
+        # sometimes this function (and not SCAN) does not read the buffer properly
+        # a fix is in progress for LINUX systems. it works fine for Windows
+        processed_scanraw = struct.unpack( '<' + 'xH'*pts, bin_scanraw ) # ignore trailing '}ch> '
+        processed_scanraw = np.array(processed_scanraw, dtype=np.uint16 ).reshape(-1, 1) #unit8 has overflow error
 
-    # CONVERT to dBm Power
-    # take the processed binary data and convert it to dBm. 
-    # The equation is from tinySA.org & official documentation
-    SCALE_FACTOR = 174  # tinySA Basic: 128, tinySA Ultra and newer is 174
-    dBm_data = processed_scanraw / 32 - SCALE_FACTOR
-    print(dBm_data)
+        # CONVERT to dBm Power
+        # take the processed binary data and convert it to dBm. 
+        # The equation is from tinySA.org & official documentation
+        SCALE_FACTOR = 174  # tinySA Basic: 128, tinySA Ultra and newer is 174
+        dBm_data = processed_scanraw / 32 - SCALE_FACTOR
+        print(dBm_data)
 
-    # plot
-    plt.plot(freq_arr, data_arr, label= 'SCAN data')
-    plt.plot(freq_arr, dBm_data, label= 'SCANRAW data')
-    plt.xlabel("frequency (hz)")
-    plt.ylabel("measured data (dBm)")
-    plt.title("tinySA SCAN and SCANRAW data")
-    plt.legend()
-    plt.show()
+        # plot
+        plt.plot(freq_arr, data_arr, label= 'SCAN data')
+        plt.plot(freq_arr, dBm_data, label= 'SCANRAW data')
+        plt.xlabel("frequency (hz)")
+        plt.ylabel("measured data (dBm)")
+        plt.title("tinySA SCAN and SCANRAW data")
+        plt.legend()
+        plt.show()
+    else:
+        print("SCANRAW did not return the expected amount of data for the read")
 
 ```
 <p align="center">
@@ -725,6 +835,12 @@ from src.tinySA_python import tinySA
 
 # create a new tinySA object    
 tsa = tinySA()
+
+# set the return message preferences 
+tsa.set_verbose(True) #detailed messages
+tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
+
+
 # attempt to autoconnect
 found_bool, connected_bool = tsa.autoconnect()
 
@@ -732,13 +848,13 @@ found_bool, connected_bool = tsa.autoconnect()
 if connected_bool == False:
     print("ERROR: could not connect to port")
 else: # if port found and connected, then complete task(s) and disconnect
-    # detailed messages turned on
-    tsa.set_verbose(True) 
+
     # set scan values
     start = 150e6   # 150 MHz
     stop = 200e6    # 200 MHz
     pts = 450       # for tinySA Ultra
     outmask = 1     # get measured data (y axis)
+
     # scan
     data_bytes = tsa.command("scan 150e6 200e6 5 2")
 
@@ -1437,7 +1553,7 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 ### **scanraw**
 * **Description:** Performs a scan of unlimited amount of points and sends the data in binary form
 * **Original Usage:** `scanraw {start(Hz)} {stop(Hz)} [points][option]` or `scanraw {start(Hz)} {stop(Hz)} [points] [unbuffered]` depending on the source
-* **Direct Library Function Call:**
+* **Direct Library Function Call:** `scan_raw(start=Int|Float, stop=Int|Float, pts=Int|Float, unbuf=1)`
 * **Example Return:** 
     * Raw, unprocessed return for 15 pts: `b'scanraw 150000000 200000000 15 2\r\n{x"\nx3\nx4\nx\x15\nx6\nx\x07\nx)\nxj\nx\xfb\txm\nx]\nxO\nxp\nx\xb2\x0bx3\x0c}ch>'`
     * Example arg: `scanraw 150e6 200e6 5 1`
