@@ -25,19 +25,26 @@ class deviceConfig():
 
             
     def select_preset_model(self, model):
-        self.deviceModel = model
-        if model == "":
+
+       
+        if model == "BASIC":
             self.presetSelected = tinyBasic
-        elif model == "":
+        elif model == "ZS405":
             self.presetSelected = tinyUZS405
-        elif model == "":
+        elif model == "ZS406":
             self.presetSelected = tinyUPZS406
-        elif model == "":
+        elif model == "ZS407":
             self.presetSelected = tinyUPZS407
         else:
             self.presetSelected = None
             self.deviceModel = None
             print("ERROR: selected preset not in library")
+            return False
+        
+
+        self.deviceModel = model
+        print("Device set successfully")
+        return True
         
     # DEVICE CONFIG
     def set_default_params(self):
@@ -136,3 +143,30 @@ class deviceConfig():
     
     # TODO: add setters/getters for some of the options.
     # NOTE: not all of those should be easily changable to discourage internal hardware check changes
+
+
+    ## signal analyzer specific
+    def set_min_SA_freq(self, f):
+        self.minSADeviceFreq = float(f)
+    
+    def get_min_SA_freq(self):
+        return self.minSADeviceFreq 
+    
+    def set_max_SA_freq(self, f):
+        self.maxSADeviceFreq = float(f)
+
+    def get_max_SA_freq(self):
+        return self.maxSADeviceFreq
+
+    ## signal generator specific 
+    def set_min_SG_freq(self, f):
+        self.minSGDeviceFreq = float(f)
+    
+    def get_min_SG_freq(self):
+        return self.minSGDeviceFreq 
+    
+    def set_max_SG_freq(self, f):
+        self.maxSGDeviceFreq = float(f)
+
+    def get_max_SG_freq(self):
+        return self.maxSGDeviceFreq

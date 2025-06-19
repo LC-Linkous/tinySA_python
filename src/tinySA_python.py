@@ -50,7 +50,6 @@ class tinySA():
         self.harmonicEnabled = False
 
         #select device vars - hardcoding for the Ultra for now
-        self.deviceType = "ULTRA_ZS405"
         # device params
         self.maxPoints = 450
         # spectrum analyzer
@@ -101,14 +100,60 @@ class tinySA():
         else:
             return bytearray(b'') # the default
 
+
+######################################################################
+# Set Device Params
+#   Library specific functions. These set the boundaries & features for
+#   error checking in the library 
+#    
+# WARNING: these DO NOT change the settings on the DEVICE. just the library.
+######################################################################
+
+    def select_existing_device(self, tinySAModel):
+        # uses pre-set config files. 
+        # tinySAModel var must be one of the following:
+        # "BASIC", "ZS405", "ZS406", "ZS407"
+        try:
+            noErrors = self.dev.select_preset_model(tinySAModel)
+            if noErrors == False:
+                print("ERROR: device configuration unable to be set.This feature is underdevelopment")
+                return
+
+            # set variables from device configs.
+            # these are placeholders  tes for now
+            # device params
+            self.maxPoints = 450
+            # spectrum analyzer
+            self.minSADeviceFreq = 100e3  #100 kHz
+            self.maxSADeviceFreq = 11e9 #5.3 GHz for normal operation, but 12 GHz for edge of harmonics
+            # signal generator
+            self.minSGDeviceFreq = 100e3  #100 kHz
+            self.maxSGDeviceFreq = 960e6 #960 MHz
+            # battery
+            self.maxDeviceBattery = 4095
+            # screen 
+            self.screenWidth = 480
+            self.screenHeight = 320
+
+
+        except:
+            print("ERROR: device configuration unable to be set.This feature is underdevelopment")
+
+    def load_custom_config(self, configFile):
+        # TODO: for loading modified or other devices working on the same firmware
+        pass
+
+
+
 ######################################################################
 # Direct overrides
-#   These are used during DEBUG or when device state is already known
+#   These are used during DEBUG or when device state/model is already known
 #   Not recommended unless you are sure of the device state
 #   and which settings each device has
 # WARNING: these DO NOT change the settings on the DEVICE. just the library.
 ######################################################################
 
+    # error check bools
     def set_ultra_mode(self, ultraMode=False):
         self.ultraEnabled = ultraMode
 
@@ -118,6 +163,34 @@ class tinySA():
     def set_harmonic_mode(self, harmonicMode=False):
         self.harmonicEnabled = harmonicMode
     
+    # error check boundaries
+    ## signal analyzer specific
+    def set_min_SA_freq(self, f):
+        self.minSADeviceFreq = float(f)
+    
+    def get_min_SA_freq(self):
+        return self.minSADeviceFreq 
+    
+    def set_max_SA_freq(self, f):
+        self.maxSADeviceFreq = float(f)
+
+    def get_max_SA_freq(self):
+        return self.maxSADeviceFreq
+
+    ## signal generator specific 
+    def set_min_SG_freq(self, f):
+        self.minSGDeviceFreq = float(f)
+    
+    def get_min_SG_freq(self):
+        return self.minSGDeviceFreq 
+    
+    def set_max_SG_freq(self, f):
+        self.maxSGDeviceFreq = float(f)
+
+    def get_max_SG_freq(self):
+        return self.maxSGDeviceFreq
+
+
 
 ######################################################################
 # Serial management and message processing
