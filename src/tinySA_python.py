@@ -125,7 +125,7 @@ class tinySA():
             self.maxPoints = 450
             # spectrum analyzer
             self.minSADeviceFreq = 100e3  #100 kHz
-            self.maxSADeviceFreq = 11e9 #5.3 GHz for normal operation, but 12 GHz for edge of harmonics
+            self.maxSADeviceFreq = 12e9 #5.3 GHz for normal operation, but 12 GHz for edge of harmonics
             # signal generator
             self.minSGDeviceFreq = 100e3  #100 kHz
             self.maxSGDeviceFreq = 960e6 #960 MHz
