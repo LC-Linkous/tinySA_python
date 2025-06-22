@@ -2211,6 +2211,7 @@ Running list of words and acronyms that get tossed around with little to no expl
 * **Signal Generator** -  used to create various types of repeating or non-repeating electronic signals for testing and evaluating electronic devices and systems.
 * **S-parameters** - are a way to characterize the behavior of radio frequency (RF) networks and components. They describe how much of a signal is reflected, transmitted or transferred between PORTS. In case of s11 (s-one-one), the return loss of a single antenna or port is measured. In s12 (s-one-two) or s21 (s-two-one), the interaction between ports is measured. 
 * **SA** -  Spectrum Analyzer. A device that measures the (power) magnitude of an input signal vs frequency. It shows signal as a spectrum.
+        * This is what the 'SA' in 'tinySA' is!
 * **SA** -  Signal Analyzer. A device that measures the properties of a single frequency signal. This can include power, magnitude, phase, and other features such as  modulation. 
 * **SNA** - Scalar Network Analyzer. A device that measures amplitude as it passes through the device. It can be used to determine gain, attenuation, or frequency response.  
 * **VNA** - Vector Network Analyzer. A device that measures the network parameters of electrical networks (typically, s-parameters). Can measure both measures both amplitude and phase properties. The [wiki article on network analyzers]( https://en.wikipedia.org/wiki/Network_analyzer_(electrical)) covers the topic in detail.  
@@ -2297,6 +2298,8 @@ This library is updated in spurts. June-August are going to be the most active d
         * They have a 'TinySA Menu Tree' PDF doc that has been very useful
     * [The main TinySA GitHub](https://github.com/erikkaashoek/tinySA/)
         * [main.c](https://github.com/erikkaashoek/tinySA/blob/434126dcc6eed40e4e9ba3d7ef67e17e0370c38f/main.c)
+    * [Spectrum Analyzer How-To Guide: What They Are, What They Measure, & How to Use Them](https://www.tek.com/en/documents/primer/what-spectrum-analyzer-and-why-do-you-need-one)
+        * https://www.tek.com/en/documents/primer/what-spectrum-analyzer-and-why-do-you-need-one
 
 
 * Hardware, S-parameters and 2 port networks:
