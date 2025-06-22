@@ -48,6 +48,7 @@ Working on it:
     * [Vocab Check](#vocab-check)
     * [Calibration Setup](#calibration-setup)
     * [Some General tinySA Notes](#some-general-tinysa-notes)
+* [FAQs](#faqs)
 * [References](#references)
 * [Licensing](#licensing)  
 
@@ -1930,10 +1931,10 @@ Running list of words and acronyms that get tossed around with little to no expl
     * For example, with the **hop** command, this value controls whether the device's output is a frequency or a level (power) signal. When the outmask is set to "1", the tinySA will output a frequency signal. When set to "2", the outmask will cause the tinySA to output a level signal, which is a measure of the signal's power or intensity
 * **RBW** - Resolution Bandwidth. Frequency span of the final filter (IF filter) that is applied to the input signal. Determines the fast-Fourier transform (FFT) bin size.
 * **SDR*** - Software Defined Radio. This is a software (computer) controlled radio system capable of sending and receiving RF signals. This type of device uses software to control functions such as  modulation, demodulation, filtering, and other signal processing tasks. Messages (packets) can be sent and received with this device.
-* **Signal Generator** - Signal Analyzer. A device that measures the magnitude of an input signal vs frequency. It shows signal as a spectrum.
- - used to create various types of repeating or non-repeating electronic signals for testing and evaluating electronic devices and systems
+* **Signal Generator** -  used to create various types of repeating or non-repeating electronic signals for testing and evaluating electronic devices and systems.
 * **S-parameters** - are a way to characterize the behavior of radio frequency (RF) networks and components. They describe how much of a signal is reflected, transmitted or transferred between PORTS. In case of s11 (s-one-one), the return loss of a single antenna or port is measured. In s12 (s-one-two) or s21 (s-two-one), the interaction between ports is measured. 
-* **SA** - Signal Analyzer. A device that measures the magnitude of an input signal vs frequency. It shows signal as a spectrum.
+* **SA** -  Spectrum Analyzer. A device that measures the (power) magnitude of an input signal vs frequency. It shows signal as a spectrum.
+* **SA** -  Signal Analyzer. A device that measures the properties of a single frequency signal. This can include power, magnitude, phase, and other features such as  modulation. 
 * **SNA** - Scalar Network Analyzer. A device that measures amplitude as it passes through the device. It can be used to determine gain, attenuation, or frequency response.  
 * **VNA** - Vector Network Analyzer. A device that measures the network parameters of electrical networks (typically, s-parameters). Can measure both measures both amplitude and phase properties. The [wiki article on network analyzers]( https://en.wikipedia.org/wiki/Network_analyzer_(electrical)) covers the topic in detail.  
 
@@ -1942,9 +1943,9 @@ Running list of words and acronyms that get tossed around with little to no expl
 aka “what am I looking at and did I buy the right thing?”
  
 
-**tinySA Vs. NanoVNA **: The tinySA and NanoVNA look a lot alike, and have some similar code, but they are NOT the same device. They are designed to measure different things. The tinySA is a signal analyzer (SA) while the v is a vector network analyzer (VNA). Both have signal generation capabilities, but the tinySA (currently) has expanded features for generating signals. This library was made for the tinySA line of devices. There might be some compatibility with the NanoVNA, but this is not currently supported or under development.
+**tinySA Vs. NanoVNA **: The tinySA and NanoVNA look a lot alike, and have some similar code, but they are NOT the same device. They are designed to measure different things. The tinySA is a spectrum analyzer (SA) while the v is a vector network analyzer (VNA). Both have signal generation capabilities, but the tinySA (currently) has expanded features for generating signals. This library was made for the tinySA line of devices. There might be some compatibility with the NanoVNA, but this is not currently supported or under development.
 
-**SA** - a signal analyzer (SA) measures the magnitude of an external input signal vs frequency. It shows signal as a spectrum. The signal source does not need to be directly, physically connected to the SA, which allows for analysis of the wireless spectrum. This is the primary functionality of the tinySA, but it does have other features (such as signal generation). 
+**SA** - This one is contect dependent. SA can mean either 'Spectrum Analyzer' (multiple frequencies) or 'Signal Analyzer' (single frequency). In the case of the tinySA it is 'Spectrum Analyzer' because multiple frequencies are being measured. A spectrum analyzer measures the magnitude of an external input signal vs frequency. It shows signal as a spectrum. The signal source does not need to be directly, physically connected to the SA, which allows for analysis of the wireless spectrum. This is the primary functionality of the tinySA, but it does have other features (such as signal generation). 
 
 **VNA** – a vector network analyzer (VNA) measures parameters such as s-parameters, impedance and reflection coefficient of a radio frequency (RF) device under test (DUT). A VNA is used to characterize the transmission and reflection properties of the DUT by generating a stimulus signal and then measuring the device's response. This can be used to characterize and measure the behavior of RF devices and individual components. 
     * ["What is a Vector Network Analyzer and How Does it Work?" - Tektronix ](https://www.tek.com/en/documents/primer/what-vector-network-analyzer-and-how-does-it-work)
@@ -1962,7 +1963,12 @@ aka “what am I looking at and did I buy the right thing?”
 
 ### Calibration Setup
 
-The cable MUST be connected between the two ports BEFORE starting the calibration. 
+* [calibration menu for tinySA](https://tinysa.org/wiki/pmwiki.php?n=Main.CALIBRATEMENU)
+
+Some tips:
+* The cable MUST be connected between the two ports BEFORE starting the calibration. 
+* The cable should be finger tight. If the connector will not turn, there's a high risk of cross threading if it's forced. 
+
 
 
 ### Some General tinySA Notes
@@ -1972,7 +1978,22 @@ These are notes collected from various references as this README documentation i
 
 #### tinySA Ultra
 
-In the tinySA Ultra mode, there are four output modes: Normal (below 830 MHz), Direct (between 830MHz and 1130MHz), Ultra, and Scan.
+* In the tinySA Ultra mode, there are four output modes: Normal (below 830 MHz), Direct (between 830MHz and 1130MHz), Ultra, and Scan.
+
+
+## FAQs
+
+### How should I be using this?
+
+Right now, this library is set up as a class that can be added to a Python program. I recommend adding the contents of the `./src` folder on the same level (or lower) than the main program you're writing. 
+
+### Will this be made into a REAL Python library I can import into my project?
+
+That's the plan! Right now, the core library is made of functions for directly interfacing with the tinySA series of devices. There are several examples in this README, which will be integrated into the core library as the error checking and features are stabilized. We're probably 3-6 months of development and testing away from an official release or library creation.
+
+## How often is this library updated?
+
+This library is updated in spurts. June-August are going to be the most active development months, but it will get monthly-ish updates otherwise. Development is pretty constant on the backend, but only stable code is released publicly. Bug fixes will be addressed as they happen.   
 
 
 
