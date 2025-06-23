@@ -93,14 +93,12 @@ pandas
 matplotlib
 pillow
 pyQt5
-
 ```
 
 For anyone unfamiliar with using requirements files, or having issues with the libraries, these can also be installed manually in the terminal (we recommend a Python virtual environment) with:
 
 ```python
 pip install pyserial numpy pandas matplotlib pillow pyQt5
-
 ```
 
 `pyQt5` is used with `matplotlib` to draw the figures. It needs to be installed in Linux systems to follow the examples included in tinySA_python, but is not needed on all Windows machines.
@@ -2263,7 +2261,7 @@ These are notes collected from various references as this README documentation i
 
 ### How should I be using this?
 
-Right now, this library is set up as a class that can be added to a Python program. I recommend adding the contents of the `./src` folder on the same level (or lower) than the main program you're writing. 
+Right now, this library is set up as a class that can be added to a Python program. I recommend adding the contents of the `./src` folder on the same level (or lower) than the main program you're writing. If that doesn't make a lot of sense, check out the `hello_world.py` file in this repo. Because that example file is at the same level as the `./src` folder, we aren't dealing with path imports or checking. This works well for beginners, which is whom the bulk of the documentation is intended for.
 
 ### Will this be made into a REAL Python library I can import into my project?
 
