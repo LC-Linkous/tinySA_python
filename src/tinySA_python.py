@@ -415,7 +415,7 @@ class tinySA():
             #get the dac       
             writebyte = 'actual_freq\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)   
-        elif (isinstance(val, int)) and (self.minSADeviceFreq <= val <=self.maxSADeviceFreq ):
+        elif (isinstance(val, (int, float))) and (self.minSADeviceFreq <= val <=self.maxSADeviceFreq ):
             writebyte = 'actual_freq '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)   
             self.print_message("actual_freq set to " + str(val))
@@ -712,7 +712,7 @@ class tinySA():
             #get the dac       
             writebyte = 'dac\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)   
-        elif (isinstance(val, int)) and (0<= val <=4095):
+        elif (isinstance(val, (int, float))) and (0<= val <=4095):
             writebyte = 'dac '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)   
             self.print_message("dac set to " + str(val))
@@ -833,7 +833,7 @@ class tinySA():
         # example return: ''        
         
         #check input
-        if (isinstance(val, int)) and (-100<= val <=100):
+        if (isinstance(val, (int, float))) and (-100<= val <=100):
             writebyte = 'ext_gain '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("ext_gain() set to " + str(val))       
@@ -869,7 +869,7 @@ class tinySA():
         # example return: bytearray(b'')
 
         #check input
-        if (isinstance(val, int)) and (self.minSADeviceFreq<= val <=self.maxSADeviceFreq):
+        if (isinstance(val, (int, float))) and (self.minSADeviceFreq<= val <=self.maxSADeviceFreq):
             writebyte = 'freq '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("freq() set to " + str(val))       
@@ -918,14 +918,12 @@ class tinySA():
         # outmask: 1 is frequency, 2 is level
         # example return: ''
 
-        if (isinstance(start, int)) and (isinstance(stop, int)) and (isinstance(inc, int)):
+        if (isinstance(start, (int, float))) and (isinstance(stop, (int, float))) and (isinstance(inc, (int, float))):
             if (isinstance(outmask, int)) and (0<outmask<3):
-                writebyte = 'hop ' + str(start) + ' ' + str(stop) 
-                + ' ' + str(inc) + ' ' + str(outmask) + '\r\n'
+                writebyte = 'hop ' + str(start) + ' ' + str(stop)  + ' ' + str(inc) + ' ' + str(outmask) + '\r\n'
 
             elif outmask ==None:
-                writebyte = 'hop ' + str(start) + ' ' + str(stop) 
-                + ' ' + str(inc) + '\r\n'
+                writebyte = 'hop ' + str(start) + ' ' + str(stop) + ' ' + str(inc) + '\r\n'
 
             msgbytes = self.tinySA_serial(writebyte, printBool=False) 
             self.print_message("sampling over frequency range")
@@ -1065,7 +1063,7 @@ class tinySA():
             writebyte = 'line '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)    
             self.print_message("horizontal line turned off")
-        elif (isinstance(val, int)) or (isinstance(val, float)):    
+        elif (isinstance(val, (int, float))): # or (isinstance(val, float)):    
             writebyte = 'line '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)    
             self.print_message("horizontal line turned off")  
@@ -1171,7 +1169,7 @@ class tinySA():
             writebyte = 'marker ' + str(ID) + ' ' +str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)     
             self.print_message("marker set to " + str(val))      
-        elif (isinstance(val, int)) or (isinstance(val, float)):  
+        elif (isinstance(val, (int, float))): # or (isinstance(val, float)):  
             writebyte = 'marker ' + str(ID) + ' ' +str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)     
             self.print_message("marker set to " + str(val)) 
@@ -2109,7 +2107,7 @@ class tinySA():
             #get the offset       
             writebyte = 'vbat_offset\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)   
-        elif (isinstance(val, int)) and (0<= val <=4095):
+        elif (isinstance(val, (int, float))) and (0<= val <=4095):
             writebyte = 'vbat_offset '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)   
             self.print_message("vbat_offset set to " + str(val))
