@@ -3,10 +3,8 @@
 ##-------------------------------------------------------------------------------\
 #   tinySA_python
 #   './examples/using_autoconnect.py'
-#   This is a visual comparison of SCAN and SCANRAW to work out some errors in 
-#   the decode process given that the tinySA is still running during the read, 
-#   we don't expect SCAN and SCANRAW to be exactly the same, but they 
-#   should be relatively similar values when SCANRAW is decoded
+#   This is an example of using the autoconnect feature. 
+#   The detected device ID is returned and the serial disconnected
 #
 #   Last update: June 18, 2025
 ##-------------------------------------------------------------------------------\
