@@ -583,7 +583,7 @@ else: # port open, complete task(s) and disconnect
 
 #### **Example 2: Plot using Scan Data and Frequencies**
 
-This example uses `scan()` to take a data measurement of data that DOES NOT need to been on the screen, unlike **Example 1** above. Then, the frequencies on the x-axis are calculated between the `start` and `stop` frequencies using the `number of points`. This is done because `frequencies()` would have the values of the last scan, which are connected to `RBW` and not the `number of points`. 
+This example uses `scan()` to take a data measurement of data that DOES NOT need to be on the screen, unlike **Example 1** above. Then, the frequencies on the x-axis are calculated between the `start` and `stop` frequencies using the `number of points`. This is done because `frequencies()` would have the values of the last scan, which are connected to `RBW` and not the `number of points`. 
 
 
  
