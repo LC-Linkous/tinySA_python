@@ -4,19 +4,17 @@
 #   tinySA_python
 #   './examples/plotting_scanraw.py'
 #   This is a visual comparison of SCAN and SCANRAW to work out some errors in 
-#   the decode process given that the tinySA is still running during the read, 
-#   we don't expect SCAN and SCANRAW to be exactly the same, but they 
+#   the decode process. We don't expect SCAN and SCANRAW to be exactly the same, 
+#   because the number of points taken are not the same, but they 
 #   should be relatively similar values when SCANRAW is decoded
 #
-#   Last update: June 18, 2025
+#   Last update: July 2, 2025
 ##-------------------------------------------------------------------------------\
-
 
 
 # import tinySA library
 # (NOTE: check library path relative to script path)
 from src.tinySA_python import tinySA 
-
 
 # imports FOR THE EXAMPLE
 import numpy as np
@@ -62,14 +60,12 @@ def convert_data_to_arrays(start, stop, pts, data):
 
     return freq_arr, data_arr
 
-
 # create a new tinySA object    
 tsa = tinySA()
 
 # set the return message preferences 
 tsa.set_verbose(True) #detailed messages
 tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
-
 
 # attempt to autoconnect
 found_bool, connected_bool = tsa.autoconnect()
@@ -92,7 +88,6 @@ else: # if port found and connected, then complete task(s) and disconnect
 
     # SCAN RAW
     scanraw_data_bytes = tsa.scan_raw(start, stop, pts, outmask)
-
 
     # for subsequent reads, the tinySA does freeze while preforming SCANRAW
     # if there's an error, the screen will stay frozen (for reading).
@@ -143,4 +138,3 @@ else: # if port found and connected, then complete task(s) and disconnect
         plt.show()
     else:
         print("SCANRAW did not return the expected amount of data for the read")
-
