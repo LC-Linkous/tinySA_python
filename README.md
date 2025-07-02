@@ -101,7 +101,7 @@ For anyone unfamiliar with using requirements files, or having issues with the l
 pip install pyserial numpy pandas matplotlib pillow pyQt5
 ```
 
-`pyQt5` is used with `matplotlib` to draw the figures. It needs to be installed in Linux systems to follow the examples included in tinySA_python, but is not needed on all Windows machines.
+`pyQt5` is used with `matplotlib` to draw the figures. It needs to be installed on Linux systems to follow the examples included in tinySA_python, but is not needed on all Windows machines.
 
 
 
@@ -298,7 +298,7 @@ bytearray(b'tinySA ULTRA\r\n2019-2024 Copyright @Erik Kaashoek\r\n2016-2020 Copy
 
 ### Toggle Error Messages
 
-Currently, the following can be used to turn on or off returned error messages.
+The following can be used to turn on or off returned error messages.
 
 1) the 'verbose' option. When enabled, detailed messages are printed out. 
 
@@ -446,7 +446,7 @@ def convert_data_to_image(data_bytes, width, height):
     elif len(data_bytes) > expected_size:
         # truncate the data to the expected size (in case it's larger than needed)
         data_bytes = data_bytes[:expected_size]
-        print("Data is larger than the expected size. trunacting. check data.")
+        print("Data is larger than the expected size. truncating. check data.")
 
     # unpack the byte array to get pixel values (RGB565 format)
     num_pixels = width * height
@@ -511,7 +511,7 @@ This example plots the last/current sweep of data from the tinySA device.
 `byteArrayToNumArray(byteArr)` takes in the returned trace data and frequency 
 bytearrays and converts them to arrays that are then plotted using `matplotlib`
 
-This example works because `data()` returns a trace, which is goign to be the same dimensionality of the `frequencies()` return because they have the same `RBW`
+This example works because `data()` returns a trace, which is going to be the same dimensionality of the `frequencies()` return because they have the same `RBW`
 
 ```python
 
@@ -602,7 +602,7 @@ def convert_data_to_arrays(start, stop, pts, data):
     # using the start and stop frequencies, and the number of points, 
 
     freq_arr = np.linspace(start, stop, pts) # note that the decimals might go out to many places. 
-                                                # you can truncate this because its only used 
+                                                # you can truncate this because it’s only used 
                                                 # for plotting in this example
 
     # As of the Jan. 2024 build in some data returned with SWEEP or SCAN calls there is error data.  
@@ -1648,7 +1648,7 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **CLI Wrapper Usage:**
 * **Notes:** 
 * The tinySA Ultra can measure, store, and validate the tinySA noise figure (NF). It can also measure amplifier (AMP) NF. 
-* While it is possible to set this value progamatically, until more documentation is online it is recommended to only GET the nf value. 
+* While it is possible to set this value programmatically, until more documentation is online it is recommended to only GET the nf value. 
 * "The NF is the degradation in dB of the SNR after the amplifier compared to before the amplifier." - [https://tinysa.org/wiki/pmwiki.php?n=Main.NoiseFactor](https://tinysa.org/wiki/pmwiki.php?n=Main.NoiseFactor)
 
 
@@ -2219,9 +2219,9 @@ Running list of words and acronyms that get tossed around with little to no expl
 aka “what am I looking at and did I buy the right thing?”
  
 
-**tinySA Vs. NanoVNA **: The tinySA and NanoVNA look a lot alike, and have some similar code, but they are NOT the same device. They are designed to measure different things. The tinySA is a spectrum analyzer (SA) while the v is a vector network analyzer (VNA). Both have signal generation capabilities, but the tinySA (currently) has expanded features for generating signals. This library was made for the tinySA line of devices. There might be some compatibility with the NanoVNA, but this is not currently supported or under development.
+**tinySA Vs. NanoVNA **: The tinySA and NanoVNA look a lot alike, and have some similar code, but they are NOT the same device. They are designed to measure different things. The tinySA is a spectrum analyzer (SA) while the v is a vector network analyzer (VNA). Both have signal generation capabilities, but the tinySA (currently) has expanded features for generating signals. This library was made for the tinySA line of devices. There might be some compatibility with the NanoVNA, but this is not currently supported or under development. To avoid confusion, there is a [nanoVNA_python library]( https://github.com/LC-Linkous/nanoVNA_python). 
 
-**SA** - This one is contect dependent. SA can mean either 'Spectrum Analyzer' (multiple frequencies) or 'Signal Analyzer' (single frequency). In the case of the tinySA it is 'Spectrum Analyzer' because multiple frequencies are being measured. A spectrum analyzer measures the magnitude of an external input signal vs frequency. It shows signal as a spectrum. The signal source does not need to be directly, physically connected to the SA, which allows for analysis of the wireless spectrum. This is the primary functionality of the tinySA, but it does have other features (such as signal generation). 
+**SA** - This one is context dependent. SA can mean either 'Spectrum Analyzer' (multiple frequencies) or 'Signal Analyzer' (single frequency). In the case of the tinySA it is 'Spectrum Analyzer' because multiple frequencies are being measured. A spectrum analyzer measures the magnitude of an external input signal vs frequency. It shows signal as a spectrum. The signal source does not need to be directly physically connected to the SA, which allows for analysis of the wireless spectrum. This is the primary functionality of the tinySA, but it does have other features (such as signal generation). 
 
 **VNA** – a vector network analyzer (VNA) measures parameters such as s-parameters, impedance and reflection coefficient of a radio frequency (RF) device under test (DUT). A VNA is used to characterize the transmission and reflection properties of the DUT by generating a stimulus signal and then measuring the device's response. This can be used to characterize and measure the behavior of RF devices and individual components. 
     * ["What is a Vector Network Analyzer and How Does it Work?" - Tektronix ](https://www.tek.com/en/documents/primer/what-vector-network-analyzer-and-how-does-it-work)
@@ -2232,7 +2232,7 @@ aka “what am I looking at and did I buy the right thing?”
 
 **SNA** – a scalar network analyzer (SNA) measures amplitude as it passes through the device. It can be used to determine gain, attenuation, or frequency response. scalar network analyzers are less expensive than VNAs because they only measure the magnitude of the signal, not the phase.
 
-**SDR** - a software defined radio (SDR) is a software (computer) controlled radio system capable of sending and receiving RF signals. This type of device uses software to control functions such as  modulation, demodulation, filtering, and other signal processing tasks. Messages  can be sent and received with this device. 
+**SDR** - a software defined radio (SDR) is a software (computer) controlled radio system capable of sending and receiving RF signals. This type of device uses software to control functions such as  modulation, demodulation, filtering, and other signal processing tasks. Messages can be sent and received with this device. 
 
 **LNA** - an electronic component designed to amplify weak incoming signals with minimal noise addition, thus improving the signal-to-noise ratio (SNR). This hardware is often attached (or built in) to the devices above. It is not a stand-alone device for signal generation or analysis. 
 
