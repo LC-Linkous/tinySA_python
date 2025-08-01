@@ -21,10 +21,7 @@ import numpy as np
 import re
 
 
-try:
-    from src.device_config.device_config import deviceConfig
-except:
-    from device_config.device_config import deviceConfig
+from tinysa.device_config import deviceConfig
 
 
 class tinySA():

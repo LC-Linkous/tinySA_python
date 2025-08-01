@@ -11,7 +11,7 @@
 
 # import tinySA library
 # (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA 
+from tinysa import tinySA 
 
 
 # imports FOR THE EXAMPLE
