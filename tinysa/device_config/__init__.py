@@ -4,16 +4,11 @@
 import os
 import pandas as pd
 
-try:
-    from src.device_config.presets import config_tinysa_basic as tinyBasic
-    from src.device_config.presets  import config_tinysa_ultra_ZS405 as tinyUZS405
-    from src.device_config.presets  import config_tinysa_ultra_p_ZS406 as tinyUPZS406
-    from src.device_config.presets  import config_tinysa_ultra_p_ZS407 as tinyUPZS407
-except:
-    from device_config.presets import config_tinysa_basic as tinyBasic
-    from device_config.presets  import config_tinysa_ultra_ZS405 as tinyUZS405
-    from device_config.presets  import config_tinysa_ultra_p_ZS406 as tinyUPZS406
-    from device_config.presets  import config_tinysa_ultra_p_ZS407 as tinyUPZS407
+
+from tinysa.device_config.presets import config_tinysa_basic as tinyBasic
+from tinysa.device_config.presets  import config_tinysa_ultra_ZS405 as tinyUZS405
+from tinysa.device_config.presets  import config_tinysa_ultra_p_ZS406 as tinyUPZS406
+from tinysa.device_config.presets  import config_tinysa_ultra_p_ZS407 as tinyUPZS407
 
 
 class deviceConfig():

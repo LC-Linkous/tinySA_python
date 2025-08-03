@@ -12,7 +12,7 @@
 
 # import tinySA library
 # (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA 
+from tinysa import tinySA
 
 #import for EXAMPLE
 import matplotlib.pyplot as plt
