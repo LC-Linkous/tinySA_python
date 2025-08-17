@@ -2,6 +2,9 @@
 # tinySA_python
 ## AN UNOFFICIAL Python Library for the tinySA Device Series
 
+# IN PROGRESS! The dev branch is not stable. refer to the main branch for the current stable version of the code
+
+
 A Non-GUI Python API class for the tinySA series of devices. This repository uses official resources and documentation but is NOT endorsed by the official tinySA product or company. See the [references](#references) section for further reading. See the [official tinySA resources](https://www.tinysa.org/wiki/) for device features.
 
 
