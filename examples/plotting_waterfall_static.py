@@ -1,14 +1,14 @@
 #! /usr/bin/python3
 ##-------------------------------------------------------------------------------\
 #   tinySA_python
-#   './examples/plotting_waterfall_2.py'
+#   './examples/plotting_waterfall_1.py'
 #   A waterfall plot example using matplotlib to plot multiple SCAN data over time
 #
 #   Last update: June 22, 2025
 ##-------------------------------------------------------------------------------\
 # import tinySA library
 # (NOTE: check library path relative to script path)
-from tinysa import tinySA
+from src.tinySA_python import tinySA
 
 # imports FOR THE EXAMPLE
 import csv
@@ -39,7 +39,7 @@ def convert_data_to_arrays(start, stop, pts, data):
 
 def collect_waterfall_data(tsa, start, stop, pts, outmask, num_scans, scan_interval):
 
-    waterfall_data = []
+    waterfall_data = []  # 2D array of scan data (time x frequency)
     timestamps = []
     freq_arr = None
     
@@ -68,29 +68,30 @@ def collect_waterfall_data(tsa, start, stop, pts, outmask, num_scans, scan_inter
     return freq_arr, np.array(waterfall_data), timestamps
 
 def plot_waterfall(freq_arr, waterfall_data, timestamps, start, stop):
-
     # Create figure with subplots
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
     
-    # Waterfall plot (main plot) - stacked line style
-    vertical_offset = 10  # dB offset between traces
+    # Waterfall plot (main plot)
+    # Create time array for y-axis (scan number or elapsed time)
+    time_arr = np.arange(len(timestamps))
     
-    # Plot each scan as a line with vertical offset
-    for i, scan_data in enumerate(waterfall_data):
-        # Add vertical offset to separate traces
-        offset_data = scan_data + (i * vertical_offset)
-        ax1.plot(freq_arr/1e9, offset_data, 'b-', linewidth=0.5, alpha=0.8)
+    # Create meshgrid for pcolormesh
+    freq_mesh, time_mesh = np.meshgrid(freq_arr, time_arr)
+    
+    # Plot waterfall
+    im = ax1.pcolormesh(freq_mesh/1e9, time_mesh, waterfall_data, 
+                       shading='nearest', cmap='viridis')
     
     ax1.set_xlabel('Frequency (GHz)')
-    ax1.set_ylabel('Signal Strength + Offset (dBm)')
+    ax1.set_ylabel('Scan Number')
     ax1.set_title(f'Waterfall Plot: {start/1e9:.1f} - {stop/1e9:.1f} GHz')
-    ax1.grid(True, alpha=0.3)
     
-    # Invert y-axis so newest scans are at top (like traditional waterfall)
-    ax1.invert_yaxis()
+    # Add colorbar
+    cbar = plt.colorbar(im, ax=ax1)
+    cbar.set_label('Signal Strength (dBm)')
     
     # Latest scan plot (bottom subplot)
-    ax2.plot(freq_arr/1e9, waterfall_data[-1], 'b-', linewidth=1)
+    ax2.plot(freq_arr/1e9, waterfall_data[-1])
     ax2.set_xlabel('Frequency (GHz)')
     ax2.set_ylabel('Signal Strength (dBm)')
     ax2.set_title('Latest Scan')
@@ -139,9 +140,8 @@ else: # if port found and connected, then complete task(s) and disconnect
         # create waterfall plot
         fig = plot_waterfall(freq_arr, waterfall_data, timestamps, start, stop)
         
-       
-        # Save the data to CSV
-        filename = "waterfall_2_sample.csv"
+        # Save data out to .csv
+        filename = "waterfall_1_sample.csv"
             
         # Create CSV with frequency headers and time/scan data
         with open(filename, 'w', newline='') as csvfile:
@@ -155,7 +155,7 @@ else: # if port found and connected, then complete task(s) and disconnect
             for i, (scan_data, timestamp) in enumerate(zip(waterfall_data, timestamps)):
                 row = [i+1, timestamp.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]] + scan_data.tolist()
                 writer.writerow(row)
-        
+            
         print(f"Data saved to {filename}")
         print(f"CSV contains {len(waterfall_data)} scans with {len(freq_arr)} frequency points each")
         
