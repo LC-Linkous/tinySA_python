@@ -23,10 +23,16 @@ import queue
 
 def convert_data_to_arrays(start, stop, pts, data):
     #Convert the raw tinySA data to frequency and power arrays.
-    # Create frequency array
-    freq_arr = np.linspace(start, stop, pts)
-    
-    # Handle error data by replacing "-:.0" with "-10.0"
+    # using the start and stop frequencies, and the number of points,
+    freq_arr = np.linspace(start, stop, pts) # note that the decimals might go out to many places.
+                                                # you can truncate this because its only used
+                                                # for plotting in this example
+    # As of the Jan. 2024 build in some data returned with SWEEP or SCAN calls there is error data.  
+    # https://groups.io/g/tinysa/topic/tinasa_ultra_sweep_command/104194367  
+    # this shows up as "-:.000000e+01".
+    # TEMP fix - replace the colon character with a -10. This puts the 'filled in' points around the noise floor.
+    # more advanced filtering should be applied for actual analysis.
+   
     data1 = bytearray(data.replace(b"-:.0", b"-10.0"))
     
     # Get first value in each returned row (power in dBm)
