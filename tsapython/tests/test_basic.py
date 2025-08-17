@@ -2,7 +2,7 @@
 
 ##------------------------------------------------------------------------------------------------\
 #   tinySA_python (tsapython)
-#   './src/tests/test_basic.py'
+#   './tests/test_basic.py'
 #   UNOFFICIAL Python API based on the tinySA official documentation at https://www.tinysa.org/wiki/
 #
 #   Basic tests for tsapython. This requires NO hardware.
