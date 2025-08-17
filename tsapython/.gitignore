@@ -169,6 +169,8 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+uv.lock
+
 
 # macOS system files
 .DS_Store
