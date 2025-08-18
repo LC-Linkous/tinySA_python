@@ -5,17 +5,19 @@
 # IN PROGRESS! The dev branch is not stable. refer to the main branch for the current stable version of the code
 
 
-A Non-GUI Python API class for the tinySA series of devices. This repository uses official resources and documentation but is NOT endorsed by the official tinySA product or company. See the [references](#references) section for further reading. See the [official tinySA resources](https://www.tinysa.org/wiki/) for device features.
+A Non-GUI Python API for the tinySA series of devices. This repository uses official resources and documentation but is NOT endorsed by the official tinySA product or company. See the [references](#references) section for further reading. See the [official tinySA resources](https://www.tinysa.org/wiki/) for device features.
 
+This library covers most documented commands for the tinySA device series, and is planned to include device-specific commands and memory. The documentation (after the examples) is sorted based on the serial command for the device, with some provided usage examples. While some error checking exists in both the device and the library, it is not exhaustive. It is strongly suggested to read the official documentation before attempting to script with your device.
 
-This library covers most documented commands for the tinySA device series. The documentation is sorted based on the serial command, with some provided usage examples. While some error checking exists in both the device and the library, it is not exhaustive. It is strongly suggested to read the official documentation before attempting to script with your device.
+This README provides example code for connecting to the device, scanning and plotting data, saving to CSV, and creating real-time waterfall plots. Examples are not exhaustive. Refer to the [List of tinySA Commands and their Library Commands](#list-of-tinysa-commands-and-their-library-commands) for all of the tested commands for this library. 
+
+If you are interested in developing the PyPI package, or making a custom local version, see [Library Development](#library-development) towards the end of this README.
 
 
 ## Table of Contents
 * [The tinySA Series of Devices](#the-tinysa-series-of-devices)
 * [Library Usage](#library-usage)
 * [Requirements](#requirements)
-* [Library Development](#library-development)
 * [Error Handling](#error-handling)
 * [Example Implementations](#example-implementations)
     * [Finding the Serial Port](#finding-the-serial-port)
@@ -39,6 +41,7 @@ This library covers most documented commands for the tinySA device series. The d
 * [List of tinySA Commands and their Library Commands](#list-of-tinysa-commands-and-their-library-commands)
 * [List of Commands Removed from Library](#list-of-commands-removed-from-library)
 * [Additional Library Functions for Advanced Use](#additional-library-functions-for-advanced-use)
+* [Library Development](#library-development)
 * [Notes for Beginners](#notes-for-beginners)
     * [Vocab Check](#vocab-check)
     * [Calibration Setup](#calibration-setup)
@@ -150,7 +153,6 @@ pip install pyserial numpy pandas matplotlib pillow pyQt5
 
 
 
-## Library Development
 
 
 
@@ -2544,6 +2546,13 @@ Other commands: version reset data frequencies scan hop scanraw test touchcal to
     * None
 * **CLI Wrapper Usage:**
 * **Notes:** If unfamiliar with device and operation, DO NOT USE THIS. There is no error checking and you will be interfacing with the tinySA device directly.
+
+
+
+## Library Development
+
+
+
 
 
 ## Notes for Beginners
