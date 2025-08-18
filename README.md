@@ -1572,7 +1572,7 @@ Quick Link Table:
     *  `get_bulk_data()`
 * **CLI Wrapper Usage:**
 * **Notes:** 
- All numbers are binary coded 2 bytes little endian. The pixel data is encoded as 2 bytes per pixel. This is data returned by the device when in AUTO REFRESH mode. NOTE: may need to be paired with a continious buffer read and dump, which will be tested in the next           
+ All numbers are binary coded 2 bytes little endian. The pixel data is encoded as 2 bytes per pixel. This is data returned by the device when in AUTO REFRESH mode. NOTE: may need to be paired with a continious buffer read and dump, which will be tested in the next update           
             
 
 ### **calc**
@@ -1860,12 +1860,34 @@ Quick Link Table:
 ### **leveloffset**
 * **Description:** Sets or gets the level calibration data
 * **Original Usage:** `leveloffset low|high|switch [output] {error}`
-* **Direct Library Function Call:** `level_offset()`
-* **Example Return:** empty bytearray
+    * alternative returned information for format: `leveloffset [low|switch|receive_switch|out_switch|lna|harmonic|shift|shift1|shift2|shift3|drive1|drive2|drive3|direct|direct_lna|ultra|ultra_lna|harmonic_lna|adf] {output} [-20..+20]`
+* **Direct Library Function Call:** `level_offset(val=low|switch|receive_switch|out_switch|lna|harmonic|shift|shift1|shift2|shift3|drive1|drive2|drive3|direct|direct_lna|ultra|ultra_lna|harmonic_lna|adf, offset=[-20.0...20.0], isOutput=True|False)`
+    * `isOutput` boolean variable determines if the 'output' argument is included in the statement. See examples below.
+* **Example Return:**
+    * `leveloffset`, with no arguments
+        * output: `bytearray(b'-8.462500e+01 0.000000000 ... \r\n-8.128125e+01 0.000000000 \r')`
+    * `leveloffset low -3.0`
+        * output: `bytearray(b'')`
+    * `leveloffset low output 0.0`
+        * output: `bytearray(b'')`
 * **Alias Functions:**
     * None
 * **CLI Wrapper Usage:**
-* **Notes:**  TODO. error checking needed
+* **Notes:**  
+    * NOT ALL COMBINATIONS ARE VALID.
+    * Calibration tables:
+        * `low` - Low frequency mode corrections
+        * `switch` - Switch-related corrections
+        * `receive_switch` - Receive switch corrections
+        * `out_switch` - Output switch corrections
+        * `lna` - LNA (Low Noise Amplifier) corrections
+        * `harmonic` - Harmonic mode corrections
+        * `shift/shift1/shift2/shift3` - Frequency shift corrections
+        * `drive1/drive2/drive3` - Drive level corrections
+        * `direct/direct_lna` - Direct mode corrections
+        * `ultra/ultra_lna` - Ultra mode corrections
+        * `harmonic_lna` - Harmonic mode with LNA corrections
+        * `adf` - ADF (frequency synthesizer) corrections
 
 ### **line**
 * **Description:** Disables the horizontal line or sets it to a specific level.
@@ -2277,12 +2299,12 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
     * `run_sweep(start=FREQ, stop=FREQ, pts=INT)`
 * **CLI Wrapper Usage:**
 * **Notes:**  sweep without arguments lists the current sweep settings, the frequencies specified should be within the permissible range. The sweep commands apply both to input and output modes. MAX PTS is device dependent; 290 for tinySA Basic and 450 for tinySA Ultra and newer
-* sweep start {frequency}: sets the start frequency of the sweep.
-* sweep stop {frequency}: sets the stop frequency of the sweep.
-* sweep center {frequency}: sets the center frequency of the sweep.
-* sweep span {frequency}: sets the span of the sweep.
-* sweep cw {frequency}: sets the continuous wave frequency (zero span sweep). 
-* sweep {start(Hz)} {stop(Hz)} [0..MAX PTS]: sets the start and stop frequencies, and optionally the number of points in the sweep
+* `sweep start {integer}`: sets the start frequency of the sweep.
+* `sweep stop {integer}`: sets the stop frequency of the sweep.
+* `sweep center {integer}`: sets the center frequency of the sweep.
+* `sweep span {integer}`: sets the span of the sweep.
+* `sweep cw {integer}`: sets the continuous wave frequency (zero span sweep). 
+* `sweep {start(Hz)} {stop(Hz)} [0..MAX PTS]`: sets the start and stop frequencies, and optionally the number of points in the sweep
  
 
 ### **sweeptime**
