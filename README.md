@@ -54,18 +54,24 @@ If you are interested in developing the PyPI package, or making a custom local v
 
 ## The tinySA Series of Devices
 
-The [tinySA line of devices](https://tinysa.org/wiki/pmwiki.php?n=TinySA4.Comparison) are a series of portable and pretty user-friendly devices with both spectrum analyzer and signal generator capabilities. There are four main versions, all of which share the same key features. The Ultra and Ultra Plus versions build off of the original tinySA Basic. They look very similar to the [NanoVNA series](https://nanovna.com/), but are NOT the same device and have different functionalities. 
+The [tinySA line of devices](https://tinysa.org/wiki/pmwiki.php?n=TinySA4.Comparison) are a series of portable and pretty user-friendly devices with both spectrum analyzer and signal generator capabilities. There are four main versions, all of which share the same key features. The Ultra and Ultra Plus versions build off of the original tinySA Basic. They look very similar to the [NanoVNA series](https://nanovna.com/), but are NOT the same device and have different functionalities. They are also made by different people.
 
-The NanoVNA series is a handheld vector network analyzer (VNA), which measures the S-parameters (loosely: a type of response of a device or antenna) over at different frequencies, while a spectrum analyzer measures the amplitude of RF signals at different frequencies. There's a lot of overlap with the use of both devices, but the measurements are very different. A signal generator is exactly what it sounds like - it generates a signal at a specific frequency or frequencies at a specified power level.
+The NanoVNA series is a handheld vector network analyzer (VNA), which measures the S-parameters (loosely: a type of system response of a device or antenna) at different frequencies, while a spectrum analyzer measures the amplitude of RF signals at different frequencies. There's a lot of overlap with the use of both devices in RF design and testing, but the measurements are very different. A signal generator is exactly what it sounds like - it generates a controllable signal at a specific frequency or frequencies at a specified power level.
 
-Official documentation can be found at [https://tinysa.org/](https://tinysa.org/). The official Wiki is going to be more up to date than this repo with new versions and features, and they also have links to GUI-based software (which is also under development). Several community projects also exist on GitHub.
+Official documentation for the tinySA can be found at [https://tinysa.org/](https://tinysa.org/). The official Wiki is going to be more up to date than this repo with new versions and features, and they also have links to GUI-based software (which is also under development). Several community projects exist on GitHub, and some may be official (this is not one of them!).
 
-There is also a very active tinySA community at [https://groups.io/g/tinysa](https://groups.io/g/tinysa) exploring the device capabilities and its many features. 
+There is also a very active tinySA community at [https://groups.io/g/tinysa](https://groups.io/g/tinysa) exploring the device capabilities and its many features. There are in-depth Q&A topics there for device usage. That community **does not** support this library, and does not have anything to do with this library's development. They're a cool group, don't bother them with this.
 
 The end of this README will have some references and links to supporting material, but it is STRONGLY suggested to do some basic research and become familiar with your device before attempting to script or write code for it. 
 
+Improper usage may destroy your device. 
+
+
 
 ## Library Usage
+
+
+
 
 
 OUT OF DATE - GETTING MAJOR OVERHAUL
