@@ -5,13 +5,15 @@
 # IN PROGRESS! The dev branch is not stable. refer to the main branch for the current stable version of the code
 
 
+
 A Non-GUI Python API for the tinySA series of devices. This repository uses official resources and documentation but is NOT endorsed by the official tinySA product or company. See the [references](#references) section for further reading. See the [official tinySA resources](https://www.tinysa.org/wiki/) for device features.
 
-This library covers most documented commands for the tinySA device series, and is planned to include device-specific commands and memory. The documentation (after the examples) is sorted based on the serial command for the device, with some provided usage examples. While some error checking exists in both the device and the library, it is not exhaustive. It is strongly suggested to read the official documentation before attempting to script with your device.
+This library covers most documented commands for the tinySA device series, and is planned to include configurable, device-specific commands and memory. The documentation (after the examples) is sorted based on the serial command for the device, with some provided usage examples. While some error checking exists in both the device and the library, it is not exhaustive. It is strongly advised to read the official documentation before attempting to script with your tinySA device. Operating the device experimentally or without referencing the official documents runs the risk of **destroying your device**. See the [tinySA First use page](https://tinysa.org/wiki/pmwiki.php?n=Main.FirstUse) for some setup tips and warnings.
 
-This README provides example code for connecting to the device, scanning and plotting data, saving to CSV, and creating real-time waterfall plots. Examples are not exhaustive. Refer to the [List of tinySA Commands and their Library Commands](#list-of-tinysa-commands-and-their-library-commands) for all of the tested commands for this library. 
+This README provides example code for connecting to the device, scanning and plotting data, saving to CSV, and creating real-time waterfall plots. Examples are not exhaustive. Refer to the [List of tinySA Commands and their Library Commands](#list-of-tinysa-commands-and-their-library-commands) for all of the tested commands for this library. Alias functions have been provided for convenience, but are not exhaustive. 
 
 If you are interested in developing the PyPI package, or making a custom local version, see [Library Development](#library-development) towards the end of this README.
+
 
 
 ## Table of Contents
