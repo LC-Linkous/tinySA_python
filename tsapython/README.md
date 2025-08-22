@@ -2,6 +2,9 @@
 
 **An Unofficial Python API for the tinySA Device Series**
 
+[![PyPI version](https://badge.fury.io/py/tsapython.svg)](https://badge.fury.io/py/tsapython)
+[![License: GPL v2](https://img.shields.io/badge/License-GPL_v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
+
 A Non-GUI Python API for the tinySA series of spectrum analyzer devices. This library provides programmatic control over tinySA devices for automated measurements, data collection, and analysis. 
 
 Popular features:
@@ -16,8 +19,7 @@ Popular features:
 This repository uses official resources and documentation but is **NOT** endorsed by the official tinySA product, owner, or company. Refer to official resources and support for product information. This library was built for the official tinySA device line(s), so any knock-off or custom devices may not be compatible with the library. Unofficial devices have not been tested. 
 
 
-[![PyPI version](https://badge.fury.io/py/tsapython.svg)](https://badge.fury.io/py/tsapython)
-[![License: GPL v2](https://img.shields.io/badge/License-GPL_v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
+
 
 ## Full Code Examples:
 
