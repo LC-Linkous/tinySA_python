@@ -2,10 +2,6 @@
 # tinySA_python
 ## AN UNOFFICIAL Python API for the tinySA Device Series
 
-# IN PROGRESS! The dev branch is not stable. refer to the main branch for the current stable version of the code
-
-
-
 A Non-GUI Python API for the tinySA series of devices. This repository uses official resources and documentation but is NOT endorsed by the official tinySA product or company. See the [references](#references) section for further reading. See the [official tinySA resources](https://www.tinysa.org/wiki/) for device features.
 
 This library covers most documented commands for the tinySA device series, and is planned to include configurable, device-specific commands and memory. The documentation (after the examples) is sorted based on the serial command for the device, with some provided usage examples. While some error checking exists in both the device and the library, it is not exhaustive. It is strongly advised to read the official documentation before attempting to script with your tinySA device. Operating the device experimentally or without referencing the official documents runs the risk of **destroying your device**. See the [tinySA First use page](https://tinysa.org/wiki/pmwiki.php?n=Main.FirstUse) for some setup tips and warnings.
@@ -70,7 +66,10 @@ Improper usage may destroy your device.
 
 ## Library Usage
 
-This library is now avilable via PyPI, local install, or just using the class. We reccomend one of the library install options.
+This library is now available via PyPI, local install, or just using the class. We recommend one of the library install options.
+
+Several usage examples are provided in the [Example Implementations](#example-implementations) section, including working with the hardware and plotting results with matplotlib. 
+
 
 ### PyPI Install
 
@@ -144,17 +143,9 @@ pip install pyserial numpy pandas matplotlib pillow pyQt5
 `pyQt5` is used with `matplotlib` to draw the figures. It needs to be installed on Linux systems to follow the examples included in tinySA_python, but is not needed on all Windows machines.
 
 
+### Structure
 
-
-
-
-OUT OF DATE - GETTING MAJOR OVERHAUL
-
-This library is currently only available as the tinySA class in 'tinySA_python.py' in this repository. It is very much under development and missing some key error checking and handling. HOWEVER, ‘any’ error checking is currently more than the ‘no’ error checking provided by interfacing directly with the device. The code that is included in this repository has been tested on at least one tinySA device and is relatively stable. 
-
-Several usage examples are provided in the [Example Implementations](#example-implementations) section, including working with the hardware and plotting results with matplotlib. 
-
-
+The `tsapython` library, as it is avilable on PyPI is structured as follows:
 
 ```python
 
@@ -175,13 +166,55 @@ tsapython/
     ├── test_basic.py
     ├── test_example_workflow.py
     └── test_hardware.py
+```
 
+A `docs` repository for the library will be added later in development for stable releases.
 
+This library is also part of the `tinySA_python` repository, which includes more extensive documentation and the working development. The GitHub repository is structured as follows:
 
+```python
+
+tinySA_python/
+├── README
+├── requirements.txt
+├── test_requirements.txt
+├── media/
+│   └── README images, screenshots
+└──tsapython/
+    ├── .python-version
+    ├── pyproject.toml
+    ├── README.md
+    ├── LICENSE
+    ├── .gitignore
+    ├──  examples/
+    │   ├── __init__.py
+    │   ├── identifying_serial_ports.py
+    │   ├── plotting_scan.py
+    │   ├── plotting_scanraw.py
+    │   ├── plotting_waterfall_realtime.py
+    │   ├── save_scan_csv.py
+    │   ├── using_autoconnect.py
+    │   └── using_command_func.py
+    ├── src/
+    │   └── tsapython/
+    │       ├── __init__.py
+    │       ├── core.py
+    │       └── py.typed
+    └── tests/
+        ├── __init__.py
+        ├── run_all_tests.py
+        ├── test_basic.py
+        ├── test_example_workflow.py
+        └── test_hardware.py
 
 ```
 
-running tests:
+
+### Running Tests
+
+Tests should be run from the root `tsapython` directory.
+
+```python
 # Run individual test files
 uv run python tests/test_basic.py
 uv run python tests/test_hardware.py  
@@ -193,50 +226,7 @@ uv run python tests/run_all_tests.py
 # Or run directly if you have Python in PATH
 python tests/test_basic.py
 python tests/run_all_tests.py
-
-
-
-
-
-
-## Requirements
-
-OUT OF DATE - GETTING MAJOR OVERHAUL
-
-This project requires numpy, pandas and pyserial. 
-
-Use 'pip install -r requirements.txt' to install the following dependencies:
-
-```python
-pyserial
-numpy
-pandas
-
 ```
-
-The above dependencies are only for the API interfacing of the tinySA_python library. Additional dependencies should be installed if you are following the examples in this README. These can be installed with 'pip install -r test_requirements.txt':
-
-```python
-pyserial
-numpy
-pandas
-matplotlib
-pillow
-pyQt5
-```
-
-For anyone unfamiliar with using requirements files, or having issues with the libraries, these can also be installed manually in the terminal (we recommend a Python virtual environment) with:
-
-```python
-pip install pyserial numpy pandas matplotlib pillow pyQt5
-```
-
-`pyQt5` is used with `matplotlib` to draw the figures. It needs to be installed on Linux systems to follow the examples included in tinySA_python, but is not needed on all Windows machines.
-
-
-
-
-
 
 ## Error Handling
 
@@ -258,6 +248,7 @@ Some error checking includes:
 
 This library was developed on Windows and has been lightly tested on Linux. The main difference (so far) has been in the permissions for first access of the serial port, but there may be smaller bugs in format that have not been detected yet. 
 
+
 ### Finding the Serial Port
 
 To start, a serial connection between the tinySA and user PC device must be created. There are several ways to list available serial ports. The library supports some rudimentary autodetection, but if that does not work instructions in this section also support manual detection. 
@@ -271,9 +262,8 @@ The tinySA_python currently has some autodetection capabilities, but these are n
 
 ```python
 
-# import tinySA library
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA 
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
 
 # create a new tinySA object    
 tsa = tinySA()
@@ -388,9 +378,8 @@ bytearray(b'deviceid 0\r')
 
 ```python
 
-# import the library class for the tinySA
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
 
 # create a new tinySA object    
 tsa = tinySA()
@@ -481,9 +470,8 @@ This example shows several types of common data requests:
 
 ```python
 
-# import the library class for the tinySA
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
 
 # create a new tinySA object    
 tsa = tinySA()
@@ -542,9 +530,9 @@ else:
 
 ```python
 
-# import the library class for the tinySA
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
+
 
 # imports FOR THE EXAMPLE
 import numpy as np
@@ -641,9 +629,9 @@ This example works because `data()` returns a trace, which is going to be the sa
 
 ```python
 
-# import tinySA library
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA 
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
+
 
 # import matplotlib FOR THE EXAMPLE
 import matplotlib.pyplot as plt
@@ -715,9 +703,8 @@ This example uses `scan()` to take a data measurement of data that DOES NOT need
  
 ```python
 
-# import tinySA library
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA 
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
 
 
 # imports FOR THE EXAMPLE
@@ -815,9 +802,8 @@ NOTE FOR LINUX USERS: the serial read with SCANRAW is finicky. It's also ONLY wi
 
  
 ```python
-# import tinySA library
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA 
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
 
 
 # imports FOR THE EXAMPLE
@@ -960,9 +946,9 @@ The first part of this example is a static report of the measurements taken over
 
 
 ```python
-# import tinySA library
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
+
 
 # imports FOR THE EXAMPLE
 import csv
@@ -1138,9 +1124,9 @@ else: # if port found and connected, then complete task(s) and disconnect
 The second part of the example is a realtime waterfall plot with peak tracking and a sample of the last reading.
 
 ```python
-# import tinySA library
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA 
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
+
 
 # imports FOR THE EXAMPLE
 import numpy as np
@@ -1434,9 +1420,8 @@ if __name__ == "__main__":
 
 ```python
 
-# import tinySA library
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA 
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
 
 
 # imports FOR THE EXAMPLE
@@ -1532,9 +1517,8 @@ else: # if port found and connected, then complete task(s) and disconnect
 In some cases, this library may not cover all possible command versions, or new features might not be included yet. The tinySA can be accessed directly using the `command()` function. There is NO ERROR CHECKING on this function. It takes the full argument, just as if arguments were entered on the command line. 
 
 ```python
-# import tinySA library
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA 
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
 
 
 # create a new tinySA object    
@@ -1656,7 +1640,7 @@ Quick Link Table:
     *  `get_bulk_data()`
 * **CLI Wrapper Usage:**
 * **Notes:** 
- All numbers are binary coded 2 bytes little endian. The pixel data is encoded as 2 bytes per pixel. This is data returned by the device when in AUTO REFRESH mode. NOTE: may need to be paired with a continious buffer read and dump, which will be tested in the next update           
+ All numbers are binary coded 2 bytes little endian. The pixel data is encoded as 2 bytes per pixel. This is data returned by the device when in AUTO REFRESH mode. NOTE: may need to be paired with a continuous buffer read and dump, which will be tested in the next update           
             
 
 ### **calc**
@@ -1806,7 +1790,7 @@ Quick Link Table:
 * **CLI Wrapper Usage:**
 * **Notes:** 
     * NOTE: no frequency checking is done for this function yet.
-    * might be tinySA Ultra annd newer only.
+    * might be tinySA Ultra and newer only.
     * Related to NORMAL, DIRECT, ADF, and MIXER
     * [https://tinysa.org/wiki/pmwiki.php?n=TinySA4.OutputCurveEdit](https://tinysa.org/wiki/pmwiki.php?n=TinySA4.OutputCurveEdit)
 
@@ -2488,7 +2472,7 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
     * None, see direct library function calls
     * it is also suggested to use the `command()` function to preform more complex actions because this is a complicated command structure
 * **CLI Wrapper Usage:**
-* **Notes:** For readability, this command was split into multiple functions intitially rather than using complex alias functions. There is a mismatch of information of commands between versions, so this library uses the documentation returned by the device. 
+* **Notes:** For readability, this command was split into multiple functions initially rather than using complex alias functions. There is a mismatch of information of commands between versions, so this library uses the documentation returned by the device. 
     * `select_trace()`: tinySA Ultra has 4 traces to choose from. Other devices may have other numbers of traces.
     * `trace_reflevel(...)` : adjusts the reference level of a trace. Levels are specified in dB(m) and can be specified using a floating point notation. E.g. 10 or 2.5 [https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface](https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface)
 
@@ -2766,6 +2750,13 @@ This library is updated in spurts. June-August are going to be the most active d
 
 * Python Packaging and Library Setup:
     * [https://packaging.python.org/en/latest/tutorials/packaging-projects/](https://packaging.python.org/en/latest/tutorials/packaging-projects/) 
+    * [https://www.sarahglasmacher.com/how-to-build-python-package-uv/](https://www.sarahglasmacher.com/how-to-build-python-package-uv/)
+
+
+## Acknowledgments and Contributions
+
+
+
 
 
 ## Licensing
