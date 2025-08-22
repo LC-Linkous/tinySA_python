@@ -1,0 +1,5 @@
+pyserial
+numpy
+pandas
+matplotlib
+pyQt5
