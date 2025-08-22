@@ -242,7 +242,9 @@ Detailed error messages can be returned by toggling 'verbose' on.
 From the [official wiki USB Interface page](https://tinysa-org.translate.goog/wiki/pmwiki.php?n=Main.USBInterface&_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en-US):
 
 ```
-There is limited error checking against incorrect parameters or incorrect device mode. Some error checking will be integrated as the device configurations are included, but this is not intended to be exhaustive. 
+There is limited error checking against incorrect parameters or incorrect device mode. 
+Some error checking will be integrated as the device configurations are included, 
+but this is not intended to be exhaustive. 
 ```
 
 
@@ -2806,10 +2808,10 @@ This library is updated in spurts. June-August are going to be the most active d
     * [https://packaging.python.org/en/latest/tutorials/packaging-projects/](https://packaging.python.org/en/latest/tutorials/packaging-projects/) 
     * [https://www.sarahglasmacher.com/how-to-build-python-package-uv/](https://www.sarahglasmacher.com/how-to-build-python-package-uv/)
 
-
-## Acknowledgments and Contributions
-
-
+* A running list of some other cool tinySA related projects:
+    * [https://github.com/g4ixt/QtTinySA](https://github.com/g4ixt/QtTinySA)
+    * [https://github.com/Ho-Ro/nanovna-tools](https://github.com/Ho-Ro/nanovna-tools)
+        * Has interfacing with the tinySA AND NanoVNA!
 
 
 
