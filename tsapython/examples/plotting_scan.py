@@ -1,17 +1,16 @@
 #! /usr/bin/python3
 
 ##-------------------------------------------------------------------------------\
-#   tinySA_python
+#   tinySA_python (tsapython)
 #   './examples/plotting_scan.py'
 #   A short example using matplotlib to plot requested SCAN data
 #
-#   Last update: June 18, 2025
+#   Last update: August 17, 2025
 ##-------------------------------------------------------------------------------\
 
 
-# import tinySA library
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA 
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
 
 
 # imports FOR THE EXAMPLE

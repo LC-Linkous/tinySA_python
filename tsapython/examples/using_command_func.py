@@ -1,19 +1,18 @@
 #! /usr/bin/python3
 
 ##-------------------------------------------------------------------------------\
-#   tinySA_python
+#   tinySA_python (tsapython)
 #   './examples/using_command_func.py'
 #   The command func can be used for commands or functionalities that exist on the 
 #   tinySA series of devices but arent included in the library yet. There is NO
 #   built in error checking for this process. 
 #
-#   Last update: June 18, 2025
+#   Last update: August 17, 2025
 ##-------------------------------------------------------------------------------\
 
 
-# import tinySA library
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA 
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
 
 
 # create a new tinySA object    

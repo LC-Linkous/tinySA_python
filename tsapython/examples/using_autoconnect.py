@@ -1,17 +1,16 @@
 #! /usr/bin/python3
 
 ##-------------------------------------------------------------------------------\
-#   tinySA_python
+#   tinySA_python (tsapython)
 #   './examples/using_autoconnect.py'
 #   This is an example of using the autoconnect feature. 
 #   The detected device ID is returned and the serial disconnected
 #
-#   Last update: June 18, 2025
+#   Last update: August 17, 2025
 ##-------------------------------------------------------------------------------\
 
-# import tinySA library
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA 
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
 
 # create a new tinySA object    
 tsa = tinySA()

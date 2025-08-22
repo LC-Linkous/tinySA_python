@@ -1,8 +1,8 @@
 #! /usr/bin/python3
 
 ##------------------------------------------------------------------------------------------------\
-#   tinySA_python 
-#   './tinySA_python.py'
+#   tinySA_python (tsapython)
+#   './src/tsapython/core.py'
 #   UNOFFICIAL Python API based on the tinySA official documentation at https://www.tinysa.org/wiki/
 #
 #   references:
@@ -10,9 +10,11 @@
 #       http://athome.kaashoek.com/tinySA/python/tinySA.py  (existing library with some examples)
 #
 #
+#   This class was previously named tinySA_python. The rename is to cover the CORE device functionalities,
+#   with the device specifics being added as extra modules. 
 #
 #   Author(s): Lauren Linkous
-#   Last update: June 8, 2025
+#   Last update: August 17, 2025
 ##--------------------------------------------------------------------------------------------------\
 
 import serial
@@ -21,24 +23,14 @@ import numpy as np
 import re
 
 
-try:
-    from src.device_config.device_config import deviceConfig
-except:
-    from device_config.device_config import deviceConfig
-
-
 class tinySA():
     def __init__(self, parent=None):
         # serial port
         self.ser = None
 
-        # user device class (to account for custom settings) 
-        self.dev = deviceConfig #TODO, finish this class and integrate
-
         # message feedback
         self.verboseEnabled = False
         self.returnErrorByte = False
-
 
 
         # VARS BELOW HERE will be largely replaced with device class config calls
@@ -54,7 +46,7 @@ class tinySA():
         self.maxPoints = 450
         # spectrum analyzer
         self.minSADeviceFreq = 100e3  #100 kHz
-        self.maxSADeviceFreq = 11e9 #5.3 GHz for normal operation, but 12 GHz for edge of harmonics
+        self.maxSADeviceFreq = 15e9 #5.3 GHz for normal operation, but 12 GHz for edge of harmonics.
         # signal generator
         self.minSGDeviceFreq = 100e3  #100 kHz
         self.maxSGDeviceFreq = 960e6 #960 MHz
@@ -1038,7 +1030,7 @@ class tinySA():
         return self.level_change(val)
 
 
-    def level_offset(self):
+    def level_offset(self, val, offset, isOutput=False):
         # sets or dumps the level calibration data.
         # For the output corrections first ensure correct output 
         # levels at maximum output level. 
@@ -1050,7 +1042,63 @@ class tinySA():
         # error = measured level - specified level
 
 
-        # usage: leveloffset low|high|switch [output] {error}
+        # usage: leveloffset [low|switch|receive_switch|out_switch|lna|
+        #   harmonic|shift|shift1|shift2|shift3|drive1|drive2|drive3|
+        #   direct|direct_lna|ultra|ultra_lna|harmonic_lna|adf]
+        #    {output} [-20..+20]
+
+
+        #NOTE: there's probably some limitations on which of these take the 'output' command,
+        # but that error checking isn't done here YET
+
+        #explicitly allowed vals
+        accepted_vals =  ["low","switch","receive_switch","out_switch","lna",
+                          "harmonic","shift","shift1","shift2","shift3",
+                          "drive1","drive2","drive3","direct","direct_lna",
+                          "ultra","ultra_lna","harmonic_lna","adf"]
+        #check input
+        if (val in accepted_vals):
+            if (-20.0<=offset<=20.0):
+                if isOutput == True:
+                    # success message
+                    writebyte = 'leveloffset '+str(val)+ ' output ' + str(float(offset)) +'\r\n'
+                    msgbytes = self.tinySA_serial(writebyte, printBool=False)
+                    self.print_message("leveloffset() set to " + str(val) + " output " + str(offset))    
+
+
+                elif isOutput == False:
+                    # success message
+                    writebyte = 'leveloffset '+str(val)+ ' ' + str(float(offset)) +'\r\n'
+                    msgbytes = self.tinySA_serial(writebyte, printBool=False)
+                    self.print_message("leveloffset() set to " + str(val) +  " "  + str(offset))    
+
+                else:
+                    # just for the error check when bulking this function out
+                    self.print_message("ERROR: leveloffset() value isOutput is a Boolean")
+                    self.print_message("ERROR: value set to" + str(isOutput))
+                    msgbytes =  self.error_byte_return()
+                    return msgbytes
+                        
+
+            else:
+                self.print_message("ERROR: leveloffset() takes offset vals as floats [-20.0 - 20.0]")
+                self.print_message("ERROR: value set to" + str(offset))
+                msgbytes =  self.error_byte_return()
+               
+       
+        else:
+            self.print_message("ERROR: leveloffset() takes value arguments low|switch|receive_switch|out_switch|lna|" \
+            "harmonic|shift|shift1|shift2|shift3|drive1|drive2|drive3|direct|" \
+            "direct_lna|ultra|ultra_lna|harmonic_lna|adf, ans specificed output and level")
+            self.print_message("ERROR: value set to" + str(val))
+            msgbytes =  self.error_byte_return()
+        return msgbytes
+
+
+
+
+
+
         msgbytes =  self.error_byte_return()
         self.print_message("Function does not exist yet. error checking needed")
         return None
@@ -2254,8 +2302,8 @@ if __name__ == "__main__":
         tsa.set_error_byte_return(True) #get explicit b'ERROR'
         msg = tsa.get_device_id() 
         print(msg)
-        
 
+  
         tsa.disconnect()
     else:
         print("ERROR: could not connect to port")

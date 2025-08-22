@@ -169,3 +169,16 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+uv.lock
+
+
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# macOS metadata for folders
+Icon?
+._*
+.Spotlight-V100
+.Trashes

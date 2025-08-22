@@ -1,20 +1,19 @@
 #! /usr/bin/python3
 
 ##-------------------------------------------------------------------------------\
-#   tinySA_python
+#   tinySA_python (tsapython)
 #   './examples/plotting_scanraw.py'
 #   This is a visual comparison of SCAN and SCANRAW to work out some errors in 
 #   the decode process. We don't expect SCAN and SCANRAW to be exactly the same, 
 #   because the number of points taken are not the same, but they 
 #   should be relatively similar values when SCANRAW is decoded
 #
-#   Last update: July 2, 2025
+#   Last update: August 17, 2025
 ##-------------------------------------------------------------------------------\
 
 
-# import tinySA library
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA 
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
 
 # imports FOR THE EXAMPLE
 import numpy as np
@@ -103,7 +102,7 @@ else: # if port found and connected, then complete task(s) and disconnect
 
     # PROCESS SCANRAW into an array & reuse the FREQ_ARR value
     # remove the intro curly brace ({) 
-    bin_scanraw = scanraw_data_bytes[1:] #skip the first char because it's the raminaing curly brace
+    bin_scanraw = scanraw_data_bytes[1:] #skip the first char because it's the remaining curly brace
     # use struct.unpack() because of the repeating pattern
         # <: indicates little-endian byte order, meaning the least significant byte is stored first
         # 'xH'*pts: a repetition of the format 'xH' once per point.

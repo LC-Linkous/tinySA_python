@@ -1,14 +1,19 @@
 #! /usr/bin/python3
 
 ##-------------------------------------------------------------------------------\
-#   tinySA_python
+#   tinySA_python (tsapython)
 #   './examples/identifying_serial_ports.py'
-#   This is a quick example of how to ID serial ports manually if you're running
+#
+#   Hardware required, but does NOT use the tinySA_python library
+# 
+#    This is a quick example of how to ID serial ports manually if you're running
 #   into issues with autoconnect or connecting in general.
 #   This example is not a streamlined process, 
 #   it's meant to demonstrate to new users what this process looks like
 #
-#   Last update: June 18, 2025
+#   
+#
+#   Last update: August 17, 2025
 ##-------------------------------------------------------------------------------\
 
 

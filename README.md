@@ -1,31 +1,29 @@
 
 # tinySA_python
-## AN UNOFFICIAL Python Library for the tinySA Device Series
+## AN UNOFFICIAL Python API for the tinySA Device Series
 
-A Non-GUI Python API class for the tinySA series of devices. This repository uses official resources and documentation but is NOT endorsed by the official tinySA product or company. See the [references](#references) section for further reading. See the [official tinySA resources](https://www.tinysa.org/wiki/) for device features.
+A Non-GUI Python API for the tinySA series of devices. This repository uses official resources and documentation but is NOT endorsed by the official tinySA product or company. See the [references](#references) section for further reading. See the [official tinySA resources](https://www.tinysa.org/wiki/) for device features.
+
+This library covers most documented commands for the tinySA device series, and is planned to include configurable, device-specific commands and memory. The documentation (after the examples) is sorted based on the serial command for the device, with some provided usage examples. While some error checking exists in both the device and the library, it is not exhaustive. It is strongly advised to read the official documentation before attempting to script with your tinySA device. Operating the device experimentally or without referencing the official documents runs the risk of **destroying your device**. See the [tinySA First use page](https://tinysa.org/wiki/pmwiki.php?n=Main.FirstUse) for some setup tips and warnings.
+
+This README provides example code for connecting to the device, scanning and plotting data, saving to CSV, and creating real-time waterfall plots. Examples are not exhaustive. Refer to the [List of tinySA Commands and their Library Commands](#list-of-tinysa-commands-and-their-library-commands) for all of the tested commands for this library. Alias functions have been provided for convenience, but are not exhaustive. 
+
+If you are interested in developing the PyPI package, or making a custom local version, see [Library Development](#library-development) towards the end of this README.
 
 
-This library covers most documented commands for the tinySA device series. The documentation is sorted based on the serial command, with some provided usage examples. While some error checking exists in both the device and the library, it is not exhaustive. It is strongly suggested to read the official documentation before attempting to script with your device.
+The primary GitHub: https://github.com/LC-Linkous/tinySA_python
 
-Done:
-* library commands for common args
-* documentation for original command usage and library functions
-* examples for basic functionality 
-* some Debian-flavored Linux testing
-
-Working on it:
-* filling in unfinished args and any new tinySA features
-    * scan and scanraw occasionally throw back bad data. handled in an example, but actual fix in progress
-    * trigger needs more alias funcs to cover full functionality
-* scanraw serial FROM DEVICE issues with the buffer. This is being explored see Example #3 in [Plotting Data with Matplotlib](#plotting-data-with-matplotlib) for details. 
-* An argparse option + some example scripts
-* Beginner notes, vocab, and some examples for common usage
+The PyPI page: https://pypi.org/project/tsapython/
 
 
 ## Table of Contents
 * [The tinySA Series of Devices](#the-tinysa-series-of-devices)
-* [Requirements](#requirements)
 * [Library Usage](#library-usage)
+    * [PyPI Install](#pypi-install)
+    * [Local Install Using UV](#local-install-using-uvl)
+* [Requirements](#requirements)
+* [Structure](#structure)
+* [Running Tests](#running-tests)
 * [Error Handling](#error-handling)
 * [Example Implementations](#example-implementations)
     * [Finding the Serial Port](#finding-the-serial-port)
@@ -49,8 +47,10 @@ Working on it:
 * [List of tinySA Commands and their Library Commands](#list-of-tinysa-commands-and-their-library-commands)
 * [List of Commands Removed from Library](#list-of-commands-removed-from-library)
 * [Additional Library Functions for Advanced Use](#additional-library-functions-for-advanced-use)
+* [Library Development](#library-development)
 * [Notes for Beginners](#notes-for-beginners)
     * [Vocab Check](#vocab-check)
+    * [VNA vs. SA vs. LNA vs. SNA vs. SDR vs Signal Generator](#vna-vs-sa-vs-lna-vs-sna-vs-sdr-vs-signal-generator)
     * [Calibration Setup](#calibration-setup)
     * [Some General tinySA Notes](#some-general-tinysa-notes)
 * [FAQs](#faqs)
@@ -59,17 +59,65 @@ Working on it:
 
 ## The tinySA Series of Devices
 
-The [tinySA line of devices](https://tinysa.org/wiki/pmwiki.php?n=TinySA4.Comparison) are a series of portable and pretty user-friendly devices with both spectrum analyzer and signal generator capabilities. There are four main versions, all of which share the same key features. The Ultra and Ultra Plus versions build off of the original tinySA Basic. They look very similar to the [NanoVNA series](https://nanovna.com/), but are NOT the same device and have different functionalities. 
+The [tinySA line of devices](https://tinysa.org/wiki/pmwiki.php?n=TinySA4.Comparison) are a series of portable and pretty user-friendly devices with both spectrum analyzer and signal generator capabilities. There are four main versions, all of which share the same key features. The Ultra and Ultra Plus versions build off of the original tinySA Basic. They look very similar to the [NanoVNA series](https://nanovna.com/), but are NOT the same device and have different functionalities. They are also made by different people.
 
-The NanoVNA series is a handheld vector network analyzer (VNA), which measures the S-parameters (loosely: a type of response of a device or antenna) over at different frequencies, while a spectrum analyzer measures the amplitude of RF signals at different frequencies. There's a lot of overlap with the use of both devices, but the measurements are very different. A signal generator is exactly what it sounds like - it generates a signal at a specific frequency or frequencies at a specified power level.
+The NanoVNA series is a handheld vector network analyzer (VNA), which measures the S-parameters (loosely: a type of system response of a device or antenna) at different frequencies, while a spectrum analyzer measures the amplitude of RF signals at different frequencies. There's a lot of overlap with the use of both devices in RF design and testing, but the measurements are very different. A signal generator is exactly what it sounds like - it generates a controllable signal at a specific frequency or frequencies at a specified power level.
 
-Official documentation can be found at [https://tinysa.org/](https://tinysa.org/). The official Wiki is going to be more up to date than this repo with new versions and features, and they also have links to GUI-based software (which is also under development). Several community projects also exist on GitHub.
+Official documentation for the tinySA can be found at [https://tinysa.org/](https://tinysa.org/). The official Wiki is going to be more up to date than this repo with new versions and features, and they also have links to GUI-based software (which is also under development). Several community projects exist on GitHub, and some may be official (this is not one of them!).
 
-There is also a very active tinySA community at [https://groups.io/g/tinysa](https://groups.io/g/tinysa) exploring the device capabilities and its many features. 
+There is also a very active tinySA community at [https://groups.io/g/tinysa](https://groups.io/g/tinysa) exploring the device capabilities and its many features. There are in-depth Q&A topics there for device usage. That community **does not** support this library, and does not have anything to do with this library's development. They're a cool group, don't bother them with this.
 
 The end of this README will have some references and links to supporting material, but it is STRONGLY suggested to do some basic research and become familiar with your device before attempting to script or write code for it. 
 
+Improper usage may destroy your device. 
 
+
+
+## Library Usage
+
+This library is now available via PyPI, local install, or just using the class. We recommend one of the library install options.
+
+Several usage examples are provided in the [Example Implementations](#example-implementations) section, including working with the hardware and plotting results with matplotlib. 
+
+
+### PyPI Install
+
+
+The `tsapython` package (from PyPI at [https://pypi.org/project/tsapython/2.0.0/](https://pypi.org/project/tsapython/2.0.0/))  can be installed with:
+
+```python
+
+pip install tsapython
+
+```
+
+The GitHub repository will continue to be named `tinySA_python` to differentiate the working versions and the additional documentation included here. 
+
+
+### Local Install Using UV
+
+Developing a project, or running something custom? You can pull the code from GitHub and build+install the package locally. 
+
+(You can also use your favorite package manager. This is set up for UV, but the information for other setups should all be in the `tsapython` directory)
+
+This is a summarized version of the instructions at [https://www.sarahglasmacher.com/how-to-build-python-package-uv/](https://www.sarahglasmacher.com/how-to-build-python-package-uv/):
+
+
+```python
+# install UV
+pip install uv
+
+# navigate to the tsapython directory
+cd .\tsapython
+
+# build the package
+# a 'dist' directory should be created in tsapython
+uv build
+
+# install the package locally
+pip install dist/tsapython-2.0.0-py3-none-any.whl
+
+```
 
 ## Requirements
 
@@ -104,13 +152,90 @@ pip install pyserial numpy pandas matplotlib pillow pyQt5
 `pyQt5` is used with `matplotlib` to draw the figures. It needs to be installed on Linux systems to follow the examples included in tinySA_python, but is not needed on all Windows machines.
 
 
+## Structure
 
-## Library Usage
+The `tsapython` library, as it is available on PyPI is structured as follows:
 
-This library is currently only available as the tinySA class in 'tinySA_python.py' in this repository. It is very much under development and missing some key error checking and handling. HOWEVER, ‘any’ error checking is currently more than the ‘no’ error checking provided by interfacing directly with the device. The code that is included in this repository has been tested on at least one tinySA device and is relatively stable. 
+```python
 
-Several usage examples are provided in the [Example Implementations](#example-implementations) section, including working with the hardware and plotting results with matplotlib. 
+tsapython/
+├── .python-version
+├── pyproject.toml
+├── README.md
+├── LICENSE
+├── .gitignore
+├── src/
+│   └── tsapython/
+│       ├── __init__.py
+│       ├── core.py
+│       └── py.typed
+└── tests/
+    ├── __init__.py
+    ├── run_all_tests.py
+    ├── test_basic.py
+    ├── test_example_workflow.py
+    └── test_hardware.py
+```
 
+A `docs` repository for the library will be added later in development for stable releases.
+
+This library is also part of the `tinySA_python` repository, which includes more extensive documentation and the working development. The GitHub repository is structured as follows:
+
+```python
+
+tinySA_python/
+├── README
+├── requirements.txt
+├── test_requirements.txt
+├── media/
+│   └── README images, screenshots
+└──tsapython/
+    ├── .python-version
+    ├── pyproject.toml
+    ├── README.md
+    ├── LICENSE
+    ├── .gitignore
+    ├──  examples/
+    │   ├── __init__.py
+    │   ├── identifying_serial_ports.py
+    │   ├── plotting_scan.py
+    │   ├── plotting_scanraw.py
+    │   ├── plotting_waterfall_realtime.py
+    │   ├── save_scan_csv.py
+    │   ├── using_autoconnect.py
+    │   └── using_command_func.py
+    ├── src/
+    │   └── tsapython/
+    │       ├── __init__.py
+    │       ├── core.py
+    │       └── py.typed
+    └── tests/
+        ├── __init__.py
+        ├── run_all_tests.py
+        ├── test_basic.py
+        ├── test_example_workflow.py
+        └── test_hardware.py
+
+```
+
+
+## Running Tests
+
+Tests should be run from the root `tsapython` directory.
+
+```python
+# Run individual test files
+uv run python tests/test_basic.py
+uv run python tests/test_hardware.py  
+uv run python tests/example_workflow.py
+
+# Run all tests together
+uv run python tests/run_all_tests.py
+
+# Or run directly if you have Python in PATH
+python tests/test_basic.py
+python tests/run_all_tests.py
+```
 
 ## Error Handling
 
@@ -120,17 +245,23 @@ Detailed error messages can be returned by toggling 'verbose' on.
 
 From the [official wiki USB Interface page](https://tinysa-org.translate.goog/wiki/pmwiki.php?n=Main.USBInterface&_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en-US):
 
-    There is limited error checking against incorrect parameters or incorrect device mode. Some error checking will be integrated as the device configurations are included, but this is not intended to be exhaustive. 
+```
+There is limited error checking against incorrect parameters or incorrect device mode. 
+Some error checking will be integrated as the device configurations are included, 
+but this is not intended to be exhaustive. 
+```
+
 
 Some error checking includes:
 
  * Frequencies can be specified using an integer optionally postfixed with a the letter 'k' for kilo 'M' for Mega or 'G' for Giga. E.g. 0.1M (100kHz), 500k (0.5MHz) or 12000000 (12MHz)
  * Levels are specified in dB(m) and can be specified using a floating point notation. E.g. 10 or 2.5
- * Time is specified in seconds optionally postfixed with the letters 'm' for mili or 'u' for micro. E.g. 1 (1 second), 2.5 (2.5 seconds), 120m (120 milliseconds)
+ * Time is specified in seconds optionally postfixed with the letters 'm' for milli or 'u' for micro. E.g. 1 (1 second), 2.5 (2.5 seconds), 120m (120 milliseconds)
 
 ## Example Implementations
 
 This library was developed on Windows and has been lightly tested on Linux. The main difference (so far) has been in the permissions for first access of the serial port, but there may be smaller bugs in format that have not been detected yet. 
+
 
 ### Finding the Serial Port
 
@@ -145,9 +276,8 @@ The tinySA_python currently has some autodetection capabilities, but these are n
 
 ```python
 
-# import tinySA library
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA 
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
 
 # create a new tinySA object    
 tsa = tinySA()
@@ -262,9 +392,8 @@ bytearray(b'deviceid 0\r')
 
 ```python
 
-# import the library class for the tinySA
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
 
 # create a new tinySA object    
 tsa = tinySA()
@@ -355,9 +484,8 @@ This example shows several types of common data requests:
 
 ```python
 
-# import the library class for the tinySA
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
 
 # create a new tinySA object    
 tsa = tinySA()
@@ -416,9 +544,9 @@ else:
 
 ```python
 
-# import the library class for the tinySA
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
+
 
 # imports FOR THE EXAMPLE
 import numpy as np
@@ -515,9 +643,9 @@ This example works because `data()` returns a trace, which is going to be the sa
 
 ```python
 
-# import tinySA library
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA 
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
+
 
 # import matplotlib FOR THE EXAMPLE
 import matplotlib.pyplot as plt
@@ -589,9 +717,8 @@ This example uses `scan()` to take a data measurement of data that DOES NOT need
  
 ```python
 
-# import tinySA library
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA 
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
 
 
 # imports FOR THE EXAMPLE
@@ -689,9 +816,8 @@ NOTE FOR LINUX USERS: the serial read with SCANRAW is finicky. It's also ONLY wi
 
  
 ```python
-# import tinySA library
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA 
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
 
 
 # imports FOR THE EXAMPLE
@@ -784,7 +910,7 @@ else: # if port found and connected, then complete task(s) and disconnect
 
     # PROCESS SCANRAW into an array & reuse the FREQ_ARR value
     # remove the intro curly brace ({) 
-    bin_scanraw = scanraw_data_bytes[1:] #skip the first char because it's the raminaing curly brace
+    bin_scanraw = scanraw_data_bytes[1:] #skip the first char because it's the remaining curly brace
     # use struct.unpack() because of the repeating pattern
         # <: indicates little-endian byte order, meaning the least significant byte is stored first
         # 'xH'*pts: a repetition of the format 'xH' once per point.
@@ -834,9 +960,9 @@ The first part of this example is a static report of the measurements taken over
 
 
 ```python
-# import tinySA library
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
+
 
 # imports FOR THE EXAMPLE
 import csv
@@ -1012,9 +1138,9 @@ else: # if port found and connected, then complete task(s) and disconnect
 The second part of the example is a realtime waterfall plot with peak tracking and a sample of the last reading.
 
 ```python
-# import tinySA library
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA 
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
+
 
 # imports FOR THE EXAMPLE
 import numpy as np
@@ -1301,16 +1427,12 @@ if __name__ == "__main__":
 
 
 
-
-
-
 ### Saving SCAN Data to CSV
 
 ```python
 
-# import tinySA library
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA 
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
 
 
 # imports FOR THE EXAMPLE
@@ -1406,9 +1528,8 @@ else: # if port found and connected, then complete task(s) and disconnect
 In some cases, this library may not cover all possible command versions, or new features might not be included yet. The tinySA can be accessed directly using the `command()` function. There is NO ERROR CHECKING on this function. It takes the full argument, just as if arguments were entered on the command line. 
 
 ```python
-# import tinySA library
-# (NOTE: check library path relative to script path)
-from src.tinySA_python import tinySA 
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
 
 
 # create a new tinySA object    
@@ -1530,7 +1651,7 @@ Quick Link Table:
     *  `get_bulk_data()`
 * **CLI Wrapper Usage:**
 * **Notes:** 
- All numbers are binary coded 2 bytes little endian. The pixel data is encoded as 2 bytes per pixel. This is data returned by the device when in AUTO REFRESH mode. NOTE: may need to be paired with a continious buffer read and dump, which will be tested in the next           
+ All numbers are binary coded 2 bytes little endian. The pixel data is encoded as 2 bytes per pixel. This is data returned by the device when in AUTO REFRESH mode. NOTE: may need to be paired with a continuous buffer read and dump, which will be tested in the next update           
             
 
 ### **calc**
@@ -1680,7 +1801,7 @@ Quick Link Table:
 * **CLI Wrapper Usage:**
 * **Notes:** 
     * NOTE: no frequency checking is done for this function yet.
-    * might be tinySA Ultra annd newer only.
+    * might be tinySA Ultra and newer only.
     * Related to NORMAL, DIRECT, ADF, and MIXER
     * [https://tinysa.org/wiki/pmwiki.php?n=TinySA4.OutputCurveEdit](https://tinysa.org/wiki/pmwiki.php?n=TinySA4.OutputCurveEdit)
 
@@ -1818,12 +1939,34 @@ Quick Link Table:
 ### **leveloffset**
 * **Description:** Sets or gets the level calibration data
 * **Original Usage:** `leveloffset low|high|switch [output] {error}`
-* **Direct Library Function Call:** `level_offset()`
-* **Example Return:** empty bytearray
+    * alternative returned information for format: `leveloffset [low|switch|receive_switch|out_switch|lna|harmonic|shift|shift1|shift2|shift3|drive1|drive2|drive3|direct|direct_lna|ultra|ultra_lna|harmonic_lna|adf] {output} [-20..+20]`
+* **Direct Library Function Call:** `level_offset(val=low|switch|receive_switch|out_switch|lna|harmonic|shift|shift1|shift2|shift3|drive1|drive2|drive3|direct|direct_lna|ultra|ultra_lna|harmonic_lna|adf, offset=[-20.0...20.0], isOutput=True|False)`
+    * `isOutput` boolean variable determines if the 'output' argument is included in the statement. See examples below.
+* **Example Return:**
+    * `leveloffset`, with no arguments
+        * output: `bytearray(b'-8.462500e+01 0.000000000 ... \r\n-8.128125e+01 0.000000000 \r')`
+    * `leveloffset low -3.0`
+        * output: `bytearray(b'')`
+    * `leveloffset low output 0.0`
+        * output: `bytearray(b'')`
 * **Alias Functions:**
     * None
 * **CLI Wrapper Usage:**
-* **Notes:**  TODO. error checking needed
+* **Notes:**  
+    * NOT ALL COMBINATIONS ARE VALID.
+    * Calibration tables:
+        * `low` - Low frequency mode corrections
+        * `switch` - Switch-related corrections
+        * `receive_switch` - Receive switch corrections
+        * `out_switch` - Output switch corrections
+        * `lna` - LNA (Low Noise Amplifier) corrections
+        * `harmonic` - Harmonic mode corrections
+        * `shift/shift1/shift2/shift3` - Frequency shift corrections
+        * `drive1/drive2/drive3` - Drive level corrections
+        * `direct/direct_lna` - Direct mode corrections
+        * `ultra/ultra_lna` - Ultra mode corrections
+        * `harmonic_lna` - Harmonic mode with LNA corrections
+        * `adf` - ADF (frequency synthesizer) corrections
 
 ### **line**
 * **Description:** Disables the horizontal line or sets it to a specific level.
@@ -2235,12 +2378,12 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
     * `run_sweep(start=FREQ, stop=FREQ, pts=INT)`
 * **CLI Wrapper Usage:**
 * **Notes:**  sweep without arguments lists the current sweep settings, the frequencies specified should be within the permissible range. The sweep commands apply both to input and output modes. MAX PTS is device dependent; 290 for tinySA Basic and 450 for tinySA Ultra and newer
-* sweep start {frequency}: sets the start frequency of the sweep.
-* sweep stop {frequency}: sets the stop frequency of the sweep.
-* sweep center {frequency}: sets the center frequency of the sweep.
-* sweep span {frequency}: sets the span of the sweep.
-* sweep cw {frequency}: sets the continuous wave frequency (zero span sweep). 
-* sweep {start(Hz)} {stop(Hz)} [0..MAX PTS]: sets the start and stop frequencies, and optionally the number of points in the sweep
+* `sweep start {integer}`: sets the start frequency of the sweep.
+* `sweep stop {integer}`: sets the stop frequency of the sweep.
+* `sweep center {integer}`: sets the center frequency of the sweep.
+* `sweep span {integer}`: sets the span of the sweep.
+* `sweep cw {integer}`: sets the continuous wave frequency (zero span sweep). 
+* `sweep {start(Hz)} {stop(Hz)} [0..MAX PTS]`: sets the start and stop frequencies, and optionally the number of points in the sweep
  
 
 ### **sweeptime**
@@ -2251,7 +2394,7 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Alias Functions:**
     * None
 * **CLI Wrapper Usage:**
-* **Notes:** the time specified may end in a letter where  m=mili and u=micro
+* **Notes:** the time specified may end in a letter where  m=milli and u=micro
 
 ### **temperature**
 * **Description:** Get the temperature from the device
@@ -2340,7 +2483,7 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
     * None, see direct library function calls
     * it is also suggested to use the `command()` function to preform more complex actions because this is a complicated command structure
 * **CLI Wrapper Usage:**
-* **Notes:** For readability, this command was split into multiple functions intitially rather than using complex alias functions. There is a mismatch of information of commands between versions, so this library uses the documentation returned by the device. 
+* **Notes:** For readability, this command was split into multiple functions initially rather than using complex alias functions. There is a mismatch of information of commands between versions, so this library uses the documentation returned by the device. 
     * `select_trace()`: tinySA Ultra has 4 traces to choose from. Other devices may have other numbers of traces.
     * `trace_reflevel(...)` : adjusts the reference level of a trace. Levels are specified in dB(m) and can be specified using a floating point notation. E.g. 10 or 2.5 [https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface](https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface)
 
@@ -2458,7 +2601,7 @@ Other commands: version reset data frequencies scan hop scanraw test touchcal to
 * **Original Usage:** `sweep_voltage {0-3.3}`
 * **Direct Library Function Call:** `sweep_voltage()`
 * **Example Return:** empty bytearray
-* **Notes:** device does not recognize this
+* **Notes:** device does not recognize this. Will revisit after next firmware update
 
 
 
@@ -2480,6 +2623,27 @@ Other commands: version reset data frequencies scan hop scanraw test touchcal to
     * None
 * **CLI Wrapper Usage:**
 * **Notes:** If unfamiliar with device and operation, DO NOT USE THIS. There is no error checking and you will be interfacing with the tinySA device directly.
+
+
+
+## Library Development
+
+This library (and the PyPI package) have been developed through experimental usage and some existing references. The primary function of the library is to make it more accessible for developers to access the tinySA device lines with a non-GUI based Python interface for custom programs or scripts. 
+
+Collaboration on this repository is welcome. Development is active, but may be a little slow at times. Please submit issues and comments on GitHub, NOT the tinySA community page. This repository exists and operates separately of the official tinySA product. 
+
+If you are interested in creating a Pull Request, please reach out. Eventually there will be some Pull Request templates in the tinySA_python repository, but in the meantime, please include the following information in a Pull Request:
+
+* A descriptive title of the change.
+* What the type of change is. For example, if it's an additional feature or bug fix.
+* The purpose of the pull request; that is, a brief description of the change.
+* What is the impact of this change; include details on what it fixes/updates/changes/adds/etc.
+
+Please keep Pull Requests to a single, or very few, issue(s) to make the code easier to review. Also, please build and test your own pull request before submitting it to make sure it compiles and executes at least the basic tests without bugs.
+
+A streamlined testing process will be coming in one of the following major version updates. For now, there is some information for using [UV to build the package](#local-install-using-uv) for local use and testing.
+
+
 
 
 ## Notes for Beginners
@@ -2521,11 +2685,11 @@ Running list of words and acronyms that get tossed around with little to no expl
 aka “what am I looking at and did I buy the right thing?”
  
 
-**tinySA Vs. NanoVNA **: The tinySA and NanoVNA look a lot alike, and have some similar code, but they are NOT the same device. They are designed to measure different things. The tinySA is a spectrum analyzer (SA) while the v is a vector network analyzer (VNA). Both have signal generation capabilities, but the tinySA (currently) has expanded features for generating signals. This library was made for the tinySA line of devices. There might be some compatibility with the NanoVNA, but this is not currently supported or under development. To avoid confusion, there is a [nanoVNA_python library]( https://github.com/LC-Linkous/nanoVNA_python). 
+**tinySA Vs. NanoVNA**: The tinySA and NanoVNA look a lot alike, and have some similar API interfacing, but they are NOT the same device. They are designed to measure different things. The tinySA is a spectrum analyzer (SA) while the NanoVNA is a vector network analyzer (VNA). Both have signal generation capabilities, but the tinySA (currently) has expanded features for generating signals. This library was made for the tinySA line of devices. There might be some compatibility with the NanoVNA, but this is not currently supported or under development. To avoid confusion, there is a [nanoVNA_python library]( https://github.com/LC-Linkous/nanoVNA_python) that focuses on the NanoVNA. 
 
 **SA** - This one is context dependent. SA can mean either 'Spectrum Analyzer' (multiple frequencies) or 'Signal Analyzer' (single frequency). In the case of the tinySA it is 'Spectrum Analyzer' because multiple frequencies are being measured. A spectrum analyzer measures the magnitude of an external input signal vs frequency. It shows signal as a spectrum. The signal source does not need to be directly physically connected to the SA, which allows for analysis of the wireless spectrum. This is the primary functionality of the tinySA, but it does have other features (such as signal generation). 
 
-**VNA** – a vector network analyzer (VNA) measures parameters such as s-parameters, impedance and reflection coefficient of a radio frequency (RF) device under test (DUT). A VNA is used to characterize the transmission and reflection properties of the DUT by generating a stimulus signal and then measuring the device's response. This can be used to characterize and measure the behavior of RF devices and individual components. 
+**VNA** – a vector network analyzer (VNA) measures values such as s-parameters, impedance and reflection coefficient of a radio frequency (RF) device under test (DUT). A VNA is used to characterize the transmission and reflection properties of the DUT by generating a stimulus signal and then measuring the device's response. This can be used to characterize and measure the behavior of RF devices and individual components. 
     * ["What is a Vector Network Analyzer and How Does it Work?" - Tektronix ](https://www.tek.com/en/documents/primer/what-vector-network-analyzer-and-how-does-it-work)
     * [NanoVNA @ https://nanovna.com/](https://nanovna.com/)
 
@@ -2545,8 +2709,8 @@ aka “what am I looking at and did I buy the right thing?”
 
 Some tips:
 * The cable MUST be connected between the two ports BEFORE starting the calibration. 
-* The cable should be finger tight. If the connector will not turn, there's a high risk of cross threading if it's forced. 
-
+* The cable should be finger tight. If the connector will not turn, there's a high risk of cross threading if it's forced. It's better to try again than to need to buy and install new connectors.
+* If you have any RF equipment nearby (including hand-held radios), avoid transmitting during calibration or self-tests. Depending on the signal strength, this could cause issues with the results.
 
 
 ### Some General tinySA Notes
@@ -2554,25 +2718,60 @@ Some tips:
 These are notes collected from various references as this README documentation is built out. Some are obvious, some were not at the time.
 
 
+#### tinySA Basic
+
+* Screen size of 2.8 inches
+* Points displayed per scan: 290 max
+* Low input frequency: 100 kHz - 350 MHz
+* High input: 240 MHz - 960 MHz
+* No SD card storage
+
+
+
 #### tinySA Ultra
 
+* Screen size of 4 inches
+* Points displayed per scan: 450 max
+* Low input frequency: 100k Hz-800 MHz, but Ultra mode and harmonic mode changes this
+* High input: Ultra mode and harmonic mode impact this
+* Has SD card storage option
+
 * In the tinySA Ultra mode, there are four output modes: Normal (below 830 MHz), Direct (between 830MHz and 1130MHz), Ultra, and Scan.
+
+* Ultra Mode: A special operational mode on the Ultra and Ultra Plus devices that allows users to access a broader frequency range, up to 6 GHz for the tinySA Ultra. Comes with an increased scan time. 
+
+* Harmonic Mode: A mode for measuring the harmonics of a fundamental signal instead of displaying the entire spectrum.
+
+
+#### tinySA Ultra Plus
+
+* There are two versions of the Ultra Plus: the ZS406 and the ZS 407. They have different frequency ranges. Refer to [official documentation](https://tinysa.org/wiki/pmwiki.php?n=TinySA4.Comparison) for differences.
+
+* Screen size of 4 inches
+* Points displayed per scan: 450 max
+* Low input frequency: 100k Hz-900 MHz, but Ultra mode and harmonic mode changes this
+* High input: Ultra mode and harmonic mode impact this
+* Has SD card storage option
+
+* In the tinySA Ultra mode, there are four output modes: Normal (below 830 MHz), Direct (between 830MHz and 1130MHz), Ultra, and Scan.
+
+* Ultra Mode: A special operational mode on the Ultra and Ultra Plus devices that allows users to access a broader frequency range, up to 5.3 or 7.3 GHz for the tinySA Ultra Plus (depends on the model). Comes with an increased scan time. 
+
+* Harmonic Mode: A mode for measuring the harmonics of a fundamental signal instead of displaying the entire spectrum.
 
 
 ## FAQs
 
-### How should I be using this?
+### How should I be using this library?
 
-Right now, this library is set up as a class that can be added to a Python program. I recommend adding the contents of the `./src` folder on the same level (or lower) than the main program you're writing. If that doesn't make a lot of sense, check out the `hello_world.py` file in this repo. Because that example file is at the same level as the `./src` folder, we aren't dealing with path imports or checking. This works well for beginners, which is whom the bulk of the documentation is intended for.
+The `tinySA_python library` (named for the GitHub repository) is a collection of documentation, examples, and the `tsapython` package. Further expansion for other python packages is planned to include advanced usage functionality. The tinySA_python repository is intended for beginners and those looking for a simplified way of interacting with their tinySA device. The library itself does not use a graphical user interface (GUI), but it can be used with visualization tools to plot collected data.
 
-### Will this be made into a REAL Python library I can import into my project?
+The [Library Usage](#library-usage) section includes information on how to download the package with `pip`, or installing a version locally from the repository. 
 
-That's the plan! Right now, the core library is made of functions for directly interfacing with the tinySA series of devices. There are several examples in this README, which will be integrated into the core library as the error checking and features are stabilized. We're probably 3-6 months of development and testing away from an official release or library creation.
 
 ## How often is this library updated?
 
 This library is updated in spurts. June-August are going to be the most active development months, but it will get monthly-ish updates otherwise. Development is pretty constant on the backend, but only stable code is released publicly. Bug fixes will be addressed as they happen.   
-
 
 
 
@@ -2607,6 +2806,17 @@ This library is updated in spurts. June-August are going to be the most active d
     * [https://en.wikipedia.org/wiki/Scattering_parameters](https://en.wikipedia.org/wiki/Scattering_parameters)
     * [https://www.microwaves101.com/encyclopedias/s-parameters](https://www.microwaves101.com/encyclopedias/s-parameters)
     * ["Network Theory - Two-Port Networks" - tutorialspoint.com](https://www.tutorialspoint.com/network_theory/network_theory_twoport_networks.htm)
+
+
+* Python Packaging and Library Setup:
+    * [https://packaging.python.org/en/latest/tutorials/packaging-projects/](https://packaging.python.org/en/latest/tutorials/packaging-projects/) 
+    * [https://www.sarahglasmacher.com/how-to-build-python-package-uv/](https://www.sarahglasmacher.com/how-to-build-python-package-uv/)
+
+* A running list of some other cool tinySA related projects:
+    * [https://github.com/g4ixt/QtTinySA](https://github.com/g4ixt/QtTinySA)
+    * [https://github.com/Ho-Ro/nanovna-tools](https://github.com/Ho-Ro/nanovna-tools)
+        * Has interfacing with the tinySA AND NanoVNA!
+
 
 
 ## Licensing

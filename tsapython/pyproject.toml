@@ -1,0 +1,29 @@
+[project]
+name = "tsapython"
+version = "2.0.0"
+authors = [
+    { name = "LC-Linkous", email = "L.C.Linkous@gmail.com" }
+]
+description = "An UNOFFICIAL Python API for the tinySA series of devices"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "matplotlib>=3.10.5",
+    "numpy>=2.2.6",
+    "pandas>=2.3.1",
+    "pyserial>=3.5",
+]
+license = "GPL-2.0-only"
+license-files = ["LICENSE*"]
+
+[project.urls]
+"Repository" = "https://github.com/LC-Linkous/tinySA_python"
+"Issues" = "https://github.com/LC-Linkous/tinySA_python/issues"
+
+[build-system]
+requires = ["uv_build>=0.8.11,<0.9.0"]
+build-backend = "uv_build"

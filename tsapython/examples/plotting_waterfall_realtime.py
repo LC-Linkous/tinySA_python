@@ -1,15 +1,16 @@
 #!/usr/bin/python3
 ##-------------------------------------------------------------------------------
-#   tinySA_python
+#   tinySA_python (tsapython)
 #   './examples/plotting_waterfall_realtime.py'
 #   A real-time waterfall plot example for tinySA using matplotlib.
 #   The waterfall plot is shown and processed as the measurements are taken
 #
-#   Last update: August 16, 2025
+#   Last update: August 17, 2025
 ##-------------------------------------------------------------------------------
 
-# import tinySA library
-from src.tinySA_python import tinySA 
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
+
 
 # imports FOR THE EXAMPLE
 import numpy as np
