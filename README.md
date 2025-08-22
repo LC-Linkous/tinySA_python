@@ -11,6 +11,10 @@ This README provides example code for connecting to the device, scanning and plo
 If you are interested in developing the PyPI package, or making a custom local version, see [Library Development](#library-development) towards the end of this README.
 
 
+The primary GitHub: https://github.com/LC-Linkous/tinySA_python
+
+The PyPI page: https://pypi.org/project/tsapython/
+
 
 ## Table of Contents
 * [The tinySA Series of Devices](#the-tinysa-series-of-devices)
@@ -79,7 +83,7 @@ Several usage examples are provided in the [Example Implementations](#example-im
 ### PyPI Install
 
 
-The `tsapython` library (from PyPI at []())  can be installed with:
+The `tsapython` library (from PyPI at [https://pypi.org/project/tsapython/2.0.0/](https://pypi.org/project/tsapython/2.0.0/))  can be installed with:
 
 ```python
 
