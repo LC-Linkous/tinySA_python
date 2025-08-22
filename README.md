@@ -70,6 +70,80 @@ Improper usage may destroy your device.
 
 ## Library Usage
 
+This library is now avilable via PyPI, local install, or just using the class. We reccomend one of the library install options.
+
+### PyPI Install
+
+
+The `tsapython` library (from PyPI at []())  can be installed with:
+
+```python
+
+pip install tsapython
+
+```
+
+The GitHub repository will continue to be named `tinySA_python` to differentiate the working versions and the additional documentation included here. 
+
+
+### Local Install Using UV
+
+Developing a project, or running something custom? You can pull the code from GitHub and build+install the package locally. 
+
+(You can also use your favorite package manager. This is set up for UV, but the information for other setups should all be in the `tsapython` directory)
+
+This is a summarized version of the instructions at [https://www.sarahglasmacher.com/how-to-build-python-package-uv/](https://www.sarahglasmacher.com/how-to-build-python-package-uv/):
+
+
+```python
+# install UV
+pip install uv
+
+# navigate to the tsapyhon directory
+cd .\tsapython
+
+# build the package
+# a 'dist' directory should be created in tapython
+uv build
+
+# install the package locally
+pip install dist/tsapython-2.0.0-py3-none-any.whl
+
+```
+
+### Requirements
+
+This project requires numpy, pandas and pyserial. 
+
+Use 'pip install -r requirements.txt' to install the following dependencies:
+
+```python
+pyserial
+numpy
+pandas
+
+```
+
+The above dependencies are only for the API interfacing of the tinySA_python library. Additional dependencies should be installed if you are following the examples in this README. These can be installed with 'pip install -r test_requirements.txt':
+
+```python
+pyserial
+numpy
+pandas
+matplotlib
+pillow
+pyQt5
+```
+
+For anyone unfamiliar with using requirements files, or having issues with the libraries, these can also be installed manually in the terminal (we recommend a Python virtual environment) with:
+
+```python
+pip install pyserial numpy pandas matplotlib pillow pyQt5
+```
+
+`pyQt5` is used with `matplotlib` to draw the figures. It needs to be installed on Linux systems to follow the examples included in tinySA_python, but is not needed on all Windows machines.
+
+
 
 
 
@@ -2688,6 +2762,10 @@ This library is updated in spurts. June-August are going to be the most active d
     * [https://en.wikipedia.org/wiki/Scattering_parameters](https://en.wikipedia.org/wiki/Scattering_parameters)
     * [https://www.microwaves101.com/encyclopedias/s-parameters](https://www.microwaves101.com/encyclopedias/s-parameters)
     * ["Network Theory - Two-Port Networks" - tutorialspoint.com](https://www.tutorialspoint.com/network_theory/network_theory_twoport_networks.htm)
+
+
+* Python Packaging and Library Setup:
+    * [https://packaging.python.org/en/latest/tutorials/packaging-projects/](https://packaging.python.org/en/latest/tutorials/packaging-projects/) 
 
 
 ## Licensing
