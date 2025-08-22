@@ -83,7 +83,7 @@ Several usage examples are provided in the [Example Implementations](#example-im
 ### PyPI Install
 
 
-The `tsapython` library (from PyPI at [https://pypi.org/project/tsapython/2.0.0/](https://pypi.org/project/tsapython/2.0.0/))  can be installed with:
+The `tsapython` package (from PyPI at [https://pypi.org/project/tsapython/2.0.0/](https://pypi.org/project/tsapython/2.0.0/))  can be installed with:
 
 ```python
 
@@ -107,11 +107,11 @@ This is a summarized version of the instructions at [https://www.sarahglasmacher
 # install UV
 pip install uv
 
-# navigate to the tsapyhon directory
+# navigate to the tsapython directory
 cd .\tsapython
 
 # build the package
-# a 'dist' directory should be created in tapython
+# a 'dist' directory should be created in tsapython
 uv build
 
 # install the package locally
@@ -154,7 +154,7 @@ pip install pyserial numpy pandas matplotlib pillow pyQt5
 
 ## Structure
 
-The `tsapython` library, as it is avilable on PyPI is structured as follows:
+The `tsapython` library, as it is available on PyPI is structured as follows:
 
 ```python
 
@@ -256,7 +256,7 @@ Some error checking includes:
 
  * Frequencies can be specified using an integer optionally postfixed with a the letter 'k' for kilo 'M' for Mega or 'G' for Giga. E.g. 0.1M (100kHz), 500k (0.5MHz) or 12000000 (12MHz)
  * Levels are specified in dB(m) and can be specified using a floating point notation. E.g. 10 or 2.5
- * Time is specified in seconds optionally postfixed with the letters 'm' for mili or 'u' for micro. E.g. 1 (1 second), 2.5 (2.5 seconds), 120m (120 milliseconds)
+ * Time is specified in seconds optionally postfixed with the letters 'm' for milli or 'u' for micro. E.g. 1 (1 second), 2.5 (2.5 seconds), 120m (120 milliseconds)
 
 ## Example Implementations
 
@@ -910,7 +910,7 @@ else: # if port found and connected, then complete task(s) and disconnect
 
     # PROCESS SCANRAW into an array & reuse the FREQ_ARR value
     # remove the intro curly brace ({) 
-    bin_scanraw = scanraw_data_bytes[1:] #skip the first char because it's the raminaing curly brace
+    bin_scanraw = scanraw_data_bytes[1:] #skip the first char because it's the remaining curly brace
     # use struct.unpack() because of the repeating pattern
         # <: indicates little-endian byte order, meaning the least significant byte is stored first
         # 'xH'*pts: a repetition of the format 'xH' once per point.
@@ -2394,7 +2394,7 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Alias Functions:**
     * None
 * **CLI Wrapper Usage:**
-* **Notes:** the time specified may end in a letter where  m=mili and u=micro
+* **Notes:** the time specified may end in a letter where  m=milli and u=micro
 
 ### **temperature**
 * **Description:** Get the temperature from the device
@@ -2710,7 +2710,7 @@ aka “what am I looking at and did I buy the right thing?”
 Some tips:
 * The cable MUST be connected between the two ports BEFORE starting the calibration. 
 * The cable should be finger tight. If the connector will not turn, there's a high risk of cross threading if it's forced. It's better to try again than to need to buy and install new connectors.
-* If you have any RF equipment nearby (including hand-held radios), avoid transmiting during calibration or self-tests. Depending on the signal strength, this could cause issues with the results.
+* If you have any RF equipment nearby (including hand-held radios), avoid transmitting during calibration or self-tests. Depending on the signal strength, this could cause issues with the results.
 
 
 ### Some General tinySA Notes

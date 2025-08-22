@@ -102,7 +102,7 @@ else: # if port found and connected, then complete task(s) and disconnect
 
     # PROCESS SCANRAW into an array & reuse the FREQ_ARR value
     # remove the intro curly brace ({) 
-    bin_scanraw = scanraw_data_bytes[1:] #skip the first char because it's the raminaing curly brace
+    bin_scanraw = scanraw_data_bytes[1:] #skip the first char because it's the remaining curly brace
     # use struct.unpack() because of the repeating pattern
         # <: indicates little-endian byte order, meaning the least significant byte is stored first
         # 'xH'*pts: a repetition of the format 'xH' once per point.
