@@ -247,6 +247,9 @@ tinySA_python/
 ```
 
 ## Running Tests
+
+This is primarily for development or advanced troubleshooting. These tests are for the API.
+
 The test suite uses [pytest](https://docs.pytest.org/). Tests should be run from the
 `tsapython` project directory (the one containing `pyproject.toml`).
 
@@ -2838,7 +2841,7 @@ The [Library Usage](#library-usage) section includes information on how to downl
 
 ## How often is this library updated?
 
-This library is updated in spurts. June-August are going to be the most active development months, but it will get monthly-ish updates otherwise. Development is pretty constant on the backend, but only stable code is released publicly. Bug fixes will be addressed as they happen.   
+This library is updated in spurts. June-August are going to be the most active development months, with limited updates otherwise. Development has slowed as the project stabilizes, but sometimes new features are proposed or needed. Bug fixes will be addressed as they are brought up.   
 
 
 
@@ -2891,7 +2894,7 @@ This library is updated in spurts. June-August are going to be the most active d
 The code in this repository has been released under GPL-2.0 for right now (and to have something in place rather than nothing). This licensing does NOT take priority over the official releases and the decisions of the tinySA team. This licensing does NOT take priority for any of their products, including the devices that can be used with this software. 
 
 
-This software is released AS-IS, meaning that there may be bugs (especially as it is under development). 
+This software is released AS-IS, meaning that there may be bugs (especially while under development). 
 
 
 This software is UNOFFICIAL, meaning that the tinySA team does not offer tech support for it, does not maintain it, and has no responsibility for any of the contents. 
