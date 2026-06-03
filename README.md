@@ -120,44 +120,40 @@ pip install dist/tsapython-2.0.0-py3-none-any.whl
 ```
 
 ## Requirements
-
-This project requires numpy, pandas and pyserial. 
-
+This project requires numpy and pyserial. 
 Use 'pip install -r requirements.txt' to install the following dependencies:
-
 ```python
 pyserial
 numpy
-pandas
-
 ```
-
 The above dependencies are only for the API interfacing of the tinySA_python library. Additional dependencies should be installed if you are following the examples in this README. These can be installed with 'pip install -r test_requirements.txt':
-
 ```python
 pyserial
 numpy
-pandas
 matplotlib
-pillow
 pyQt5
 ```
-
 For anyone unfamiliar with using requirements files, or having issues with the libraries, these can also be installed manually in the terminal (we recommend a Python virtual environment) with:
-
 ```python
-pip install pyserial numpy pandas matplotlib pillow pyQt5
+pip install pyserial numpy matplotlib pyQt5
 ```
-
 `pyQt5` is used with `matplotlib` to draw the figures. It needs to be installed on Linux systems to follow the examples included in tinySA_python, but is not needed on all Windows machines.
 
+If you are installing the package itself (rather than the loose requirements files), the same optional dependencies are available as extras defined in `pyproject.toml`:
+```python
+# library only (numpy + pyserial)
+pip install tsapython
+
+# library + plotting dependencies for the examples
+pip install "tsapython[plotting]"
+
+# development / running the test suite
+pip install -e ".[test]"
+```
 
 ## Structure
-
-The `tsapython` library, as it is available on PyPI is structured as follows:
-
+The `tsapython` library, as it is available on PyPI, is structured as follows:
 ```python
-
 tsapython/
 ├── .python-version
 ├── pyproject.toml
@@ -168,39 +164,57 @@ tsapython/
 │   └── tsapython/
 │       ├── __init__.py
 │       ├── core.py
-│       └── py.typed
+│       ├── py.typed
+│       └── _commands/
+│           ├── __init__.py
+│           ├── acquisition.py
+│           ├── calibration.py
+│           ├── display_ui.py
+│           ├── levels_gain.py
+│           ├── markers_traces.py
+│           ├── output_signal.py
+│           ├── presets_config.py
+│           └── system_info.py
 └── tests/
     ├── __init__.py
-    ├── run_all_tests.py
-    ├── test_basic.py
-    ├── test_example_workflow.py
-    └── test_hardware.py
+    ├── conftest.py
+    ├── test_smoke.py
+    ├── test_levels_gain.py
+    ├── test_parsing.py
+    ├── test_hardware.py
+    ├── collect_samples.py
+    └── fixtures/
+        ├── __init__.py
+        └── device_responses.py
 ```
+
+The public API is unchanged: `from tsapython import tinySA` still exposes the full `tinySA` class. The per-command methods now live in mixin modules under `_commands/` and are composed onto the `tinySA` class in `core.py`, which keeps the shared state, serial handling, and helper methods.
 
 A `docs` repository for the library will be added later in development for stable releases.
 
 This library is also part of the `tinySA_python` repository, which includes more extensive documentation and the working development. The GitHub repository is structured as follows:
-
 ```python
-
 tinySA_python/
-├── README
+├── README.md
 ├── requirements.txt
 ├── test_requirements.txt
 ├── media/
 │   └── README images, screenshots
-└──tsapython/
+└── tsapython/
     ├── .python-version
     ├── pyproject.toml
     ├── README.md
     ├── LICENSE
     ├── .gitignore
-    ├──  examples/
+    ├── examples/
     │   ├── __init__.py
+    │   ├── complete_workflow.py
+    │   ├── hardware_walkthrough.py
     │   ├── identifying_serial_ports.py
     │   ├── plotting_scan.py
     │   ├── plotting_scanraw.py
     │   ├── plotting_waterfall_realtime.py
+    │   ├── plotting_waterfall_static.py
     │   ├── save_scan_csv.py
     │   ├── using_autoconnect.py
     │   └── using_command_func.py
@@ -208,34 +222,87 @@ tinySA_python/
     │   └── tsapython/
     │       ├── __init__.py
     │       ├── core.py
-    │       └── py.typed
+    │       ├── py.typed
+    │       └── _commands/
+    │           ├── __init__.py
+    │           ├── acquisition.py
+    │           ├── calibration.py
+    │           ├── display_ui.py
+    │           ├── levels_gain.py
+    │           ├── markers_traces.py
+    │           ├── output_signal.py
+    │           ├── presets_config.py
+    │           └── system_info.py
     └── tests/
         ├── __init__.py
-        ├── run_all_tests.py
-        ├── test_basic.py
-        ├── test_example_workflow.py
-        └── test_hardware.py
-
+        ├── conftest.py
+        ├── test_smoke.py
+        ├── test_levels_gain.py
+        ├── test_parsing.py
+        ├── test_hardware.py
+        ├── collect_samples.py
+        └── fixtures/
+            ├── __init__.py
+            └── device_responses.py
 ```
-
 
 ## Running Tests
+The test suite uses [pytest](https://docs.pytest.org/). Tests should be run from the
+`tsapython` project directory (the one containing `pyproject.toml`).
 
-Tests should be run from the root `tsapython` directory.
-
+Install the test dependencies first:
 ```python
-# Run individual test files
-uv run python tests/test_basic.py
-uv run python tests/test_hardware.py  
-uv run python tests/example_workflow.py
-
-# Run all tests together
-uv run python tests/run_all_tests.py
-
-# Or run directly if you have Python in PATH
-python tests/test_basic.py
-python tests/run_all_tests.py
+pip install -e ".[test]"
+# or, using the requirements file:
+pip install pytest pytest-cov
 ```
+
+Run the hardware-free suite (no device required):
+```python
+# all tests; hardware tests self-skip when no device is connected
+uv run pytest
+
+# or, if Python/pytest are on your PATH
+pytest
+```
+
+The suite is split into hardware-free tests and tests that need a connected tinySA.
+The hardware tests are marked with `@pytest.mark.hardware` and are skipped automatically
+when no device is detected.
+```python
+# run ONLY the hardware-free tests (explicitly skip device tests)
+pytest -m "not hardware"
+
+# run ONLY the hardware tests (requires a connected tinySA)
+pytest -m hardware
+```
+
+To see coverage while testing:
+```python
+pytest --cov=tsapython --cov-report=term-missing
+```
+
+### Collecting device samples
+`tests/collect_samples.py` is a manual helper (not a pytest test) for capturing real
+device responses to use as parsing fixtures. Run it with a tinySA connected:
+```python
+# auto-detect the serial port
+python tests/collect_samples.py
+
+# or specify the port explicitly
+python tests/collect_samples.py --port COM5            # Windows
+python tests/collect_samples.py --port /dev/ttyACM0    # Linux/Mac
+```
+
+### Example scripts
+The files in `examples/` are runnable demonstrations (not part of the automated test
+suite) and require a connected device plus the plotting dependencies:
+```python
+pip install "tsapython[plotting]"     # or: pip install -r test_requirements.txt
+python examples/complete_workflow.py
+python examples/hardware_walkthrough.py
+```
+
 
 ## Error Handling
 
