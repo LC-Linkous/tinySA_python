@@ -11,7 +11,7 @@
 #
 #
 #   Author(s): Lauren Linkous
-#   Last update: August 16, 2025
+#   Last update: June 3rd, 2026
 ##--------------------------------------------------------------------------------------------------\
 
 
@@ -22,8 +22,8 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 # Import our test modules
-from test_basic import run_all_basic_tests
-from test_hardware import run_all_hardware_tests
+from tsapython.tests.test_smoke import run_all_basic_tests
+from tsapython.tests.hardware_walkthrough import run_all_hardware_tests
 
 
 def run_all_tests():
