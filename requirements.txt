@@ -1,3 +1,2 @@
 pyserial
 numpy
-pandas

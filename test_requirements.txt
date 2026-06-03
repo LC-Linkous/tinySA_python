@@ -1,5 +1,5 @@
 pyserial
 numpy
-pandas
 matplotlib
-pyQt5
+# matplotlib GUI backend for plt.show() on Linux; not needed on Windows (uses TkAgg by default)
+pyQt5 ; platform_system == "Linux"
