@@ -11,7 +11,7 @@ freshly collected hardware output (see collect_samples.py).
 """
 
 import pytest
-from fixtures.device_responses import RESPONSES
+from .fixtures.device_responses import RESPONSES
 
 
 # ---------------------------------------------------------------------------

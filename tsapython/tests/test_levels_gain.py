@@ -120,3 +120,95 @@ def test_ext_gain_valid(tsa, val, expected):
 def test_ext_gain_invalid(tsa, val):
     tsa.ext_gain(val)
     assert tsa._recorder.count == 0
+
+
+# ===========================================================================
+# Additional coverage: calc, level_change, lna2, and the set_* aliases.
+# (These were not in the original test_levels_gain.py and brought the module
+#  coverage below the others.)
+# ===========================================================================
+
+# --- calc: off|minh|maxh|maxd|aver4|aver16|quasip -------------------------
+
+@pytest.mark.parametrize("method,val", [
+    ("set_calc_off", "off"),
+    ("set_calc_minh", "minh"),
+    ("set_calc_maxh", "maxh"),
+    ("set_calc_maxd", "maxd"),
+    ("set_calc_aver4", "aver4"),
+    ("set_calc_aver16", "aver16"),
+    ("set_calc_quasip", "quasip"),
+])
+def test_calc_aliases(tsa, method, val):
+    getattr(tsa, method)()
+    assert tsa._recorder.last == f"calc {val}\r\n"
+
+
+def test_calc_invalid(tsa):
+    tsa.calc("median")
+    assert tsa._recorder.count == 0
+
+
+# --- level_change: -70..70 ------------------------------------------------
+
+@pytest.mark.parametrize("val,expected", [
+    (-70, "levelchange -70\r\n"),
+    (0, "levelchange 0\r\n"),
+    (70, "levelchange 70\r\n"),
+])
+def test_level_change_valid(tsa, val, expected):
+    tsa.set_level_change(val)
+    assert tsa._recorder.last == expected
+
+
+@pytest.mark.parametrize("val", [-71, 71])
+def test_level_change_invalid(tsa, val):
+    tsa.level_change(val)
+    assert tsa._recorder.count == 0
+
+
+# --- lna / lna2 -----------------------------------------------------------
+
+def test_lna_on_off_aliases(tsa):
+    tsa.set_lna_on()
+    assert tsa._recorder.last == "lna on\r\n"
+    tsa.set_lna_off()
+    assert tsa._recorder.last == "lna off\r\n"
+
+
+@pytest.mark.parametrize("val,expected", [
+    ("auto", "lna2 auto\r\n"),
+    (0, "lna2 0\r\n"),
+    (7, "lna2 7\r\n"),
+])
+def test_lna2_valid(tsa, val, expected):
+    tsa.set_lna2(val)
+    assert tsa._recorder.last == expected
+
+
+@pytest.mark.parametrize("val", [8, -1, "high"])
+def test_lna2_invalid(tsa, val):
+    tsa.lna2(val)
+    assert tsa._recorder.count == 0
+
+
+# --- set_* aliases mirror their base methods ------------------------------
+
+def test_set_agc_alias(tsa):
+    tsa.set_agc(3)
+    assert tsa._recorder.last == "agc 3\r\n"
+
+
+def test_set_attenuation_alias(tsa):
+    tsa.set_attenuation(10)
+    assert tsa._recorder.last == "attenuate 10\r\n"
+
+
+def test_set_ext_gain_alias(tsa):
+    tsa.set_ext_gain(20)
+    assert tsa._recorder.last == "ext_gain 20\r\n"
+
+
+def test_set_level_alias(tsa):
+    tsa.set_level(0)
+    assert tsa._recorder.last == "level 0\r\n"
