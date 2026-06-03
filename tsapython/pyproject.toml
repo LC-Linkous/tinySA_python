@@ -21,7 +21,7 @@ license-files = ["LICENSE*"]
 [project.optional-dependencies]
 plotting = [
     "matplotlib>=3.10.5",
-    "pandas>=2.3.1",
+    'pyqt5 ; platform_system == "Linux"',
 ]
 test = [
     "pytest>=8.0",
