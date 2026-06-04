@@ -1,7 +1,7 @@
 #! /usr/bin/python3
 ##-------------------------------------------------------------------------------\
 #   tinySA_python (tsapython)
-#   './examples/plotting_waterfall_1.py'
+#   './examples/plotting_waterfall_static.py'
 #   A waterfall plot example using matplotlib to plot multiple SCAN data over time
 #
 #   Last update: June 3, 2026
