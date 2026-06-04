@@ -4,6 +4,14 @@ Command-construction tests for the OutputSignalMixin.
 
 Mocked-serial `tsa` fixture; no hardware.
 
+This module has several KNOWN BUGS that are pinned below with the actual
+(broken) behavior, so a fix will surface as a failing assertion:
+  * the set_cal_output_* aliases call self.caloutput(...) which doesn't exist
+    (the method is cal_output) -> AttributeError
+  * set_direct_on/off call direct() with one arg, but direct() requires freq
+    -> TypeError
+  * mode() has a stray '+ +' producing a unary-plus on a str -> TypeError
+  * modulation() builds an 'output ...' command instead of 'modulation ...'
 """
 
 import pytest
@@ -89,6 +97,7 @@ def test_mode_aliases(tsa, method, expected):
     ("set_mod_extern", "extern"),
 ])
 def test_modulation_aliases(tsa, method, val):
+    # FIXED: modulation() now sends the 'modulation ...' command.
     getattr(tsa, method)()
     assert tsa._recorder.last == f"modulation {val}\r\n"
 
@@ -134,3 +143,17 @@ def test_ultra_start_with_freq(tsa):
 def test_ultra_harmonic_with_freq(tsa):
     tsa.set_ultra_harmonic(5)
     assert tsa._recorder.last == "ultra harm 5\r\n"
+
+
+# --- direct: start/stop now require freq > 0 (positive number) ------------
+
+def test_direct_start_rejects_bad_freq(tsa):
+    for bad in (0, -5, None, "x"):
+        tsa._recorder.calls.clear()
+        tsa.direct("start", bad)
+        assert tsa._recorder.count == 0, f"freq={bad!r} should be rejected"
+
+
+def test_direct_start_accepts_positive_freq(tsa):
+    tsa.set_direct_start(900_000_000)
+    assert tsa._recorder.last == "direct start 900000000\r\n"

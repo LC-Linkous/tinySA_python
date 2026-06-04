@@ -3,7 +3,7 @@
 Parsing / response-cleaning tests.
 
 These exercise the REAL parsing helpers (clean_return, get_serial_return,
-read_until_end_marker) against raw device output captured in the project
+get_binary_return) against raw device output captured in the project
 README. No hardware required -- the bytes are canned.
 
 Captures are kept in fixtures/device_responses.py so they can be expanded with
@@ -47,26 +47,6 @@ def test_clean_return_minus4_eats_byte_before_chevron(parsing_tsa):
     # follow-up rather than changed here.
     raw = bytearray(b"cmd\r\nXch>")          # 'X' sits directly before ch>
     assert parsing_tsa.clean_return(raw) == bytearray(b"")  # X is consumed
-
-
-# ---------------------------------------------------------------------------
-# read_until_end_marker: used by scanraw; reads until the '}' marker.
-# ---------------------------------------------------------------------------
-
-def test_read_until_end_marker_basic(parsing_tsa):
-    parsing_tsa.ser._buf = b"{xS\nxd\nx\x98\nx]\nx\x02\x0c}trailing"
-    out = parsing_tsa.read_until_end_marker(end_marker=b"}")
-    assert out.endswith(b"}")
-    assert out == bytearray(b"{xS\nxd\nx\x98\nx]\nx\x02\x0c}")
-    # remainder is preserved for the next read
-    assert parsing_tsa.remaining_buffer == b"trailing"
-
-
-def test_read_until_end_marker_timeout(parsing_tsa):
-    # no marker present -> should time out and return what it has
-    parsing_tsa.ser._buf = b"{xS\nxd"  # no closing }
-    out = parsing_tsa.read_until_end_marker(end_marker=b"}", timeout=0.05)
-    assert out == bytearray(b"{xS\nxd")
 
 
 # ---------------------------------------------------------------------------

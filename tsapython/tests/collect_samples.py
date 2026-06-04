@@ -28,7 +28,7 @@ The captures we most want (these stress the parsing logic):
   * vbat / status - short numeric frames
   * dac           - "usage:" + value frame
   * scan ... 1/2/3/4  - the four outmask formats (frequencies / data / both)
-  * scanraw ...   - BINARY frame with the { ... } end-marker (read_until_end_marker)
+  * scanraw ...   - BINARY frame with the { ... } structure (get_binary_return)
   * frequencies   - list frame
 
 If a command errors or your model doesn't support it, the script records the

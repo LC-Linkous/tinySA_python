@@ -9,7 +9,7 @@ through `self.ser` (a pyserial Serial object) and the single method
   * `recorder`   -> replaces tinySA_serial, capturing the exact command string
                     each library method builds. Use for command-construction tests.
   * `fake_port`  -> a stand-in serial port that returns canned bytes, letting us
-                    test the real get_serial_return / clean_return / read_until_end_marker
+                    test the real get_serial_return / clean_return / get_binary_return
                     parsing logic against captured device output.
 
 Neither touches real hardware.
@@ -99,7 +99,7 @@ def tsa(recorder):
 class FakePort:
     """
     Minimal stand-in for serial.Serial, used to drive the real parsing helpers
-    (get_serial_return, read_until_end_marker) with canned bytes.
+    (get_serial_return, get_binary_return) with canned bytes.
 
     Feed it the raw bytes the device would emit; it dispenses them through the
     in_waiting / read() interface the library expects.

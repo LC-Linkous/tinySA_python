@@ -3,7 +3,7 @@
 Parsing tests against REAL device captures.
 
 Unlike test_parsing.py (which uses README-derived samples), these run the
-actual clean_return / read_until_end_marker logic against bytes captured from a
+actual clean_return / get_binary_return logic against bytes captured from a
 physical tinySA Ultra via collect_samples.py. They are hardware-free at run
 time -- the bytes are frozen in fixtures/captured_responses.py.
 

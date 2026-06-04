@@ -3,8 +3,8 @@
 Command-construction tests for the PresetsConfigMixin.
 
 Mocked-serial `tsa` fixture; no hardware. NOTE: methods like reset/clear_config
-would be destructive to data on a real device, but here tinySA_serial is replaced 
-by a recorder, so these only assert the command string is built correctly -- nothing
+would be destructive on a real device, but here tinySA_serial is replaced by a
+recorder, so these only assert the command string is built correctly -- nothing
 is sent to hardware.
 """
 
@@ -165,3 +165,16 @@ def test_abort_action_after_enable(tsa):
     tsa.enable_abort()          # sends 'abort on'
     tsa.abort_action()          # now allowed -> sends bare 'abort'
     assert tsa._recorder.calls[-1] == "abort\r\n"
+
+
+def test_clear_and_reset_sends_both_and_survives(tsa):
+    # clear_and_reset sends clearconfig then reset. On REAL hardware reset()
+    # disconnects the serial and may raise/hang, so clear_and_reset catches
+    # exceptions and must not propagate them. (The mock can't simulate the
+    # disconnect; this only verifies both commands are sent and no exception
+    # escapes. See diagnose_reset.py for the real-hardware behavior check.)
+    out = tsa.clear_and_reset()              # must not raise
+    assert tsa._recorder.calls[0] == "clearconfig 1234\r\n"
+    assert tsa._recorder.calls[1] == "reset\r\n"
+    # return value is intentionally not asserted: it is None or msgbytes
+    # depending on whether the port dropped before a response arrived.
