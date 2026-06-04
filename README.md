@@ -1,5 +1,16 @@
+# tsapython
+ 
+<!-- Badges. Note on the DOI: 10.5281/zenodo.20546764 is the first-deposit DOI. -->
+ 
+[![PyPI version](https://badge.fury.io/py/tsapython.svg)](https://badge.fury.io/py/tsapython)
+[![Python versions](https://img.shields.io/pypi/pyversions/tsapython.svg)](https://pypi.org/project/tsapython/)
+[![PyPI - Wheel](https://img.shields.io/pypi/wheel/tsapython.svg)](https://pypi.org/project/tsapython/)
+[![Downloads](https://static.pepy.tech/badge/tsapython)](https://pepy.tech/project/tsapython)
+[![License: GPL v2](https://img.shields.io/badge/License-GPL_v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20546764.svg)](https://doi.org/10.5281/zenodo.20546764)
 
-# tinySA_python
+
+
 ## AN UNOFFICIAL Python API for the tinySA Device Series
 
 A Non-GUI Python API for the tinySA series of devices. This repository uses official resources and documentation but is NOT endorsed by the official tinySA product or company. See the [references](#references) section for further reading. See the [official tinySA resources](https://www.tinysa.org/wiki/) for device features.
@@ -83,7 +94,7 @@ Several usage examples are provided in the [Example Implementations](#example-im
 ### PyPI Install
 
 
-The `tsapython` package (from PyPI at [https://pypi.org/project/tsapython/2.0.0/](https://pypi.org/project/tsapython/2.0.0/))  can be installed with:
+The `tsapython` package (from PyPI at [https://pypi.org/project/tsapython/3.0.0/](https://pypi.org/project/tsapython/3.0.0/))  can be installed with:
 
 ```python
 
@@ -150,6 +161,15 @@ pip install "tsapython[plotting]"
 # development / running the test suite
 pip install -e ".[test]"
 ```
+
+## Previous versions
+
+ADD mention of the releases on github
+
+the previous releases on PyPi
+
+
+and the zenodo archive
 
 
 ## Structure

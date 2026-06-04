@@ -11,7 +11,7 @@ authors:
   - family-names: "Linkous"
     given-names: "Lauren"
     orcid: "https://orcid.org/0000-0001-9945-5125"
-version: "2.0.0"
+version: "3.0.0"
 date-released: "2026-06-04" 
 license: GPL-2.0-only
 repository-code: "https://github.com/LC-Linkous/tinySA_python"

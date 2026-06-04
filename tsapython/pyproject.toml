@@ -1,6 +1,6 @@
 [project]
 name = "tsapython"
-version = "2.0.0"
+version = "3.0.0"
 authors = [
     { name = "LC-Linkous", email = "L.C.Linkous@gmail.com" }
 ]
