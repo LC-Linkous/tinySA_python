@@ -259,8 +259,16 @@ class tinySA(
 
 
         self.ser.write(bytes(writebyte, 'utf-8'))
-        msgbytes = self.get_serial_return()
-        msgbytes = self.clean_return(msgbytes)
+        if pts is None:
+            # text commands: read to the 'ch>' prompt, then clean
+            msgbytes = self.get_serial_return()
+            msgbytes = self.clean_return(msgbytes)
+        else:
+            # binary commands (scanraw): read by EXPECTED LENGTH, not by a
+            # terminator byte. Any byte value (incl. '}' 0x7d and '>' 0x3e) can
+            # occur inside the 16-bit sample data, so terminator scanning
+            # truncates the frame. See get_binary_return().
+            msgbytes = self.get_binary_return(pts)
 
         if printBool == True:
             print(msgbytes) #overrides verbose for debug
@@ -293,6 +301,114 @@ class tinySA(
             
         return bytearray(complete)
 
+    def get_binary_return(self, pts=None, timeout=10.0, idle_timeout=1.0):
+        # Reads a binary scanraw-style frame from the serial port.
+        #
+        # WHY THIS EXISTS (separate from get_serial_return):
+        # get_serial_return terminates the read at the first '>' (0x3e) byte,
+        # which is correct for text responses ending in the 'ch>' prompt. Binary
+        # scanraw data, however, contains arbitrary byte values -- including
+        # 0x3e ('>') AND 0x7d ('}') -- inside the 16-bit samples. So a binary
+        # frame CANNOT be terminated by scanning for any marker byte; doing so
+        # truncates the frame at the first colliding data byte. (Confirmed on
+        # hardware: 450-pt frames intermittently contain early 0x3e/0x7d bytes.)
+        #
+        # The frame format is:
+        #     'scanraw ...\r\n' (echoed command) + '{' + N*( 'x' + 2 bytes ) + '}'
+        # i.e. N points, each 3 bytes (an 'x' separator + a little-endian uint16).
+        #
+        # TWO MODES:
+        #   * Known count (pts is given): read until we have the full frame by
+        #     LENGTH (1 + 3*pts + 1 bytes from the opening '{'). This is the
+        #     reliable path for scan_raw(), which always knows pts.
+        #   * Unknown count (pts is None): read structurally for streaming/
+        #     continuous callers -- accumulate until a '}' appears at a 3-byte
+        #     group boundary (a real terminator), or the stream goes idle.
+        #     Intended for future continuous-scanraw functions.
+        #
+        # Returns: '{' + the 3*N data bytes, WITHOUT the trailing '}', matching
+        # the historical clean_return() contract that existing examples rely on
+        # (callers do data[1:] then struct.unpack exactly 3*N bytes).
+        import time
+
+        buffer = bytes()
+        start_time = time.time()
+        last_data_time = None
+
+        # ---- accumulate raw bytes from the port ----
+        def overall_timed_out():
+            return (time.time() - start_time) > timeout
+
+        if pts is not None:
+            # KNOWN-LENGTH MODE
+            # full frame from '{' is: '{' + 3*pts data bytes + '}'
+            frame_len = 1 + (3 * pts) + 1
+            # We must first see the opening '{', then collect frame_len bytes
+            # starting at it. Read until we have '{' plus frame_len bytes after
+            # the brace position, or time out.
+            while True:
+                if self.ser.in_waiting > 0:
+                    buffer += self.ser.read(self.ser.in_waiting)
+                    last_data_time = time.time()
+                    start = buffer.find(b'{')
+                    if start != -1 and (len(buffer) - start) >= frame_len:
+                        # we have the complete frame
+                        frame = buffer[start:start + frame_len]
+                        # return '{' + data, dropping the trailing '}'
+                        return bytearray(frame[:-1])
+                elif overall_timed_out():
+                    self.print_message(
+                        "WARNING: scanraw binary read timed out "
+                        "(have %d bytes, wanted frame of %d from '{')"
+                        % (len(buffer), frame_len))
+                    break
+                else:
+                    time.sleep(0.01)
+            # timed out: return what we have from '{' (caller will detect short)
+            start = buffer.find(b'{')
+            if start == -1:
+                self.print_message("ERROR: scanraw frame start '{' not found")
+                return self.error_byte_return()
+            return bytearray(buffer[start:])
+
+        else:
+            # UNKNOWN-COUNT / STREAMING MODE (for future continuous callers)
+            # Read until a '}' lands on a 3-byte group boundary measured from the
+            # byte after '{'. A '}' at a boundary is the true frame end; a 0x7d
+            # inside a sample is never at a boundary (it's byte 2 or 3 of an
+            # 'x__' group). Also stop if the stream goes idle.
+            while True:
+                if self.ser.in_waiting > 0:
+                    buffer += self.ser.read(self.ser.in_waiting)
+                    last_data_time = time.time()
+                    start = buffer.find(b'{')
+                    if start != -1:
+                        body = buffer[start + 1:]   # bytes after '{'
+                        # scan group boundaries (every 3 bytes) for a '}'
+                        # a complete group is 3 bytes; check position % 3 == 0
+                        for i in range(0, len(body)):
+                            if body[i] == 0x7d and (i % 3) == 0:
+                                # '}' at a group boundary -> true end
+                                frame = buffer[start:start + 1 + i + 1]
+                                return bytearray(frame[:-1])  # drop trailing '}'
+                elif last_data_time and (time.time() - last_data_time) > idle_timeout:
+                    # stream went idle without a clean terminator
+                    self.print_message(
+                        "WARNING: streaming binary read went idle "
+                        "(%d bytes, no boundary '}')" % len(buffer))
+                    break
+                elif overall_timed_out():
+                    self.print_message(
+                        "WARNING: streaming binary read timed out (%d bytes)"
+                        % len(buffer))
+                    break
+                else:
+                    time.sleep(0.01)
+            start = buffer.find(b'{')
+            if start == -1:
+                self.print_message("ERROR: streaming frame start '{' not found")
+                return self.error_byte_return()
+            return bytearray(buffer[start:])
     def read_until_end_marker(self, end_marker=b'}', timeout=10.0):
         # scan and scan raw might return early with tinySA_serial
         # so this is written to 

@@ -129,7 +129,7 @@ class SystemInfoMixin:
 
     def get_status(self):
         # alias for status()
-        return self.get_status()
+        return self.status()
 
     def temp(self):
         # gets the temperature

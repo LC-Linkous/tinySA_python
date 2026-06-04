@@ -241,7 +241,7 @@ class AcquisitionMixin:
         else:
             #do stuff, error checking needed
             self.print_message("sweeping...")
-            writebyte = 'sweep '+str(startVal)+' '+str(stopVal)+' '+str(pts)+'1\r\n'
+            writebyte = 'sweep '+str(startVal)+' '+str(stopVal)+' '+str(pts)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
 
         return msgbytes 

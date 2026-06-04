@@ -31,37 +31,37 @@ class OutputSignalMixin:
 
     def set_cal_output_off(self):
         # alias for cal_output()
-        return self.caloutput("off")
+        return self.cal_output("off")
 
     def set_cal_output_30(self):
         # alias for cal_output()
-        return self.caloutput(30)
+        return self.cal_output(30)
 
     def set_cal_output_15(self):
         # alias for cal_output()
-        return self.caloutput(15)
+        return self.cal_output(15)
 
     def set_cal_output_10(self):
         # alias for cal_output()
-        return self.caloutput(10)       
+        return self.cal_output(10)       
 
     def set_cal_output_4(self):
         # alias for cal_output()
-        return self.caloutput(4)
+        return self.cal_output(4)
 
     def set_cal_output_3(self):
         # alias for cal_output()
-        return self.caloutput(3)
+        return self.cal_output(3)
 
     def set_cal_output_2(self):
         # alias for cal_output()
-        return self.caloutput(2)
+        return self.cal_output(2)
 
     def set_cal_output_1(self):
         # alias for cal_output()
-        return self.caloutput(1)
+        return self.cal_output(1)
 
-    def direct(self, val, freq):
+    def direct(self, val, freq=None):
         # Output mode for generating a square wave signal between 830MHz and 1130MHz
         # usage: direct {start|stop|on|off} {freq(Hz)}
         # example return: ''
@@ -110,7 +110,7 @@ class OutputSignalMixin:
         accepted_val2= ["input", "output"]
         #check input
         if (val1 in accepted_val1) and (val2 in accepted_val2):
-            writebyte = 'mode '+str(val1)+ + ' ' +str(val2)+'\r\n'
+            writebyte = 'mode '+str(val1)+ ' ' +str(val2)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)           
         else:
             self.print_message("ERROR: output() takes vals [on|off]")
@@ -144,10 +144,10 @@ class OutputSignalMixin:
                           "NFM", "WFM", "extern"]
         #check input
         if (str(val) in accepted_vals):
-            writebyte = 'output '+str(val)+'\r\n'
+            writebyte = 'modulation '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)           
         else:
-            self.print_message("ERROR: output() takes vals [on|off]")
+            self.print_message("ERROR: modulation() takes vals [off|AM_1kHz|AM_10Hz|NFM|WFM|extern]")
             msgbytes = self.error_byte_return()
         return msgbytes
 

@@ -69,11 +69,11 @@ class CalibrationMixin:
                 self.print_message("ERROR: correction() requires a slot from ["+ str(accepted_slots) + "]. see documentation")
                 msgbytes = self.error_byte_return()
                 return msgbytes
-            if not(self.minSADeviceFreq<=freq) and not(freq<=self.maxSADeviceFreq):
+            if (freq is None) or not(self.minSADeviceFreq <= freq <= self.maxSADeviceFreq):
                 self.print_message("ERROR: correction() frequency outside of device specs. see documentation")
                 msgbytes = self.error_byte_return()
                 return msgbytes
-            if not(-10<=val) and not(val<=35):
+            if (val is None) or not(-10 <= val <= 35):
                 self.print_message("ERROR: correction() val dB outside of  specs. see documentation")
                 msgbytes = self.error_byte_return()
                 return msgbytes
@@ -220,15 +220,7 @@ class CalibrationMixin:
         return msgbytes
 
 
-
-
-
-
-        msgbytes =  self.error_byte_return()
-        self.print_message("Function does not exist yet. error checking needed")
-        return None
-
-    def spur(self, val):
+    def spur(self, val=None):
         # enables or disables spur reduction
         # usage: spur on|off
         # example return:
@@ -271,15 +263,15 @@ class CalibrationMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def get_vbat_offset(self):
-        # alias for vbat_offset()
-        return self.vbat_offset()
-
-    def set_vbat_offset(self, val):
+    def get_vbat_offset(self, val=None):
         # alias for vbat_offset()
         return self.vbat_offset(val)
 
-    def zero(self, val):
+    def set_vbat_offset(self, val=None):
+        # alias for vbat_offset()
+        return self.vbat_offset(val)
+
+    def zero(self, val=None):
         #get or set the zero offset in dBm
         # DO NOT CHANGE if unfamiliar with device and offset
         # usage: zero {level}\r\n174dBm
@@ -296,6 +288,6 @@ class CalibrationMixin:
 
         return msgbytes
 
-    def get_zero_offset(self):
+    def get_zero_offset(self, val=None):
         # alias function for zero
-        return self.zero()
+        return self.zero(val)
