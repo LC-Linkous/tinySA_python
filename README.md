@@ -1,5 +1,6 @@
-# tsapython
- 
+
+# tinySA_python
+
 <!-- Badges. Note on the DOI: 10.5281/zenodo.20546764 is the first-deposit DOI. -->
  
 [![PyPI version](https://badge.fury.io/py/tsapython.svg)](https://badge.fury.io/py/tsapython)
@@ -8,7 +9,6 @@
 [![Downloads](https://static.pepy.tech/badge/tsapython)](https://pepy.tech/project/tsapython)
 [![License: GPL v2](https://img.shields.io/badge/License-GPL_v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20546764.svg)](https://doi.org/10.5281/zenodo.20546764)
-
 
 
 ## AN UNOFFICIAL Python API for the tinySA Device Series
@@ -162,7 +162,7 @@ pip install "tsapython[plotting]"
 pip install -e ".[test]"
 ```
 
-## Previous versions
+## Previous Versions
 
 ADD mention of the releases on github
 
