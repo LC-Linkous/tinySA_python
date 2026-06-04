@@ -12,9 +12,10 @@ Popular features:
 - **Device Discovery**: Automatic detection and serial connection to tinySA devices
 - **Frequency Sweeps**: Collect data across specified frequency ranges
 - **Multiple Modes**: Support for both input and output modes (device dependent)
-- **Data Export**: Easy integration with matplotlib, pandas, and numpy
+- **Data Export**: Easy integration with matplotlib and numpy
 - **Error Handling**: Error checking and verbose output options
 - **Device Control**: Full programmatic control of tinySA settings and measurements
+
 
 This repository uses official resources and documentation but is **NOT** endorsed by the official tinySA product, owner, or company. Refer to official resources and support for product information. This library was built for the official tinySA device line(s), so any knock-off or custom devices may not be compatible with the library. Unofficial devices have not been tested. 
 
@@ -23,12 +24,28 @@ This repository uses official resources and documentation but is **NOT** endorse
 
 ## Full Code Examples:
 
-The README on the [main GitHub repo](https://github.com/LC-Linkous/tinySA_python) has provides examples for all of the following:
+ 
+The README on the [main GitHub repo](https://github.com/LC-Linkous/tinySA_python) provides runnable examples, grouped by what they demonstrate:
+ 
+**Getting started / device control**
+- `using_autoconnect.py` — detect and connect to a tinySA, read the device ID
+- `identifying_serial_ports.py` — manually identify serial ports (useful if autoconnect has trouble)
+- `using_command_func.py` — send raw device commands for functionality not yet wrapped by the library
+- `hardware_walkthrough.py` — a guided walkthrough of connecting and reading device info/data
+- `complete_workflow.py` — end-to-end: connect, read info, collect a sweep, and plot it
+**Plotting scan data**
+- `plotting_scan.py` — plot a single `scan`
+- `plotting_scanraw.py` — compare `scan` vs. the binary `scanraw` (with decoding to dBm)
+- `plotting_waterfall_static.py` — collect several sweeps and render a static waterfall plot
+- `plotting_waterfall_realtime.py` — a live, continuously updating waterfall plot
+**Continuous acquisition**
+- `continuous_scanraw_live.py` — loop `scan_raw` and live-plot each frame
+- `continuous_scanraw_collect.py` — loop `scan_raw`, decode to dBm, and save sweeps to CSV
+**Exporting data**
+- `save_scan_csv.py` — run a scan and write frequency/power pairs to a CSV file
+> Most plotting examples require the optional plotting dependencies:
+> `pip install "tsapython[plotting]"`
 
-* Direct device interfacing and control
-* Realtime and static waterfall plots
-* Exporting data to CSV files
-* Plotting live scan data
 
 ## Documentation & Examples
 

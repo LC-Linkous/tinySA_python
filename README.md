@@ -151,9 +151,10 @@ pip install "tsapython[plotting]"
 pip install -e ".[test]"
 ```
 
+
 ## Structure
 The `tsapython` library, as it is available on PyPI, is structured as follows:
-```python
+```
 tsapython/
 ├── .python-version
 ├── pyproject.toml
@@ -179,21 +180,30 @@ tsapython/
     ├── __init__.py
     ├── conftest.py
     ├── test_smoke.py
+    ├── test_acquisition.py
+    ├── test_calibration.py
+    ├── test_display_ui.py
     ├── test_levels_gain.py
+    ├── test_markers_traces.py
+    ├── test_output_signal.py
+    ├── test_presets_config.py
+    ├── test_system_info.py
     ├── test_parsing.py
     ├── test_hardware.py
+    ├── test_captured_hardware.py
     ├── collect_samples.py
     └── fixtures/
         ├── __init__.py
-        └── device_responses.py
+        ├── device_responses.py
+        └── captured_responses.py
 ```
 
 The public API is unchanged: `from tsapython import tinySA` still exposes the full `tinySA` class. The per-command methods now live in mixin modules under `_commands/` and are composed onto the `tinySA` class in `core.py`, which keeps the shared state, serial handling, and helper methods.
 
 A `docs` repository for the library will be added later in development for stable releases.
 
-This library is also part of the `tinySA_python` repository, which includes more extensive documentation and the working development. The GitHub repository is structured as follows:
-```python
+This library is also part of the `tinySA_python` repository, which includes more extensive documentation, runnable examples, and the working development. The GitHub repository is structured as follows:
+```
 tinySA_python/
 ├── README.md
 ├── requirements.txt
@@ -211,13 +221,15 @@ tinySA_python/
     │   ├── complete_workflow.py
     │   ├── hardware_walkthrough.py
     │   ├── identifying_serial_ports.py
+    │   ├── using_autoconnect.py
+    │   ├── using_command_func.py
     │   ├── plotting_scan.py
     │   ├── plotting_scanraw.py
     │   ├── plotting_waterfall_realtime.py
     │   ├── plotting_waterfall_static.py
     │   ├── save_scan_csv.py
-    │   ├── using_autoconnect.py
-    │   └── using_command_func.py
+    │   ├── continuous_scanraw_live.py
+    │   └── continuous_scanraw_collect.py
     ├── src/
     │   └── tsapython/
     │       ├── __init__.py
@@ -237,53 +249,76 @@ tinySA_python/
         ├── __init__.py
         ├── conftest.py
         ├── test_smoke.py
+        ├── test_acquisition.py
+        ├── test_calibration.py
+        ├── test_display_ui.py
         ├── test_levels_gain.py
+        ├── test_markers_traces.py
+        ├── test_output_signal.py
+        ├── test_presets_config.py
+        ├── test_system_info.py
         ├── test_parsing.py
         ├── test_hardware.py
+        ├── test_captured_hardware.py
         ├── collect_samples.py
         └── fixtures/
             ├── __init__.py
-            └── device_responses.py
+            ├── device_responses.py
+            └── captured_responses.py
 ```
 
 ## Running Tests
 
 This is primarily for development or advanced troubleshooting. These tests are for the API.
 
-The test suite uses [pytest](https://docs.pytest.org/). Tests should be run from the
-`tsapython` project directory (the one containing `pyproject.toml`).
+The test suite uses [pytest](https://docs.pytest.org/). Tests must be run from the
+`tsapython` project directory (the one containing `pyproject.toml`), since the pytest
+configuration and the `hardware` marker are defined in `pyproject.toml`. Running from a
+different directory will produce an `Unknown pytest.mark.hardware` warning.
 
 Install the test dependencies first:
-```python
+```bash
 pip install -e ".[test]"
 # or, using the requirements file:
 pip install pytest pytest-cov
 ```
 
-Run the hardware-free suite (no device required):
-```python
-# all tests; hardware tests self-skip when no device is connected
-uv run pytest
-
-# or, if Python/pytest are on your PATH
-pytest
+Run the suite (hardware tests self-skip when no device is connected):
+```bash
+python -m pytest
 ```
+
+> **Note:** use `python -m pytest`, not `uv run pytest`. Running through `uv` here can
+> create a stray virtual environment inside the project directory and tangle the test
+> environment.
 
 The suite is split into hardware-free tests and tests that need a connected tinySA.
 The hardware tests are marked with `@pytest.mark.hardware` and are skipped automatically
-when no device is detected.
-```python
+when no device is detected:
+```bash
 # run ONLY the hardware-free tests (explicitly skip device tests)
-pytest -m "not hardware"
+python -m pytest -m "not hardware"
 
 # run ONLY the hardware tests (requires a connected tinySA)
-pytest -m hardware
+python -m pytest -m hardware
 ```
 
 To see coverage while testing:
-```python
-pytest --cov=tsapython --cov-report=term-missing
+```bash
+python -m pytest --cov=tsapython --cov-report=term-missing
 ```
+
+### Capturing real device responses
+
+`tests/collect_samples.py` is a helper (not a pytest test) that connects to a real device,
+sends a set of read-only commands, and writes their responses to
+`tests/fixtures/captured_responses.py`. The `test_captured_hardware.py` tests then run the
+library's parsing logic against those real captures (these run without a device, since the
+bytes are frozen in the fixture):
+```bash
+python tests/collect_samples.py
+```
+`
 
 ### Collecting device samples
 `tests/collect_samples.py` is a manual helper (not a pytest test) for capturing real
@@ -2355,7 +2390,7 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
     *  None, but see`plotting_scanraw.py` example
 * **CLI Wrapper Usage:**
 * **Notes:** 
-    * **WARNING: the parsing documentation doesn't appear to return data consistent with measurements on the tinySA screen. UNDERGROING TESTING** 
+    * **WARNING: the screen will not match the data output during this function. That is expected.** 
     * "The measured data is the level in dBm and is send as '{' ('x' MSB LSB)*points '}'. To get the dBm level from the 16 bit data, divide by 32 and subtract 128 for the tinySA and 174 for the tinySA Ultra. The option, when present, can be either 0,1,2 or 3 being the sum of 1=unbuffered and 2=continuous." - [https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface](https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface) 
 
   
