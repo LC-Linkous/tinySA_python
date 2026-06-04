@@ -144,10 +144,9 @@ def test_config_sweep_arg_without_value(tsa):
 # --- run_sweep ------------------------------------------------------------
 
 def test_run_sweep_valid(tsa):
+    # FIXED: trailing stray '1' removed from the command string.
     tsa.run_sweep(100e6, 200e6, 250)
-    # NOTE: command string has '2501' -- pts and the trailing '1' are concatenated
-    # with no space in the source. Pinning ACTUAL behavior; see KNOWN BUG note.
-    assert tsa._recorder.last == "sweep 100000000.0 200000000.0 2501\r\n"
+    assert tsa._recorder.last == "sweep 100000000.0 200000000.0 250\r\n"
 
 
 @pytest.mark.parametrize("start,stop", [

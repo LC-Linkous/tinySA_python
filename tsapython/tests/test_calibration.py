@@ -5,7 +5,6 @@ Command-construction tests for the CalibrationMixin.
 Mocked-serial `tsa` fixture; no hardware. Frequency-range checks use the seeded
 minSADeviceFreq / maxSADeviceFreq from the fixture (100kHz .. 12GHz).
 
-Known bugs are pinned with explicit tests and marked KNOWN BUG.
 """
 
 import pytest
@@ -176,11 +175,7 @@ def test_zero_get_with_none(tsa):
     assert tsa._recorder.last == "zero\r\n"
 
 
-def test_get_zero_offset_is_broken_known_bug(tsa):
-    """
-    KNOWN BUG: get_zero_offset() calls self.zero() with no argument, but zero()
-    has a required positional 'val'. So the alias raises TypeError. Pinned so a
-    fix (giving zero() a default, or passing None) is noticed.
-    """
-    with pytest.raises(TypeError):
-        tsa.get_zero_offset()
+def test_get_zero_offset_returns_zero_query(tsa):
+    # FIXED: zero() now defaults val=None and the alias passes it through.
+    tsa.get_zero_offset()
+    assert tsa._recorder.last == "zero\r\n"

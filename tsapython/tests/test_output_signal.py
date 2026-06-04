@@ -4,14 +4,6 @@ Command-construction tests for the OutputSignalMixin.
 
 Mocked-serial `tsa` fixture; no hardware.
 
-This module has several KNOWN BUGS that are pinned below with the actual
-(broken) behavior, so a fix will surface as a failing assertion:
-  * the set_cal_output_* aliases call self.caloutput(...) which doesn't exist
-    (the method is cal_output) -> AttributeError
-  * set_direct_on/off call direct() with one arg, but direct() requires freq
-    -> TypeError
-  * mode() has a stray '+ +' producing a unary-plus on a str -> TypeError
-  * modulation() builds an 'output ...' command instead of 'modulation ...'
 """
 
 import pytest
@@ -34,18 +26,20 @@ def test_cal_output_invalid(tsa):
     assert tsa._recorder.count == 0
 
 
-@pytest.mark.parametrize("method", [
-    "set_cal_output_off", "set_cal_output_30", "set_cal_output_15",
-    "set_cal_output_10", "set_cal_output_4", "set_cal_output_3",
-    "set_cal_output_2", "set_cal_output_1",
+@pytest.mark.parametrize("method,expected", [
+    ("set_cal_output_off", "caloutput off\r\n"),
+    ("set_cal_output_30", "caloutput 30\r\n"),
+    ("set_cal_output_15", "caloutput 15\r\n"),
+    ("set_cal_output_10", "caloutput 10\r\n"),
+    ("set_cal_output_4", "caloutput 4\r\n"),
+    ("set_cal_output_3", "caloutput 3\r\n"),
+    ("set_cal_output_2", "caloutput 2\r\n"),
+    ("set_cal_output_1", "caloutput 1\r\n"),
 ])
-def test_cal_output_aliases_attributeerror_known_bug(tsa, method):
-    """
-    KNOWN BUG: these aliases call self.caloutput(...) but the method is named
-    cal_output. They raise AttributeError. Fix = rename the call to cal_output.
-    """
-    with pytest.raises(AttributeError):
-        getattr(tsa, method)()
+def test_cal_output_aliases(tsa, method, expected):
+    # FIXED: aliases now call cal_output() correctly.
+    getattr(tsa, method)()
+    assert tsa._recorder.last == expected
 
 
 # --- direct: on/off (no freq) vs start/stop (with freq) -------------------
@@ -60,31 +54,28 @@ def test_direct_stop_with_freq(tsa):
     assert tsa._recorder.last == "direct stop 900000000\r\n"
 
 
-@pytest.mark.parametrize("method", ["set_direct_on", "set_direct_off"])
-def test_direct_on_off_aliases_typeerror_known_bug(tsa, method):
-    """
-    KNOWN BUG: set_direct_on/off call direct("on"/"off") but direct() requires
-    a second positional 'freq'. They raise TypeError. Fix = give direct() a
-    default freq=None, or have the aliases pass freq=None.
-    """
-    with pytest.raises(TypeError):
-        getattr(tsa, method)()
+@pytest.mark.parametrize("method,expected", [
+    ("set_direct_on", "direct on\r\n"),
+    ("set_direct_off", "direct off\r\n"),
+])
+def test_direct_on_off_aliases(tsa, method, expected):
+    # FIXED: direct() now defaults freq=None so on/off aliases work.
+    getattr(tsa, method)()
+    assert tsa._recorder.last == expected
 
 
 # --- mode: stray '+ +' makes every call raise -----------------------------
 
-@pytest.mark.parametrize("method", [
-    "set_low_input_mode", "set_low_output_mode",
-    "set_high_input_mode", "set_high_output_mode",
+@pytest.mark.parametrize("method,expected", [
+    ("set_low_input_mode", "mode low input\r\n"),
+    ("set_low_output_mode", "mode low output\r\n"),
+    ("set_high_input_mode", "mode high input\r\n"),
+    ("set_high_output_mode", "mode high output\r\n"),
 ])
-def test_mode_typeerror_known_bug(tsa, method):
-    """
-    KNOWN BUG: mode() builds 'mode '+str(val1)+ + ' '... -- the doubled '+ +'
-    applies a unary plus to a string and raises TypeError. Every mode alias is
-    currently unusable. Fix = remove the extra '+'.
-    """
-    with pytest.raises(TypeError):
-        getattr(tsa, method)()
+def test_mode_aliases(tsa, method, expected):
+    # FIXED: removed the stray '+ +' in mode().
+    getattr(tsa, method)()
+    assert tsa._recorder.last == expected
 
 
 # --- modulation: builds an 'output ...' command (bug) but is reachable ----
@@ -97,13 +88,9 @@ def test_mode_typeerror_known_bug(tsa, method):
     ("set_mod_WFM", "WFM"),
     ("set_mod_extern", "extern"),
 ])
-def test_modulation_aliases_send_output_command_known_bug(tsa, method, val):
-    """
-    KNOWN BUG: modulation() builds 'output '+val instead of 'modulation '+val.
-    Pinned to actual output. Fix = change the command prefix to 'modulation'.
-    """
+def test_modulation_aliases(tsa, method, val):
     getattr(tsa, method)()
-    assert tsa._recorder.last == f"output {val}\r\n"
+    assert tsa._recorder.last == f"modulation {val}\r\n"
 
 
 def test_modulation_invalid(tsa):

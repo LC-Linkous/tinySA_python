@@ -3,8 +3,8 @@
 Command-construction tests for the PresetsConfigMixin.
 
 Mocked-serial `tsa` fixture; no hardware. NOTE: methods like reset/clear_config
-would be destructive on a real device, but here tinySA_serial is replaced by a
-recorder, so these only assert the command string is built correctly -- nothing
+would be destructive to data on a real device, but here tinySA_serial is replaced 
+by a recorder, so these only assert the command string is built correctly -- nothing
 is sent to hardware.
 """
 

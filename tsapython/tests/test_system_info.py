@@ -9,8 +9,6 @@ Several methods here are fixed-string getters (info, version, vbat, ...). For
 those we assert the exact command string. Methods with validation (dac, rbw,
 self_test) get valid + invalid cases.
 
-Known bugs are pinned with explicit tests and marked KNOWN BUG so they are
-tracked rather than silently accepted.
 """
 
 import pytest
@@ -40,14 +38,10 @@ def test_fixed_string_getters(tsa, method, expected):
     assert tsa._recorder.last == expected
 
 
-def test_get_status_is_recursive_known_bug(tsa):
-    """
-    KNOWN BUG: get_status calls self.get_status() instead of self.status(),
-    so it recurses infinitely. Pinned so a fix is noticed. Remove the xfail
-    and assert 'status\\r\\n' once the alias is corrected.
-    """
-    with pytest.raises(RecursionError):
-        tsa.get_status()
+def test_get_status_returns_status(tsa):
+    # FIXED: get_status now calls status().
+    tsa.get_status()
+    assert tsa._recorder.last == "status\r\n"
 
 
 # --- command(): passthrough -----------------------------------------------

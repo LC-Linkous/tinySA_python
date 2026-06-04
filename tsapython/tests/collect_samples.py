@@ -6,9 +6,8 @@ Run this with a tinySA plugged in to capture REAL raw device responses. It
 saves them to tests/fixtures/captured_responses.py, which the parsing tests can
 then use instead of (or alongside) the README-derived samples.
 
-This is NOT a test. It's a manual data-collection utility, to be used with tests,
-or just to collect some data for test development. This replaces what was the 
-roughly written "test_basic.py" before standardizing the project in in June 2026. 
+This is NOT a test. It's a manual data-collection utility, like your existing
+test_basic.py / test_hardware.py demo scripts.
 
 USAGE
 -----
@@ -107,7 +106,12 @@ def main():
     print("Connected. Capturing %d commands...\n" % len(SAFE_COMMANDS))
 
     records = {}
-    for label, method, cmdargs in SAFE_COMMANDS:
+    total = len(SAFE_COMMANDS)
+    for i, (label, method, cmdargs) in enumerate(SAFE_COMMANDS, start=1):
+        # Show which command this iteration is testing.
+        argstr = ", ".join(repr(a) for a in cmdargs) if cmdargs else ""
+        print(f"[{i}/{total}] {label}: {method}({argstr})")
+
         # Build the exact command string the method would send, by intercepting
         # tinySA_serial, then send it ourselves to grab raw+cleaned.
         sent = {}
