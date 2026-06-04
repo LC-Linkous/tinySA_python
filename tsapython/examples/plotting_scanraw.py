@@ -8,7 +8,7 @@
 #   because the number of points taken are not the same, but they 
 #   should be relatively similar values when SCANRAW is decoded
 #
-#   Last update: August 17, 2025
+#   Last update: June 3, 2026
 ##-------------------------------------------------------------------------------\
 
 
@@ -16,9 +16,17 @@
 from tsapython import tinySA
 
 # imports FOR THE EXAMPLE
-import numpy as np
-import matplotlib.pyplot as plt
 import struct
+# This example needs the optional plotting dependencies.
+# Install them with:  pip install "tsapython[plotting]"
+try:
+    import numpy as np
+    import matplotlib.pyplot as plt
+except ImportError as exc:
+    raise SystemExit(
+        "This example requires the plotting extra (numpy and matplotlib). "
+        'Install it with:  pip install "tsapython[plotting]"'
+    ) from exc
 
 def convert_data_to_arrays(start, stop, pts, data):
     # FOR PLOTTING
@@ -30,10 +38,13 @@ def convert_data_to_arrays(start, stop, pts, data):
 
     # As of the Jan. 2024 build in some data returned with SWEEP or SCAN calls there is error data.  
     # https://groups.io/g/tinysa/topic/tinasa_ultra_sweep_command/104194367  
-    # this shows up as "-:.000000e+01".
-    # TEMP fix - replace the colon character with a -10. This puts the 'filled in' points around the noise floor.
-    # more advanced filtering should be applied for actual analysis.
-    data1 =bytearray(data.replace(b"-:.0", b"-10.0"))
+    # this shows up as "-:.000000e+01" (and the unsigned ":.000000e-01" / ":.000000e+01").
+    # The ':' is ASCII 0x3A, one past '9' (0x39): the firmware overflows a single digit
+    # slot, so what should read "10" renders as ":". Both signed AND unsigned forms occur.
+    # TEMP fix - replace the colon form with 10. This puts the 'filled in' points around the
+    # noise floor. More advanced filtering should be applied for actual analysis.
+    # NOTE: order matters -- handle the negative form first, then the bare/unsigned form.
+    data1 =bytearray(data.replace(b"-:.0", b"-10.0").replace(b":.0", b"10.0"))
     
     # get both values in each row returned (for reference)
     #data_arr = [list(map(float, line.split())) for line in data.decode('utf-8').split('\n') if line.strip()] 
@@ -78,7 +89,8 @@ else: # if port found and connected, then complete task(s) and disconnect
     start = int(150e6)   # 150 MHz
     stop = int(500e6)    # 500 MHz
     pts = 450            # for tinySA Ultra
-    outmask = 2     # get measured data (y axis)
+    outmask = 2     # for scan(): get measured data (y axis)
+    unbuf = 1       # for scan_raw(): unbuffered mode (1/2/3), NOT an outmask
     # scan raw call - reads until end of stream
     # this CAN be run in a loop. the limiting factor is time to plot. 
 
@@ -86,7 +98,7 @@ else: # if port found and connected, then complete task(s) and disconnect
     scan_data_bytes = tsa.scan(start, stop, pts, outmask)
 
     # SCAN RAW
-    scanraw_data_bytes = tsa.scan_raw(start, stop, pts, outmask)
+    scanraw_data_bytes = tsa.scan_raw(start, stop, pts, unbuf)
 
     # for subsequent reads, the tinySA does freeze while preforming SCANRAW
     # if there's an error, the screen will stay frozen (for reading).

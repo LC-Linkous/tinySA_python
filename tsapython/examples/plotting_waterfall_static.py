@@ -4,7 +4,7 @@
 #   './examples/plotting_waterfall_1.py'
 #   A waterfall plot example using matplotlib to plot multiple SCAN data over time
 #
-#   Last update: August 17, 2025
+#   Last update: June 3, 2026
 ##-------------------------------------------------------------------------------\
 
 # import tinySA_python (tsapython) package
@@ -12,10 +12,18 @@ from tsapython import tinySA
 
 # imports FOR THE EXAMPLE
 import csv
-import numpy as np
-import matplotlib.pyplot as plt
 import time
 from datetime import datetime
+# This example needs the optional plotting dependencies.
+# Install them with:  pip install "tsapython[plotting]"
+try:
+    import numpy as np
+    import matplotlib.pyplot as plt
+except ImportError as exc:
+    raise SystemExit(
+        "This example requires the plotting extra (numpy and matplotlib). "
+        'Install it with:  pip install "tsapython[plotting]"'
+    ) from exc
 
 def convert_data_to_arrays(start, stop, pts, data):
     # using the start and stop frequencies, and the number of points,
@@ -24,11 +32,14 @@ def convert_data_to_arrays(start, stop, pts, data):
                                                 # for plotting in this example
     # As of the Jan. 2024 build in some data returned with SWEEP or SCAN calls there is error data.  
     # https://groups.io/g/tinysa/topic/tinasa_ultra_sweep_command/104194367  
-    # this shows up as "-:.000000e+01".
-    # TEMP fix - replace the colon character with a -10. This puts the 'filled in' points around the noise floor.
-    # more advanced filtering should be applied for actual analysis.
+    # this shows up as "-:.000000e+01" (and the unsigned ":.000000e-01" / ":.000000e+01").
+    # The ':' is ASCII 0x3A, one past '9' (0x39): the firmware overflows a single digit
+    # slot, so what should read "10" renders as ":". Both signed AND unsigned forms occur.
+    # TEMP fix - replace the colon form with 10. This puts the 'filled in' points around the
+    # noise floor. More advanced filtering should be applied for actual analysis.
+    # NOTE: order matters -- handle the negative form first, then the bare/unsigned form.
    
-    data1 = bytearray(data.replace(b"-:.0", b"-10.0"))
+    data1 = bytearray(data.replace(b"-:.0", b"-10.0").replace(b":.0", b"10.0"))
    
     # get both values in each row returned (for reference)
     #data_arr = [list(map(float, line.split())) for line in data.decode('utf-8').split('\n') if line.strip()]
