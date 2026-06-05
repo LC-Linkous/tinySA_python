@@ -3,6 +3,7 @@ name: Publish to PyPI
 on:
   release:
     types: [published]
+  workflow_dispatch:        # allows manual runs from the Actions tab
 
 jobs:
   build:
@@ -25,7 +26,7 @@ jobs:
   publish:
     needs: build
     runs-on: ubuntu-latest
-    environment: pypi          # must match the environment in your PyPI publisher config
+    environment: pypi          # must match the environment in PyPI publisher config
     permissions:
       id-token: write          # REQUIRED for trusted publishing (OIDC)
     steps:
