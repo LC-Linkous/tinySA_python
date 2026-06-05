@@ -13,7 +13,20 @@
 #   loop cadence is limited by the device sweep time (~150-200 ms/frame on a
 #   tinySA Ultra for small point counts).
 #
+#   PLOTTING ARCHITECTURE:
+#   Acquisition runs in a BACKGROUND THREAD and hands frames to the main thread
+#   through a queue; matplotlib's FuncAnimation draws on the GUI event loop. This
+#   keeps the window responsive (a tight manual loop with plt.pause() starves the
+#   GUI event loop, so the window stops rendering and controls stop responding).
+#   This mirrors the pattern in plotting_waterfall_realtime.py.
+#
+#   NOTE: the device screen does not update while scanraw runs -- scanraw is a
+#   data-acquisition mode, not a display mode. A frozen device screen during this
+#   example is expected, not a hang.
+#
 #   Close the plot window (or Ctrl+C) to stop.
+#
+#   NOTE: if scanning is slow, check your device's RBW setting. 'auto' works best
 #
 #   HARDWARE REQUIRED. Needs the plotting extra:
 #       pip install "tsapython[plotting]"
@@ -26,11 +39,15 @@ from tsapython import tinySA
 
 # imports FOR THE EXAMPLE
 import struct
+import time
+import threading
+import queue
 # This example needs the optional plotting dependencies.
 # Install them with:  pip install "tsapython[plotting]"
 try:
     import numpy as np
     import matplotlib.pyplot as plt
+    import matplotlib.animation as animation
 except ImportError as exc:
     raise SystemExit(
         "This example requires the plotting extra (numpy and matplotlib). "
@@ -55,8 +72,55 @@ def decode_scanraw(frame_bytes, pts):
     return samples / 32 - SCALE_FACTOR     # dBm
 
 
+class LiveScanrawPlotter:
+    def __init__(self, tsa, start, stop, pts, unbuf=1):
+        self.tsa = tsa
+        self.start = start
+        self.stop = stop
+        self.pts = pts
+        self.unbuf = unbuf
+        self.freq_arr = np.linspace(start, stop, pts)
+        self.data_queue = queue.Queue()
+        self.running = False
+        self.thread = None
+
+    def _acquire(self):
+        # background thread: loop scan_raw, decode, hand the latest frame off
+        while self.running:
+            try:
+                frame = self.tsa.scan_raw(self.start, self.stop, self.pts, self.unbuf)
+                dbm = decode_scanraw(frame, self.pts)
+                if dbm is not None:
+                    self.data_queue.put(dbm)
+            except Exception as e:
+                print(f"acquisition error: {e}")
+                time.sleep(0.15)
+
+    def start_acquisition(self):
+        self.running = True
+        self.thread = threading.Thread(target=self._acquire, daemon=True)
+        self.thread.start()
+
+    def stop_acquisition(self):
+        self.running = False
+        if self.thread:
+            self.thread.join(timeout=1.0)
+
+    def update(self, frame, line, ax):
+        # main thread: drain to the most recent frame and draw it
+        latest = None
+        while not self.data_queue.empty():
+            try:
+                latest = self.data_queue.get_nowait()
+            except queue.Empty:
+                break
+        if latest is not None:
+            line.set_ydata(latest)
+            ax.set_ylim(np.min(latest) - 5, np.max(latest) + 5)
+        return (line,)
+
+
 def main():
-    # create a new tinySA object
     tsa = tinySA()
     tsa.set_verbose(False)            # quiet: we loop a lot
     tsa.set_error_byte_return(True)
@@ -68,16 +132,14 @@ def main():
 
     # scan parameters
     start = int(150e6)   # 150 MHz
-    stop = int(500e6)    # 500 MHz
+    stop = int(400e6)    # 400 MHz
     pts = 290            # within the device's per-sweep resolution
     unbuf = 1            # scanraw mode bit: 1 = unbuffered (single frame per call)
 
-    freq_arr = np.linspace(start, stop, pts)
+    plotter = LiveScanrawPlotter(tsa, start, stop, pts, unbuf)
 
-    # set up an interactive line plot we update in place
-    plt.ion()
     fig, ax = plt.subplots(figsize=(11, 6))
-    (line,) = ax.plot(freq_arr / 1e9, np.full(pts, -120.0), lw=1.2)
+    (line,) = ax.plot(plotter.freq_arr / 1e9, np.full(pts, -120.0), lw=1.2)
     ax.set_xlabel("Frequency (GHz)")
     ax.set_ylabel("Power (dBm)")
     ax.set_title("tinySA continuous SCANRAW (looped) - close window to stop")
@@ -85,23 +147,21 @@ def main():
     ax.set_ylim(-120, 0)
 
     print("Live scanning. Close the plot window to stop.")
+    plotter.start_acquisition()
+
+    # FuncAnimation drives redraws on the GUI event loop, keeping the window
+    # responsive. interval is the redraw period in ms; acquisition runs
+    # independently in the background thread.
+    ani = animation.FuncAnimation(
+        fig, plotter.update, fargs=(line, ax),
+        interval=200, blit=False, cache_frame_data=False)
+
     try:
-        # loop until the window is closed
-        while plt.fignum_exists(fig.number):
-            frame = tsa.scan_raw(start, stop, pts, unbuf)
-            dbm = decode_scanraw(frame, pts)
-            if dbm is None:
-                # incomplete frame this round; skip and try again
-                continue
-            line.set_ydata(dbm)
-            # rescale y to the data with a little headroom
-            ax.set_ylim(np.min(dbm) - 5, np.max(dbm) + 5)
-            fig.canvas.draw_idle()
-            plt.pause(0.01)   # let the GUI process events
+        plt.show()   # blocks until the window is closed
     except KeyboardInterrupt:
         print("\nStopped by user.")
     finally:
-        # leave the device sweeping and release the port
+        plotter.stop_acquisition()
         tsa.resume()
         tsa.disconnect()
         print("Disconnected.")

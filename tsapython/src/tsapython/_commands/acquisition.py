@@ -151,7 +151,7 @@ class AcquisitionMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def continious_scanraw(self, start, stop, pts=250, unbuf=1, count=None):
+    def continuous_scanraw(self, start, stop, pts=250, unbuf=1, count=None):
         # Continuous SCANRAW acquisition.
         #
         # The tinySA returns exactly ONE binary frame per scanraw call (it does
@@ -161,10 +161,10 @@ class AcquisitionMixin:
         # frame per iteration so the caller can decode/plot/store as they go.
         #
         # usage:
-        #     for frame in tsa.continious_scanraw(start, stop, pts):
+        #     for frame in tsa.continuous_scanraw(start, stop, pts):
         #         ...process frame...           # runs until you break
         #
-        #     for frame in tsa.continious_scanraw(start, stop, pts, count=10):
+        #     for frame in tsa.continuous_scanraw(start, stop, pts, count=10):
         #         ...process frame...           # stops after 10 frames
         #
         # Each yielded value is the raw bytes from scan_raw() for that sweep
@@ -177,10 +177,10 @@ class AcquisitionMixin:
         # validate once up front (same checks as scan_raw) so a bad call fails
         # immediately rather than on the first iteration.
         if not ((0 <= start) and (start < stop) and (pts <= self.maxPoints)):
-            self.print_message("ERROR: continious_scanraw takes START STOP PTS UNBUF; check limits")
+            self.print_message("ERROR: continuous_scanraw takes START STOP PTS UNBUF; check limits")
             return
         if unbuf not in (1, 2, 3):
-            self.print_message("ERROR: unrecognized UNBUF for continious_scanraw")
+            self.print_message("ERROR: unrecognized UNBUF for continuous_scanraw")
             return
 
         emitted = 0

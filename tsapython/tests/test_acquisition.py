@@ -185,3 +185,39 @@ def test_trigger_level(tsa):
 def test_trigger_invalid(tsa):
     tsa.trigger("sometimes")
     assert tsa._recorder.count == 0
+
+
+# --- continuous_scanraw: generator that loops scan_raw -------------------
+
+def test_continuous_scanraw_is_generator(tsa):
+    import inspect
+    from tsapython import tinySA
+    assert inspect.isgeneratorfunction(tinySA.continuous_scanraw)
+
+
+def test_continuous_scanraw_count(tsa, monkeypatch):
+    # mock scan_raw so we don't need a device; count limits the yields
+    calls = []
+    def fake(start, stop, pts, unbuf):
+        calls.append((start, stop, pts, unbuf))
+        return bytearray(b'{' + b'\x00' * (3 * pts))
+    tsa.scan_raw = fake
+    frames = list(tsa.continuous_scanraw(150_000_000, 200_000_000, 5, 1, count=3))
+    assert len(frames) == 3
+    assert len(calls) == 3
+    assert all(len(f) == 1 + 3 * 5 for f in frames)
+
+
+def test_continuous_scanraw_bad_args_yields_nothing(tsa):
+    # start >= stop -> generator returns immediately, no frames
+    assert list(tsa.continuous_scanraw(200_000_000, 100_000_000, 5, 1, count=3)) == []
+    # bad unbuf -> nothing
+    assert list(tsa.continuous_scanraw(150_000_000, 200_000_000, 5, 9, count=3)) == []
+
+
+def test_continuous_scanraw_indefinite(tsa):
+    import itertools
+    tsa.scan_raw = lambda *a: bytearray(b'{' + b'\x00' * 15)
+    # no count -> runs forever; islice proves it keeps going
+    some = list(itertools.islice(tsa.continuous_scanraw(150_000_000, 200_000_000, 5, 1), 4))
+    assert len(some) == 4
