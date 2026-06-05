@@ -151,8 +151,43 @@ class AcquisitionMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def continious_scanraw(self):
-        pass # the continious scan might need to be handled differently
+    def continious_scanraw(self, start, stop, pts=250, unbuf=1, count=None):
+        # Continuous SCANRAW acquisition.
+        #
+        # The tinySA returns exactly ONE binary frame per scanraw call (it does
+        # not open an unbounded multi-frame stream over USB, even with the
+        # 'continuous' bit set in unbuf). So continuous acquisition is done by
+        # calling scan_raw() repeatedly. This is a GENERATOR: it yields one raw
+        # frame per iteration so the caller can decode/plot/store as they go.
+        #
+        # usage:
+        #     for frame in tsa.continious_scanraw(start, stop, pts):
+        #         ...process frame...           # runs until you break
+        #
+        #     for frame in tsa.continious_scanraw(start, stop, pts, count=10):
+        #         ...process frame...           # stops after 10 frames
+        #
+        # Each yielded value is the raw bytes from scan_raw() for that sweep
+        # ('{' + 3*pts data bytes). Decode like the scanraw examples (skip the
+        # leading '{', struct.unpack '<' + 'xH'*pts, then /32 - SCALE for dBm).
+        #
+        # count: number of frames to yield. None = run indefinitely (break out
+        #        of the loop, or stop iterating, to end).
+
+        # validate once up front (same checks as scan_raw) so a bad call fails
+        # immediately rather than on the first iteration.
+        if not ((0 <= start) and (start < stop) and (pts <= self.maxPoints)):
+            self.print_message("ERROR: continious_scanraw takes START STOP PTS UNBUF; check limits")
+            return
+        if unbuf not in (1, 2, 3):
+            self.print_message("ERROR: unrecognized UNBUF for continious_scanraw")
+            return
+
+        emitted = 0
+        while (count is None) or (emitted < count):
+            frame = self.scan_raw(start, stop, pts, unbuf)
+            yield frame
+            emitted += 1
 
     def config_sweep(self, argName=None, val=None): 
             # split call for SWEEP

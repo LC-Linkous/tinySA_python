@@ -409,36 +409,6 @@ class tinySA(
                 self.print_message("ERROR: streaming frame start '{' not found")
                 return self.error_byte_return()
             return bytearray(buffer[start:])
-    def read_until_end_marker(self, end_marker=b'}', timeout=10.0):
-        # scan and scan raw might return early with tinySA_serial
-        # so this is written to 
-        import time
-        
-        buffer = bytes()
-        start_time = time.time()
-        
-        while True:
-            if self.ser.in_waiting > 0:
-                buffer += self.ser.read(self.ser.in_waiting)
-                
-                # Check if we have the end marker
-                if end_marker in buffer:
-                    # Find the position after the end marker
-                    end_pos = buffer.find(end_marker) + len(end_marker)
-                    complete = buffer[:end_pos]
-                    # Keep any remaining data for next read
-                    self.remaining_buffer = buffer[end_pos:]
-                    return bytearray(complete)
-            
-            # Timeout check
-            if time.time() - start_time > timeout:
-                self.print_message(f"WARNING: Timeout waiting for end marker {end_marker}")
-                break
-            
-            time.sleep(0.01)
-        
-        return bytearray(buffer)
-
     def clean_return(self, data):
         # takes in a bytearray and removes 1) the text up to the first '\r\n' (includes the command), an 2) the ending 'ch>'
         # Find the first occurrence of \r\n (carriage return + newline)

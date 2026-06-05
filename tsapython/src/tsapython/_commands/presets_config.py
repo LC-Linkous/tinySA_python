@@ -73,8 +73,17 @@ class PresetsConfigMixin:
 
     def clear_and_reset(self):
         # alias function for full clear and reset process
+        # NOTE: reset() disconnects the serial immediately, so it may raise a
+        # SerialException or return nothing usable. We clear first, then reset,
+        # and tolerate the disconnect rather than depending on a clean return.
+        # Returns the reset response if one comes back before the port drops,
+        # otherwise None. Callers should NOT block waiting on this return.
         self.clear_config()
-        self.reset()
+        try:
+            return self.reset()
+        except Exception as err:  # serial drops on reset; expected
+            self.print_message("reset() disconnected the serial (expected): " + str(err))
+            return None
 
     def device_id(self, ID=None):
         # sets or dumps a user settable number that can be used to identify a specific tinySA

@@ -75,10 +75,16 @@ class OutputSignalMixin:
             msgbytes = self.tinySA_serial(writebyte, printBool=False)     
             self.print_message("direct() set with " + str(val))
         elif (str(val)=="start") or (str(val)=="stop"):
-            #TODO: add frequency checking here
-            writebyte = 'direct '+str(val)+' ' +str(freq)+ '\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)     
-            self.print_message("direct() set with " + str(val) + "frequency of " + str(freq))            
+            # freq must be a positive number. No upper bound is enforced: the
+            # valid range is model-dependent (varies across tinySA variants),
+            # so the device itself rejects out-of-range values.
+            if (isinstance(freq, (int, float))) and (freq > 0):
+                writebyte = 'direct '+str(val)+' ' +str(freq)+ '\r\n'
+                msgbytes = self.tinySA_serial(writebyte, printBool=False)     
+                self.print_message("direct() set with " + str(val) + " frequency of " + str(freq))            
+            else:
+                self.print_message("ERROR: direct() start/stop requires freq as a positive number")
+                msgbytes = self.error_byte_return()
         else:
             self.print_message("ERROR: direct() takes val={'on', 'off', 'start', 'stop'}, freq=INT")
             msgbytes = self.error_byte_return()

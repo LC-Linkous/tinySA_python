@@ -22,7 +22,6 @@ class SystemInfoMixin:
         self.print_message("command() called with ::" + str(val))
         return msgbytes   
 
-        #TODO ADD the CORRECTION setter shortcuts here.     
 
     def dac(self, val=None):
         # sets or dumps the dac value
