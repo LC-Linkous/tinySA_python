@@ -54,6 +54,7 @@ Zenodo archive with DOI: [https://doi.org/10.5281/zenodo.20546764](https://doi.o
         * [Example 3: Plot using SCAN and SCANRAW Data and Calculated Frequencies](#example-3-plot-using-scan-and-scanraw-data-and-calculated-frequencies)
         * [Example 4: Plot using SCAN And Filters for Artifact Comparison](#example-4-plot-using-scan-and-filters-for-artifact-comparison)
         * [Example 5: Plot a Waterfall using SCAN and Calculated Frequencies](#example-5-plot-a-waterfall-using-scan-and-calculated-frequencies)
+        * [Example 6: Finding Peaks in a Frequency Range](#example-6-finding-peaks-in-a-frequency-range)
     * [Saving SCAN Data to CSV](#saving-scan-data-to-csv)
     * [Accessing the tinySA Directly](#accessing-the-tinysa-directly)
 * [List of tinySA Commands and their Library Commands](#list-of-tinysa-commands-and-their-library-commands)
@@ -1671,6 +1672,20 @@ if __name__ == "__main__":
    <p align="center">Realtime Waterfall Plot for SCAN Data</p>
 
 
+#### **Example 6: Finding Peaks in a Frequency Range**
+
+Locating the strongest signal in a span is a common task, and this example (`examples/find_peaks.py`) shows two ways to do it.
+
+The first uses the device's built-in marker peak: `marker_peak(1)` activates marker 1 and parks it on the strongest signal the device sees, returning the marker information. This is the quickest way to find the single largest peak, since the hardware does the work.
+
+The second computes peaks from `scan()` data in Python, which lets you find *multiple* peaks rather than just the strongest one. After collecting the scan, the example walks the data to pick out the top several peaks, blanking a small window around each one it finds so the same signal's shoulder isn't reported twice. The found peaks are printed with their frequencies and power levels, and marked on a plot of the spectrum.
+
+Use the device marker peak when you just need the single strongest signal; use the Python approach when you want to catalog several signals across the span at once. The example also applies the same `:`-artifact handling described in the scan examples above, so malformed firmware values don't skew the results.
+
+<p align="center">
+        <img src="media/example7_find_peaks.png" alt="Top 3 peaks of a signal read" height="350">
+</p>
+   <p align="center">Top 3 Peaks in a Frequency Range</p>
 
 
 
