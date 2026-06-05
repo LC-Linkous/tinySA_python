@@ -15,18 +15,18 @@ jobs:
         uses: astral-sh/setup-uv@v5
 
       - name: Build package
-        run: uv build
+        run: uv build tsapython          # project lives in the tsapython/ subdirectory
 
       - name: Store distributions
         uses: actions/upload-artifact@v4
         with:
           name: dist
-          path: dist/
+          path: tsapython/dist/          # uv writes dist/ inside the project dir
 
   publish:
     needs: build
     runs-on: ubuntu-latest
-    environment: pypi          # must match the environment in PyPI publisher config
+    environment: pypi          # must match the environment in your PyPI publisher config
     permissions:
       id-token: write          # REQUIRED for trusted publishing (OIDC)
     steps:
