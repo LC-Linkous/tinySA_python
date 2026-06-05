@@ -937,7 +937,7 @@ else: # if port found and connected, then complete task(s) and disconnect
 
 #### **Example 3: Plot using SCAN and SCANRAW Data and Calculated Frequencies**
 
-This example uses `scan()` and `scanraw()` to take a data measurement of data that DOES NOT need to been on the screen, unlike **Example 1** above. Then, the frequencies on the x-axis are calculated between the `start` and `stop` frequencies using the `number of points`. This is done because `frequencies()` would have the values of the last scan, which are connected to `RBW` and not the `number of points`.  The following example shows several filters that can be used.
+This example uses `scan()` and `scanraw()` to take a data measurement of data that DOES NOT need to been on the screen, unlike **Example 1** above. Then, the frequencies on the x-axis are calculated between the `start` and `stop` frequencies using the `number of points`. This is done because `frequencies()` would have the values of the last scan, which are connected to `RBW` and not the `number of points`.  The following example shows several filters that can be used. If scanning is slow, check your device's RBW setting; 'auto' works best.
 
 Extra processing needs to be done to get `dBm power` from `scanraw()`.
 
