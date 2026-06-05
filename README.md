@@ -138,14 +138,16 @@ Use 'pip install -r requirements.txt' to install the following dependencies:
 pyserial
 numpy
 ```
-The above dependencies are only for the API interfacing of the tinySA_python library. Additional dependencies should be installed if you are following the examples in this README. These can be installed with 'pip install -r test_requirements.txt':
+The above dependencies are only for the API interfacing of the tinySA_python library. Additional dependencies should be installed if you are following the examples in this README. These can be installed with `pip install -r test_requirements.txt`:
 ```python
 pyserial
 numpy
 matplotlib
-pyQt5
+pyQt5   # Linux OS, some Windows machines
 ```
+
 For anyone unfamiliar with using requirements files, or having issues with the libraries, these can also be installed manually in the terminal (we recommend a Python virtual environment) with:
+
 ```python
 pip install pyserial numpy matplotlib pyQt5
 ```
@@ -344,7 +346,7 @@ bytes are frozen in the fixture):
 ```bash
 python tests/collect_samples.py
 ```
-`
+
 
 ### Collecting device samples
 `tests/collect_samples.py` is a manual helper (not a pytest test) for capturing real
