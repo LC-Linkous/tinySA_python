@@ -1,5 +1,15 @@
-
 # tinySA_python
+
+<!-- Badges. Note on the DOI: 10.5281/zenodo.20546764 is the first-deposit DOI. -->
+ 
+[![PyPI version](https://badge.fury.io/py/tsapython.svg)](https://badge.fury.io/py/tsapython)
+[![Python versions](https://img.shields.io/pypi/pyversions/tsapython.svg)](https://pypi.org/project/tsapython/)
+[![PyPI - Wheel](https://img.shields.io/pypi/wheel/tsapython.svg)](https://pypi.org/project/tsapython/)
+[![Downloads](https://static.pepy.tech/badge/tsapython)](https://pepy.tech/project/tsapython)
+[![License: GPL v2](https://img.shields.io/badge/License-GPL_v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20546764.svg)](https://doi.org/10.5281/zenodo.20546764)
+
+
 ## AN UNOFFICIAL Python API for the tinySA Device Series
 
 A Non-GUI Python API for the tinySA series of devices. This repository uses official resources and documentation but is NOT endorsed by the official tinySA product or company. See the [references](#references) section for further reading. See the [official tinySA resources](https://www.tinysa.org/wiki/) for device features.
@@ -11,16 +21,17 @@ This README provides example code for connecting to the device, scanning and plo
 If you are interested in developing the PyPI package, or making a custom local version, see [Library Development](#library-development) towards the end of this README.
 
 
-The primary GitHub: https://github.com/LC-Linkous/tinySA_python
+The primary GitHub: [https://github.com/LC-Linkous/tinySA_python](https://github.com/LC-Linkous/tinySA_python)
 
-The PyPI page: https://pypi.org/project/tsapython/
+The PyPI page: [https://pypi.org/project/tsapython/](https://pypi.org/project/tsapython/)
 
+Zenodo archive with DOI: [https://doi.org/10.5281/zenodo.20546764](https://doi.org/10.5281/zenodo.20546764)
 
 ## Table of Contents
 * [The tinySA Series of Devices](#the-tinysa-series-of-devices)
 * [Library Usage](#library-usage)
     * [PyPI Install](#pypi-install)
-    * [Local Install Using UV](#local-install-using-uvl)
+    * [Local Install Using UV](#local-install-using-uv)
 * [Requirements](#requirements)
 * [Structure](#structure)
 * [Running Tests](#running-tests)
@@ -41,7 +52,9 @@ The PyPI page: https://pypi.org/project/tsapython/
         * [Example 1: Plot using On-Screen Trace Data and Frequencies](#example-1-plot-using-on-screen-trace-data-and-frequencies)
         * [Example 2: Plot using Scan Data and Frequencies](#example-2-plot-using-scan-data-and-frequencies)
         * [Example 3: Plot using SCAN and SCANRAW Data and Calculated Frequencies](#example-3-plot-using-scan-and-scanraw-data-and-calculated-frequencies)
-        * [Example 4: Plot a Waterfall using SCAN and Calculated Frequencies](#example-4-plot-a-waterfall-using-scan-and-calculated-frequencies)
+        * [Example 4: Plot using SCAN And Filters for Artifact Comparison](#example-4-plot-using-scan-and-filters-for-artifact-comparison)
+        * [Example 5: Plot a Waterfall using SCAN and Calculated Frequencies](#example-5-plot-a-waterfall-using-scan-and-calculated-frequencies)
+        * [Example 6: Finding Peaks in a Frequency Range](#example-6-finding-peaks-in-a-frequency-range)
     * [Saving SCAN Data to CSV](#saving-scan-data-to-csv)
     * [Accessing the tinySA Directly](#accessing-the-tinysa-directly)
 * [List of tinySA Commands and their Library Commands](#list-of-tinysa-commands-and-their-library-commands)
@@ -83,7 +96,7 @@ Several usage examples are provided in the [Example Implementations](#example-im
 ### PyPI Install
 
 
-The `tsapython` package (from PyPI at [https://pypi.org/project/tsapython/2.0.0/](https://pypi.org/project/tsapython/2.0.0/))  can be installed with:
+The `tsapython` package (from PyPI at [https://pypi.org/project/tsapython/3.0.0/](https://pypi.org/project/tsapython/3.0.0/))  can be installed with:
 
 ```python
 
@@ -115,49 +128,62 @@ cd .\tsapython
 uv build
 
 # install the package locally
-pip install dist/tsapython-2.0.0-py3-none-any.whl
+pip install dist/tsapython-3.0.0-py3-none-any.whl
 
 ```
 
 ## Requirements
-
-This project requires numpy, pandas and pyserial. 
-
+This project requires numpy and pyserial. 
 Use 'pip install -r requirements.txt' to install the following dependencies:
-
 ```python
 pyserial
 numpy
-pandas
-
 ```
-
-The above dependencies are only for the API interfacing of the tinySA_python library. Additional dependencies should be installed if you are following the examples in this README. These can be installed with 'pip install -r test_requirements.txt':
-
+The above dependencies are only for the API interfacing of the tinySA_python library. Additional dependencies should be installed if you are following the examples in this README. These can be installed with `pip install -r test_requirements.txt`:
 ```python
 pyserial
 numpy
-pandas
 matplotlib
-pillow
-pyQt5
+pyQt5   # Linux OS, some Windows machines
 ```
 
 For anyone unfamiliar with using requirements files, or having issues with the libraries, these can also be installed manually in the terminal (we recommend a Python virtual environment) with:
 
 ```python
-pip install pyserial numpy pandas matplotlib pillow pyQt5
+pip install pyserial numpy matplotlib pyQt5
+```
+`pyQt5` is used with `matplotlib` to draw the figures. It needs to be installed on Linux systems to follow the examples included in tinySA_python, but is not needed on all Windows machines.
+
+If you are installing the package itself (rather than the loose requirements files), the same optional dependencies are available as extras defined in `pyproject.toml`:
+```python
+# library only (numpy + pyserial)
+pip install tsapython
+
+# library + plotting dependencies for the examples
+pip install "tsapython[plotting]"
+
+# development / running the test suite
+pip install -e ".[test]"
 ```
 
-`pyQt5` is used with `matplotlib` to draw the figures. It needs to be installed on Linux systems to follow the examples included in tinySA_python, but is not needed on all Windows machines.
+## Previous Versions
+
+Release history and archived versions of this library are available in a few places:
+
+- **GitHub Releases** — tagged releases with source and notes:
+  [https://github.com/LC-Linkous/tinySA_python/releases](https://github.com/LC-Linkous/tinySA_python/releases)
+  (the 3.0.0 release: [releases/tag/v3.0.0](https://github.com/LC-Linkous/tinySA_python/releases/tag/v3.0.0))
+- **PyPI release history** — every published version, installable with
+  `pip install tsapython==<version>`:
+  [https://pypi.org/project/tsapython/#history](https://pypi.org/project/tsapython/#history)
+- **Zenodo archive** — a citable, archived snapshot with a DOI:
+  [https://doi.org/10.5281/zenodo.20546764](https://doi.org/10.5281/zenodo.20546764)
+  (DOI `10.5281/zenodo.20546764`)
 
 
 ## Structure
-
-The `tsapython` library, as it is available on PyPI is structured as follows:
-
-```python
-
+The `tsapython` library, as it is available on PyPI, is structured as follows:
+```
 tsapython/
 ├── .python-version
 ├── pyproject.toml
@@ -168,74 +194,182 @@ tsapython/
 │   └── tsapython/
 │       ├── __init__.py
 │       ├── core.py
-│       └── py.typed
+│       ├── py.typed
+│       └── _commands/
+│           ├── __init__.py
+│           ├── acquisition.py
+│           ├── calibration.py
+│           ├── display_ui.py
+│           ├── levels_gain.py
+│           ├── markers_traces.py
+│           ├── output_signal.py
+│           ├── presets_config.py
+│           └── system_info.py
 └── tests/
     ├── __init__.py
-    ├── run_all_tests.py
-    ├── test_basic.py
-    ├── test_example_workflow.py
-    └── test_hardware.py
+    ├── conftest.py
+    ├── test_smoke.py
+    ├── test_acquisition.py
+    ├── test_calibration.py
+    ├── test_display_ui.py
+    ├── test_levels_gain.py
+    ├── test_markers_traces.py
+    ├── test_output_signal.py
+    ├── test_presets_config.py
+    ├── test_system_info.py
+    ├── test_parsing.py
+    ├── test_hardware.py
+    ├── test_captured_hardware.py
+    ├── collect_samples.py
+    └── fixtures/
+        ├── __init__.py
+        ├── device_responses.py
+        └── captured_responses.py
 ```
+
+The public API is unchanged: `from tsapython import tinySA` still exposes the full `tinySA` class. The per-command methods now live in mixin modules under `_commands/` and are composed onto the `tinySA` class in `core.py`, which keeps the shared state, serial handling, and helper methods.
 
 A `docs` repository for the library will be added later in development for stable releases.
 
-This library is also part of the `tinySA_python` repository, which includes more extensive documentation and the working development. The GitHub repository is structured as follows:
-
-```python
-
+This library is also part of the `tinySA_python` repository, which includes more extensive documentation, runnable examples, and the working development. The GitHub repository is structured as follows:
+```
 tinySA_python/
-├── README
+├── README.md
 ├── requirements.txt
 ├── test_requirements.txt
 ├── media/
 │   └── README images, screenshots
-└──tsapython/
+└── tsapython/
     ├── .python-version
     ├── pyproject.toml
     ├── README.md
     ├── LICENSE
     ├── .gitignore
-    ├──  examples/
+    ├── examples/
     │   ├── __init__.py
+    │   ├── complete_workflow.py
+    │   ├── hardware_walkthrough.py
     │   ├── identifying_serial_ports.py
+    │   ├── using_autoconnect.py
+    │   ├── using_command_func.py
     │   ├── plotting_scan.py
     │   ├── plotting_scanraw.py
     │   ├── plotting_waterfall_realtime.py
+    │   ├── plotting_waterfall_static.py
     │   ├── save_scan_csv.py
-    │   ├── using_autoconnect.py
-    │   └── using_command_func.py
+    │   ├── continuous_scanraw_live.py
+    │   └── continuous_scanraw_collect.py
     ├── src/
     │   └── tsapython/
     │       ├── __init__.py
     │       ├── core.py
-    │       └── py.typed
+    │       ├── py.typed
+    │       └── _commands/
+    │           ├── __init__.py
+    │           ├── acquisition.py
+    │           ├── calibration.py
+    │           ├── display_ui.py
+    │           ├── levels_gain.py
+    │           ├── markers_traces.py
+    │           ├── output_signal.py
+    │           ├── presets_config.py
+    │           └── system_info.py
     └── tests/
         ├── __init__.py
-        ├── run_all_tests.py
-        ├── test_basic.py
-        ├── test_example_workflow.py
-        └── test_hardware.py
-
+        ├── conftest.py
+        ├── test_smoke.py
+        ├── test_acquisition.py
+        ├── test_calibration.py
+        ├── test_display_ui.py
+        ├── test_levels_gain.py
+        ├── test_markers_traces.py
+        ├── test_output_signal.py
+        ├── test_presets_config.py
+        ├── test_system_info.py
+        ├── test_parsing.py
+        ├── test_hardware.py
+        ├── test_captured_hardware.py
+        ├── collect_samples.py
+        └── fixtures/
+            ├── __init__.py
+            ├── device_responses.py
+            └── captured_responses.py
 ```
-
 
 ## Running Tests
 
-Tests should be run from the root `tsapython` directory.
+This is primarily for development or advanced troubleshooting. These tests are for the API.
 
-```python
-# Run individual test files
-uv run python tests/test_basic.py
-uv run python tests/test_hardware.py  
-uv run python tests/example_workflow.py
+The test suite uses [pytest](https://docs.pytest.org/). Tests must be run from the
+`tsapython` project directory (the one containing `pyproject.toml`), since the pytest
+configuration and the `hardware` marker are defined in `pyproject.toml`. Running from a
+different directory will produce an `Unknown pytest.mark.hardware` warning.
 
-# Run all tests together
-uv run python tests/run_all_tests.py
-
-# Or run directly if you have Python in PATH
-python tests/test_basic.py
-python tests/run_all_tests.py
+Install the test dependencies first:
+```bash
+pip install -e ".[test]"
+# or, using the requirements file:
+pip install pytest pytest-cov
 ```
+
+Run the suite (hardware tests self-skip when no device is connected):
+```bash
+python -m pytest
+```
+
+> **Note:** use `python -m pytest`, not `uv run pytest`. Running through `uv` here can
+> create a stray virtual environment inside the project directory and tangle the test
+> environment.
+
+The suite is split into hardware-free tests and tests that need a connected tinySA.
+The hardware tests are marked with `@pytest.mark.hardware` and are skipped automatically
+when no device is detected:
+```bash
+# run ONLY the hardware-free tests (explicitly skip device tests)
+python -m pytest -m "not hardware"
+
+# run ONLY the hardware tests (requires a connected tinySA)
+python -m pytest -m hardware
+```
+
+To see coverage while testing:
+```bash
+python -m pytest --cov=tsapython --cov-report=term-missing
+```
+
+### Capturing real device responses
+
+`tests/collect_samples.py` is a helper (not a pytest test) that connects to a real device,
+sends a set of read-only commands, and writes their responses to
+`tests/fixtures/captured_responses.py`. The `test_captured_hardware.py` tests then run the
+library's parsing logic against those real captures (these run without a device, since the
+bytes are frozen in the fixture):
+```bash
+python tests/collect_samples.py
+```
+
+
+### Collecting device samples
+`tests/collect_samples.py` is a manual helper (not a pytest test) for capturing real
+device responses to use as parsing fixtures. Run it with a tinySA connected:
+```python
+# auto-detect the serial port
+python tests/collect_samples.py
+
+# or specify the port explicitly
+python tests/collect_samples.py --port COM5            # Windows
+python tests/collect_samples.py --port /dev/ttyACM0    # Linux/Mac
+```
+
+### Example scripts
+The files in `examples/` are runnable demonstrations (not part of the automated test
+suite) and require a connected device plus the plotting dependencies:
+```python
+pip install "tsapython[plotting]"     # or: pip install -r test_requirements.txt
+python examples/complete_workflow.py
+python examples/hardware_walkthrough.py
+```
+
 
 ## Error Handling
 
@@ -469,11 +603,17 @@ tsa.tinySA_help()
 All three return a bytearray in the format `bytearray(b'commands:......')`
 
 ### Setting tinySA Parameters
-TODO when error checking is complete to show multiple examples
+
+Most device parameters are set through their corresponding library functions, documented in the [List of tinySA Commands and their Library Commands](#list-of-tinysa-commands-and-their-library-commands) section below. Each setter follows the same pattern: call the function with the desired value, and the library formats and sends the command. For example:
 
 ```python
-
+tsa.rbw(100)              # set resolution bandwidth to 100 kHz
+tsa.set_sweep_center(96500000)   # set sweep center to 96.5 MHz
+tsa.set_attenuation(10)   # set input attenuation
 ```
+
+Acceptable value ranges and formats are listed per-command in the reference section. Where a value is out of range or the wrong type, the function returns an error rather than sending an invalid command to the device.
+
 ### Getting Data from Active Screen
 
 See other sections for the following examples:
@@ -627,7 +767,7 @@ else: # port open, complete task(s) and disconnect
 ```
 
 <p align="center">
-        <img src="media/capture_example.png" alt="Capture of On-screen Trace Data" height="350">
+        <img src="media/example_screen_capture.png" alt="Capture of On-screen Trace Data" height="350">
 </p>
    <p align="center">Capture On-Screen Trace Data of a Frequency Sweep from 100 kHz to 800 kHz</p>
 
@@ -737,7 +877,7 @@ def convert_data_to_arrays(start, stop, pts, data):
     # this shows up as "-:.000000e+01".
     # TEMP fix - replace the colon character with a -10. This puts the 'filled in' points around the noise floor.
     # more advanced filtering should be applied for actual analysis.
-    data1 =bytearray(data.replace(b"-:.0", b"-10.0"))
+    data1 =bytearray(data.replace(b"-:.0", b"-10.0").replace(b":.0", b"10.0"))
     
     # get both values in each row returned (for reference)
     #data_arr = [list(map(float, line.split())) for line in data.decode('utf-8').split('\n') if line.strip()] 
@@ -800,7 +940,7 @@ else: # if port found and connected, then complete task(s) and disconnect
 
 #### **Example 3: Plot using SCAN and SCANRAW Data and Calculated Frequencies**
 
-This example uses `scan()` and `scanraw()` to take a data measurement of data that DOES NOT need to been on the screen, unlike **Example 1** above. Then, the frequencies on the x-axis are calculated between the `start` and `stop` frequencies using the `number of points`. This is done because `frequencies()` would have the values of the last scan, which are connected to `RBW` and not the `number of points`. 
+This example uses `scan()` and `scanraw()` to take a data measurement of data that DOES NOT need to been on the screen, unlike **Example 1** above. Then, the frequencies on the x-axis are calculated between the `start` and `stop` frequencies using the `number of points`. This is done because `frequencies()` would have the values of the last scan, which are connected to `RBW` and not the `number of points`.  The following example shows several filters that can be used. If scanning is slow, check your device's RBW setting; 'auto' works best.
 
 Extra processing needs to be done to get `dBm power` from `scanraw()`.
 
@@ -838,7 +978,7 @@ def convert_data_to_arrays(start, stop, pts, data):
     # this shows up as "-:.000000e+01".
     # TEMP fix - replace the colon character with a -10. This puts the 'filled in' points around the noise floor.
     # more advanced filtering should be applied for actual analysis.
-    data1 =bytearray(data.replace(b"-:.0", b"-10.0"))
+    data1 =bytearray(data.replace(b"-:.0", b"-10.0").replace(b":.0", b"10.0"))
     
     # get both values in each row returned (for reference)
     #data_arr = [list(map(float, line.split())) for line in data.decode('utf-8').split('\n') if line.strip()] 
@@ -896,7 +1036,7 @@ else: # if port found and connected, then complete task(s) and disconnect
     scanraw_data_bytes = tsa.scan_raw(start, stop, pts, outmask)
 
 
-    # for subsequent reads, the tinySA does freeze while preforming SCANRAW
+    # for subsequent reads, the tinySA does freeze while performing SCANRAW
     # if there's an error, the screen will stay frozen (for reading).
     # So start it again so new data can be taken
     tsa.resume()
@@ -952,9 +1092,117 @@ else: # if port found and connected, then complete task(s) and disconnect
 </p>
    <p align="center">Plotted SCAN and SCANRAW Data of a Frequency Sweep from 150 MHz to 500 MHz</p>
 
+#### **Example 4: Plot using SCAN And Filters for Artifact Comparison**
+
+This example uses `scan()` to collect measured data, then demonstrates how to clean up the `:` firmware artifact that occasionally appears in scan output. On some firmware builds, a malformed value like `:.000000e-01` shows up in the data. The `:` is ASCII `0x3A`, one position past `9`, which happens when the firmware overflows a single digit slot where it meant to write `10`. The standard handling (used in the other plotting examples) substitutes these with a value near the noise floor so the data stays parseable, but that leaves sharp spikes in the trace.
+
+To show how those spikes can be smoothed out, this example plots the raw data alongside two filtered versions on a single matplotlib figure. A **median filter** removes the isolated spikes cleanly, while a **moving average** is included as a cautionary contrast — it smears the spikes into neighboring points rather than removing them. Comparing the three traces side by side makes the trade-offs of each approach easy to see. The filters are implemented in pure `numpy`, so no additional dependencies beyond the plotting extras are required.
+ 
+```python
+# import tinySA_python (tsapython) package
+from tsapython import tinySA
+
+# imports FOR THE EXAMPLE
+try:
+    import numpy as np
+    import matplotlib.pyplot as plt
+except ImportError as exc:
+    raise SystemExit(
+        "This example requires the plotting extra (numpy and matplotlib). "
+        'Install it with:  pip install "tsapython[plotting]"'
+    ) from exc
 
 
-#### **Example 4: Plot a Waterfall using SCAN and Calculated Frequencies**
+def parse_scan_levels(data_bytes, fix_artifact=True):
+    # Parse scan(outmask=2) output to an array of dBm levels.
+    # If fix_artifact is True, apply the standard ':' -> 10 substitution so the
+    # data is parseable. (With it False, the malformed rows would raise on
+    # float() -- shown here only to explain why the fix exists.)
+    raw = bytes(data_bytes)
+    if fix_artifact:
+        raw = raw.replace(b"-:.0", b"-10.0").replace(b":.0", b"10.0")
+    levels = []
+    for line in bytearray(raw).decode("utf-8").split("\n"):
+        line = line.strip()
+        if line:
+            levels.append(float(line.split()[0]))
+    return np.array(levels)
+
+
+def median_filter(x, k=5):
+    # Pure-numpy median filter. k is forced odd. Edge-padded so length is kept.
+    if k % 2 == 0:
+        k += 1
+    pad = k // 2
+    xp = np.pad(x, pad, mode="edge")
+    return np.array([np.median(xp[i:i + k]) for i in range(len(x))])
+
+
+def moving_average(x, k=5):
+    # Pure-numpy moving average. k is forced odd. Edge-padded so length is kept.
+    if k % 2 == 0:
+        k += 1
+    pad = k // 2
+    xp = np.pad(x, pad, mode="edge")
+    return np.convolve(xp, np.ones(k) / k, mode="valid")
+
+
+def main():
+    tsa = tinySA()
+    tsa.set_verbose(False)
+    tsa.set_error_byte_return(True)
+
+    found, connected = tsa.autoconnect()
+    if not connected:
+        print("ERROR: could not connect to port")
+        return
+
+    start = int(1e9)     # 1 GHz
+    stop = int(3e9)      # 3 GHz
+    pts = 450
+
+    data_bytes = tsa.scan(start, stop, pts, 2)   # outmask 2 = measured data
+    tsa.resume()
+    tsa.disconnect()
+
+    raw_levels = parse_scan_levels(data_bytes, fix_artifact=True)
+    freqs = np.linspace(start, stop, len(raw_levels))
+
+    # apply the two filters
+    med = median_filter(raw_levels, k=5)
+    avg = moving_average(raw_levels, k=5)
+
+    # report how many artifact-substituted points there were (points sitting at
+    # the -10 substitution value are the likely artifacts)
+    n_artifacts = int(np.sum(np.isclose(raw_levels, -10.0)))
+    print(f"Scanned {len(raw_levels)} points; "
+          f"{n_artifacts} look like ':'-artifact substitutions (~-10 dBm).")
+
+    # plot all three on one figure
+    plt.figure(figsize=(12, 7))
+    plt.plot(freqs / 1e9, raw_levels, lw=0.8, alpha=0.6,
+             label="raw (artifact-substituted, spikes visible)")
+    plt.plot(freqs / 1e9, med, lw=1.3,
+             label="median filter k=5 (removes spikes)")
+    plt.plot(freqs / 1e9, avg, lw=1.3, alpha=0.8,
+             label="moving average k=5 (smears spikes -- cautionary)")
+    plt.xlabel("Frequency (GHz)")
+    plt.ylabel("Power (dBm)")
+    plt.title("tinySA scan: ':' artifact and filtering comparison")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.show()
+
+
+if __name__ == "__main__":
+    main()
+```
+<p align="center">
+        <img src="media/example4_filter_comparison.png" alt="Plot of SCAN artifact and filtering comparison" height="350">
+</p>
+   <p align="center">Plotted SCAN Artifact and Filtering Comparison</p>
+
+#### **Example 5: Plot a Waterfall using SCAN and Calculated Frequencies**
 
 The first part of this example is a static report of the measurements taken over time. The time will vary a bit from the resolution. Data is collected and then displayed with matplotlib.
 
@@ -982,7 +1230,7 @@ def convert_data_to_arrays(start, stop, pts, data):
     # TEMP fix - replace the colon character with a -10. This puts the 'filled in' points around the noise floor.
     # more advanced filtering should be applied for actual analysis.
    
-    data1 = bytearray(data.replace(b"-:.0", b"-10.0"))
+    data1 = bytearray(data.replace(b"-:.0", b"-10.0").replace(b":.0", b"10.0"))
    
     # get both values in each row returned (for reference)
     #data_arr = [list(map(float, line.split())) for line in data.decode('utf-8').split('\n') if line.strip()]
@@ -1126,7 +1374,7 @@ else: # if port found and connected, then complete task(s) and disconnect
         tsa.disconnect()
 ```
 <p align="center">
-        <img src="media/example4_waterfall_1.png" alt="Static Waterfall Plot for SCAN Data Over 50 Readings" height="350">
+        <img src="media/example5_waterfall_1.png" alt="Static Waterfall Plot for SCAN Data Over 50 Readings" height="350">
 </p>
    <p align="center">Static Waterfall Plot for SCAN Data Over 50 Readings</p>
 
@@ -1164,7 +1412,7 @@ def convert_data_to_arrays(start, stop, pts, data):
     # TEMP fix - replace the colon character with a -10. This puts the 'filled in' points around the noise floor.
     # more advanced filtering should be applied for actual analysis.
    
-    data1 = bytearray(data.replace(b"-:.0", b"-10.0"))
+    data1 = bytearray(data.replace(b"-:.0", b"-10.0").replace(b":.0", b"10.0"))
     
     # Get first value in each returned row (power in dBm)
     try:
@@ -1419,11 +1667,25 @@ if __name__ == "__main__":
 
 
 <p align="center">
-        <img src="media/example5_waterfall_realtime.png" alt="Realtime Waterfall Plot for SCAN Data" height="350">
+        <img src="media/example6_waterfall_realtime.png" alt="Realtime Waterfall Plot for SCAN Data" height="350">
 </p>
    <p align="center">Realtime Waterfall Plot for SCAN Data</p>
 
 
+#### **Example 6: Finding Peaks in a Frequency Range**
+
+Locating the strongest signal in a span is a common task, and this example (`examples/find_peaks.py`) shows two ways to do it.
+
+The first uses the device's built-in marker peak: `marker_peak(1)` activates marker 1 and parks it on the strongest signal the device sees, returning the marker information. This is the quickest way to find the single largest peak, since the hardware does the work.
+
+The second computes peaks from `scan()` data in Python, which lets you find *multiple* peaks rather than just the strongest one. After collecting the scan, the example walks the data to pick out the top several peaks, blanking a small window around each one it finds so the same signal's shoulder isn't reported twice. The found peaks are printed with their frequencies and power levels, and marked on a plot of the spectrum.
+
+Use the device marker peak when you just need the single strongest signal; use the Python approach when you want to catalog several signals across the span at once. The example also applies the same `:`-artifact handling described in the scan examples above, so malformed firmware values don't skew the results.
+
+<p align="center">
+        <img src="media/example7_find_peaks.png" alt="Top 3 peaks of a signal read" height="350">
+</p>
+   <p align="center">Top 3 Peaks in a Frequency Range</p>
 
 
 
@@ -1452,7 +1714,7 @@ def convert_data_to_arrays(start, stop, pts, data):
     # TEMP fix - replace the colon character with a -10. This puts the 'filled in' points around the noise floor.
     # more advanced filtering should be applied for actual analysis.
     
-    data1 =bytearray(data.replace(b"-:.0", b"-10.0"))
+    data1 =bytearray(data.replace(b"-:.0", b"-10.0").replace(b":.0", b"10.0"))
     
     # get both values in each row returned (for reference)
     #data_arr = [list(map(float, line.split())) for line in data.decode('utf-8').split('\n') if line.strip()] 
@@ -1800,7 +2062,7 @@ Quick Link Table:
     * `set_direct_stop(freq=Int)`
 * **CLI Wrapper Usage:**
 * **Notes:** 
-    * NOTE: no frequency checking is done for this function yet.
+    * NOTE: for start/stop, freq must be a positive number. No upper bound is enforced because the valid range is model-dependent; the device rejects out-of-range values.
     * might be tinySA Ultra and newer only.
     * Related to NORMAL, DIRECT, ADF, and MIXER
     * [https://tinysa.org/wiki/pmwiki.php?n=TinySA4.OutputCurveEdit](https://tinysa.org/wiki/pmwiki.php?n=TinySA4.OutputCurveEdit)
@@ -2285,7 +2547,7 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
     *  None, but see`plotting_scanraw.py` example
 * **CLI Wrapper Usage:**
 * **Notes:** 
-    * **WARNING: the parsing documentation doesn't appear to return data consistent with measurements on the tinySA screen. UNDERGROING TESTING** 
+    * **WARNING: the screen will not match the data output during this function. That is expected.** 
     * "The measured data is the level in dBm and is send as '{' ('x' MSB LSB)*points '}'. To get the dBm level from the 16 bit data, divide by 32 and subtract 128 for the tinySA and 174 for the tinySA Ultra. The option, when present, can be either 0,1,2 or 3 being the sum of 1=unbuffered and 2=continuous." - [https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface](https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface) 
 
   
@@ -2364,7 +2626,7 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 ### **sweep**
 * **Description:** Set sweep boundaries or execute a sweep
 * **Original Usage:** `sweep [(start|stop|center|span|cw {frequency}) | ({start(Hz)} {stop(Hz)} [0..MAX PTS] ) ]`
-* **Direct Library Function Call:** `config_sweep(argName=start|stop|center|span|cw, val=Int|Float)` AND `preform_sweep(start, stop, pts)`
+* **Direct Library Function Call:** `config_sweep(argName=start|stop|center|span|cw, val=Int|Float)` AND `perform_sweep(start, stop, pts)`
 * **Example Return:** 
     * empty bytearray `b''`
     * bytearray(b'0 800000000 450\r')
@@ -2433,7 +2695,7 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Direct Library Function Call:** `touch(x=0,y=0)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * `preform_touch(x=Int, y=Int)`
+    * `perform_touch(x=Int, y=Int)`
 * **CLI Wrapper Usage:**
 * **Notes:**  The upper left corner of the screen is "0 0"
 
@@ -2466,7 +2728,7 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Direct Library Function Call:**
     * `trace_toggle(ID=Int|0..2..4, val="on"|"off")`
     * `trace_select(ID=Int|0..2..4)`
-    * `trace_units(val="dBm"|"dBmV"|"dBuV"|"RAW"|"V"|"Vpp"|"W")`
+    * `trace_units(ID=Int, val="dBm"|"dBmV"|"dBuV"|"RAW"|"V"|"Vpp"|"W")`
     * `trace_scale(val="auto"|Int|Float)`
     * `trace_reflevel(val="auto"|Int|Float)`
     * `trace_value(ID=Int)`
@@ -2474,17 +2736,16 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
     * `trace_copy(ID1=Int, ID2=Int)`    
 * **Example Return:** 
      * empty bytearray  `b''`
-     * `select_trace(1)`: 
+     * `trace_select(1)`: 
         * `bytearray(b'1: dBm 0.000000000 10.000000000 \r')`
     * `trace_value(1)`:
         * `bytearray(b'trace 1 value 0 -91.13\r\ntrace 1 value 1 -92.59\r\ntrace 1 value 2 -93.09\r\ntrace 1 value 3 -89.59.....\r\ntrace 1 value 448 -84.78\r\ntrace 1 value 449 -85.25\r')`  (returns MAX POINTS number of readings. PTS not currently settable)
-    * 
 * **Alias Functions:**
     * None, see direct library function calls
-    * it is also suggested to use the `command()` function to preform more complex actions because this is a complicated command structure
+    * it is also suggested to use the `command()` function to perform more complex actions because this is a complicated command structure
 * **CLI Wrapper Usage:**
 * **Notes:** For readability, this command was split into multiple functions initially rather than using complex alias functions. There is a mismatch of information of commands between versions, so this library uses the documentation returned by the device. 
-    * `select_trace()`: tinySA Ultra has 4 traces to choose from. Other devices may have other numbers of traces.
+    * `trace_select()`: tinySA Ultra has 4 traces to choose from. Other devices may have other numbers of traces.
     * `trace_reflevel(...)` : adjusts the reference level of a trace. Levels are specified in dB(m) and can be specified using a floating point notation. E.g. 10 or 2.5 [https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface](https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface)
 
 
@@ -2500,6 +2761,7 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
     * `trigger_level(FREQ)`
 * **CLI Wrapper Usage:**
 * **Notes:**  the trigger level is always set in dBm
+
 
 ### **ultra**
 * **Description:** turn on/off/config tiny SA ultra mode features
@@ -2771,7 +3033,7 @@ The [Library Usage](#library-usage) section includes information on how to downl
 
 ## How often is this library updated?
 
-This library is updated in spurts. June-August are going to be the most active development months, but it will get monthly-ish updates otherwise. Development is pretty constant on the backend, but only stable code is released publicly. Bug fixes will be addressed as they happen.   
+This library is updated in spurts. June-August are going to be the most active development months, with limited updates otherwise. Development has slowed as the project stabilizes, but sometimes new features are proposed or needed. Bug fixes will be addressed as they are brought up.   
 
 
 
@@ -2824,8 +3086,7 @@ This library is updated in spurts. June-August are going to be the most active d
 The code in this repository has been released under GPL-2.0 for right now (and to have something in place rather than nothing). This licensing does NOT take priority over the official releases and the decisions of the tinySA team. This licensing does NOT take priority for any of their products, including the devices that can be used with this software. 
 
 
-This software is released AS-IS, meaning that there may be bugs (especially as it is under development). 
+This software is released AS-IS, meaning that there may be bugs (especially while under development). 
 
 
-This software is UNOFFICIAL, meaning that the tinySA team does not offer tech support for it, does not maintain it, and has no responsibility for any of the contents. 
-
+This software is UNOFFICIAL, meaning that the tinySA team does not offer tech support for it, does not maintain it, and has no responsibility for any of the contents.

@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using these metadata."
+title: "tsapython: An Unofficial Python API for the tinySA Device Series"
+abstract: >-
+  A non-GUI Python API for the tinySA series of spectrum analyzer devices,
+  providing programmatic control for automated measurements, data collection,
+  and analysis. This is an unofficial community project and is not endorsed by
+  the official tinySA product, owner, or company.
+type: software
+authors:
+  - family-names: "Linkous"
+    given-names: "Lauren"
+    orcid: "https://orcid.org/0000-0001-9945-5125"
+version: "3.0.0"
+date-released: "2026-06-04" 
+license: GPL-2.0-only
+repository-code: "https://github.com/LC-Linkous/tinySA_python"
+url: "https://github.com/LC-Linkous/tinySA_python"
+keywords:
+  - tinySA
+  - spectrum-analyzer
+  - python
+  - serial
+  - rf
+  - signal-processing
+  - instrumentation
