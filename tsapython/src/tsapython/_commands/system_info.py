@@ -11,8 +11,6 @@
 #   Author(s): Lauren Linkous
 ##--------------------------------------------------------------------------------------------------\
 
-import re
-
 class SystemInfoMixin:
     def command(self, val):
         # if the command isn't already a function,

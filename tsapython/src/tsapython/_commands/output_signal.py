@@ -66,9 +66,6 @@ class OutputSignalMixin:
         # usage: direct {start|stop|on|off} {freq(Hz)}
         # example return: ''
 
-        #explicitly allowed vals
-        accepted_vals =  ["start", "stop",
-                           "on", "off"]
         #check input
         if (str(val)=="on") or (str(val) =="off"):
             writebyte = 'direct '+str(val)+'\r\n'
@@ -209,9 +206,6 @@ class OutputSignalMixin:
         # turn on/config tiny SA ultra mode
         # usage: ultra off|on|auto|start|harm {freq}
         # example return: bytearray(b'')
-
-        # explicitly allowed vals
-        accepted_vals =  ["off", "on", "auto", "start", "harm"]        
 
         if str(val) in ["off", "on", "auto"]:
             writebyte = 'ultra ' + str(val) +'\r\n'

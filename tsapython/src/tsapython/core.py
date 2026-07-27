@@ -20,7 +20,6 @@
 
 import serial
 import serial.tools.list_ports # COM search method wants full path
-import numpy as np
 import re
 import time
 
@@ -329,7 +328,6 @@ class tinySA(
         # Returns: '{' + the 3*N data bytes, WITHOUT the trailing '}', matching
         # the historical clean_return() contract that existing examples rely on
         # (callers do data[1:] then struct.unpack exactly 3*N bytes).
-        import time
 
         buffer = bytes()
         start_time = time.time()
