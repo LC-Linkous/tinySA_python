@@ -1,0 +1,26 @@
+name: Question / usage help
+description: How do I use this library to do something?
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For questions about **this library** (tsapython). Questions about the
+        tinySA device itself are better answered by the
+        [official wiki](https://tinysa.org/wiki/) and the
+        [tinySA community](https://groups.io/g/tinysa) — they know the hardware
+        far better, but do not support this library.
+  - type: textarea
+    id: question
+    attributes:
+      label: What are you trying to do?
+      description: The goal, plus what you've tried so far (code welcome).
+    validations:
+      required: true
+  - type: input
+    id: setup
+    attributes:
+      label: Setup
+      placeholder: "e.g. tinySA Ultra, Windows 11, Python 3.12, tsapython 3.0.0"
+    validations:
+      required: false
