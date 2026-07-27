@@ -55,7 +55,7 @@ jobs:
           fail_ci_if_error: false
 
   lint:
-    name: ruff
+    name: ruff + mypy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -73,6 +73,12 @@ jobs:
         # Blocking ruleset is E9 + F only (see [tool.ruff.lint] in
         # pyproject.toml); style rules are a planned follow-up cleanup.
         run: uv run ruff check .
+
+      - name: Mypy
+        # Blocking. The package ships a py.typed marker, which promises
+        # downstream type-checkers that these annotations are real; this gate
+        # is what keeps that promise true.
+        run: uv run mypy
 
   build:
     name: package builds
