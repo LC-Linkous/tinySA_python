@@ -11,8 +11,12 @@
 #   Author(s): Lauren Linkous
 ##--------------------------------------------------------------------------------------------------\
 
-class AcquisitionMixin:
-    def data(self, val=0):
+from collections.abc import Iterator
+
+from .._host import MixinHost
+
+class AcquisitionMixin(MixinHost):
+    def data(self, val: int = 0) -> bytearray | None:
         # dumps the trace data. 
         # usage: data [0-2]
         # 0=temp value, 1=stored trace, 2=measurement
@@ -35,19 +39,19 @@ class AcquisitionMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def get_temporary_data(self):
+    def get_temporary_data(self) -> bytearray | None:
         # alias func for data()
         return self.data(val=0)
 
-    def get_stored_trace_data(self):
+    def get_stored_trace_data(self) -> bytearray | None:
         # alias func for data()
         return self.data(val=1)
 
-    def dump_measurement_data(self):
+    def dump_measurement_data(self) -> bytearray | None:
         # alias func for data()
         return self.data(val=2)
 
-    def frequencies(self):
+    def frequencies(self) -> bytearray | None:
         # gets the frequencies used by the last sweep
         # usage: frequencies
         # example return: bytearray(b'1500000000\r\n... \r\n3000000000\r')
@@ -57,11 +61,11 @@ class AcquisitionMixin:
         self.print_message("getting frequencies from the last sweep")
         return msgbytes
 
-    def get_last_freqs(self):
+    def get_last_freqs(self) -> bytearray | None:
         # get frequencies of last sweep
         return self.frequencies()
 
-    def hop(self, start, stop, inc, outmask=None):
+    def hop(self, start: int, stop: int, inc: int, outmask: int | None = None) -> bytearray | None:
         # this is a measurement, maybe a sample measurement. format looks like hop freqval integer
         # usage: hop {start(Hz)} {stop(Hz)} {step(Hz) | points} [outmask]
         # outmask: 1 is frequency, 2 is level
@@ -83,11 +87,11 @@ class AcquisitionMixin:
 
         return None
 
-    def get_sample_pts(self, start, stop, pts):
+    def get_sample_pts(self, start: int, stop: int, pts: int) -> bytearray | None:
         # alias for hop()
         return self.hop(start, stop, pts, outmask=1)
 
-    def pause(self):
+    def pause(self) -> bytearray | None:
         # pauses the sweeping in either input or output mode
         # usage: pause
         # example return: ''
@@ -97,7 +101,7 @@ class AcquisitionMixin:
         self.print_message("pausing tinySA device")
         return msgbytes 
 
-    def resume(self):
+    def resume(self) -> bytearray | None:
         # resumes the sweeping in either input or output mode
         # usage: resume
         # example return: ''
@@ -107,7 +111,7 @@ class AcquisitionMixin:
         self.print_message("resuming sweep")
         return msgbytes 
 
-    def scan(self, start, stop, pts=250, outmask=None):
+    def scan(self, start: int, stop: int, pts: int = 250, outmask: int | None = None) -> bytearray | None:
         # Performs a scan and optionally outputs the measured data.
         # usage: scan {start(Hz)} {stop(Hz)} [points] [outmask]
             # where the outmask is a binary OR of:
@@ -126,7 +130,7 @@ class AcquisitionMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def scan_raw(self, start, stop, pts=250, unbuf=1):
+    def scan_raw(self, start: int, stop: int, pts: int = 250, unbuf: int = 1) -> bytearray | None:
         # performs a scan of unlimited amount of points 
         # and sends the data in binary form
         # usage: scanraw {start(Hz)} {stop(Hz)} [points] [unbuffered]
@@ -151,7 +155,7 @@ class AcquisitionMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def continuous_scanraw(self, start, stop, pts=250, unbuf=1, count=None):
+    def continuous_scanraw(self, start: int, stop: int, pts: int = 250, unbuf: int = 1, count: int | None = None) -> "Iterator[bytearray | None]":
         # Continuous SCANRAW acquisition.
         #
         # The tinySA returns exactly ONE binary frame per scanraw call (it does
@@ -189,7 +193,7 @@ class AcquisitionMixin:
             yield frame
             emitted += 1
 
-    def config_sweep(self, argName=None, val=None): 
+    def config_sweep(self, argName: int | float | str | None = None, val: int | float | str | None = None) -> bytearray | None: 
             # split call for SWEEP
             # Set sweep boundaries.
             # Sweep without arguments lists the current sweep 
@@ -233,31 +237,31 @@ class AcquisitionMixin:
 
         return msgbytes
 
-    def get_sweep_params(self):
+    def get_sweep_params(self) -> bytearray | None:
         # alias for config_sweep() 
         return self.config_sweep()
 
-    def set_sweep_start(self, val):
+    def set_sweep_start(self, val: int | float | str) -> bytearray | None:
         # alias for config_sweep() 
         return self.config_sweep("start", val)
 
-    def set_sweep_stop(self, val):
+    def set_sweep_stop(self, val: int | float | str) -> bytearray | None:
         # alias for config_sweep() 
         return self.config_sweep("stop", val)
 
-    def set_sweep_center(self, val):
+    def set_sweep_center(self, val: int | float | str) -> bytearray | None:
         # alias for config_sweep() 
         return self.config_sweep("center", val)
 
-    def set_sweep_span(self, val):
+    def set_sweep_span(self, val: int | float | str) -> bytearray | None:
         # alias for config_sweep() 
         return self.config_sweep("span", val)
 
-    def set_sweep_cw(self, val):
+    def set_sweep_cw(self, val: int | float | str) -> bytearray | None:
         # alias for config_sweep() 
         return self.config_sweep("cw", val)   
 
-    def run_sweep(self, startVal=None, stopVal=None, pts=250):
+    def run_sweep(self, startVal: int | float | str | None = None, stopVal: int | float | str | None = None, pts: int | None = 250) -> bytearray | None:
             # split call for SWEEP
             # Execute sweep.
             # The frequencies specified should be 
@@ -267,6 +271,7 @@ class AcquisitionMixin:
             # sweep [(start|stop|center|span|cw {frequency}) | 
             #   ({start(Hz)} {stop(Hz)} [0..290])]
             # # example return:  
+        msgbytes: bytearray | None
         if (startVal==None) or (stopVal==None):
             self.print_message("ERROR: sweep start and stop need non-empty values")
             msgbytes = self.error_byte_return()
@@ -281,7 +286,7 @@ class AcquisitionMixin:
 
         return msgbytes 
 
-    def sweep_time(self, val):
+    def sweep_time(self, val: int | float | str) -> bytearray | None:
         # sets the sweeptime
         # usage: sweep {time(Seconds)}the time
         # specified may end in a letter where
@@ -296,7 +301,7 @@ class AcquisitionMixin:
         self.print_message("sweeptime set to " + str(val))
         return msgbytes
 
-    def trigger(self, val, freq=None):
+    def trigger(self, val: int | float | str | None, freq: int | float | str | None = None) -> bytearray | None:
         # sets the trigger type or level
         # usage: trigger auto|normal|single|{level(dBm)}
         # the trigger level is always set in dBm and is the only numerical input
@@ -317,18 +322,18 @@ class AcquisitionMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def trigger_auto(self):
+    def trigger_auto(self) -> bytearray | None:
         # alias for trigger
         return self.trigger("auto")
 
-    def trigger_normal(self):
+    def trigger_normal(self) -> bytearray | None:
         # alias for trigger
         return self.trigger("normal")    
 
-    def trigger_single(self):
+    def trigger_single(self) -> bytearray | None:
         # alias for trigger
         return self.trigger("single")
 
-    def trigger_level(self, val):
+    def trigger_level(self, val: int | float | str) -> bytearray | None:
         # alias for trigger
         return self.trigger(None, val)

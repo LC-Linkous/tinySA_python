@@ -11,8 +11,10 @@
 #   Author(s): Lauren Linkous
 ##--------------------------------------------------------------------------------------------------\
 
-class MarkersTracesMixin:
-    def line(self, val):
+from .._host import MixinHost
+
+class MarkersTracesMixin(MixinHost):
+    def line(self, val: int | float | str) -> bytearray | None:
         # Disables the horizontal line or sets it to a specific level.
         # usage: line off|{level}
         # example return: ''
@@ -29,15 +31,15 @@ class MarkersTracesMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def line_off(self):
+    def line_off(self) -> bytearray | None:
         # alias for line
         return self.line("off")
 
-    def set_line(self, val):
+    def set_line(self, val: int | float | str) -> bytearray | None:
         # alias for line
         return self.line(val)
 
-    def marker(self, ID, val):
+    def marker(self, ID: int, val: int | float | str) -> bytearray | None:
         # sets or dumps marker info.
         # where id=1..4 index=0..num_points-1
         # Marker levels will use the selected unit.
@@ -70,27 +72,27 @@ class MarkersTracesMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def marker_on(self, ID):
+    def marker_on(self, ID: int) -> bytearray | None:
         # alias for marker()
         return self.marker(ID, "on")
 
-    def marker_off(self, ID):
+    def marker_off(self, ID: int) -> bytearray | None:
         # alias for marker()
         return self.marker(ID, "off")
 
-    def marker_peak(self, ID):
+    def marker_peak(self, ID: int) -> bytearray | None:
         # alias for marker()
         return self.marker(ID, "peak")
 
-    def marker_freq(self, ID, val):
+    def marker_freq(self, ID: int, val: int | float | str) -> bytearray | None:
         # alias for marker()
         return self.marker(ID, val)
 
-    def marker_index(self, ID, val):
+    def marker_index(self, ID: int, val: int | float | str) -> bytearray | None:
         # alias for marker()
         return self.marker(ID, val)
 
-    def trace_select(self, ID):
+    def trace_select(self, ID: int) -> bytearray | None:
         # split call for TRACE. select an available trace.
         # NOTE: tinySA traces are 1-indexed (trace 0 does not exist).
         if (isinstance(ID, int)) and (ID >= 1):
@@ -102,7 +104,7 @@ class MarkersTracesMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def trace_units(self, ID, val):
+    def trace_units(self, ID: int, val: int | float | str) -> bytearray | None:
         # split call for TRACE. set the units for a trace.
         # device form: trace {trace#} {dBm|dBmV|dBuV|RAW|V|Vpp|W}  (1-indexed)
         accepted_vals =  ["dBm", "dBmV", "dBuV", "V", "W", "Vpp", "RAW"]
@@ -116,21 +118,21 @@ class MarkersTracesMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def trace_scale(self, val="auto"):
+    def trace_scale(self, val: int | float | str = "auto") -> bytearray | None:
         # split call for TRACE. scales a trace/traces.
         writebyte = 'trace scale ' + str(val) + '\r\n'
         msgbytes = self.tinySA_serial(writebyte, printBool=False) 
         self.print_message("scaling trace")
         return msgbytes
 
-    def trace_reflevel(self, val="auto"):
+    def trace_reflevel(self, val: int | float | str = "auto") -> bytearray | None:
         # split call for TRACE. sets the reference level of a trace
         writebyte = 'trace reflevel ' + str(val) + '\r\n'
         msgbytes = self.tinySA_serial(writebyte, printBool=False) 
         self.print_message("setting reference level of trace")
         return msgbytes
 
-    def trace_value(self, ID):
+    def trace_value(self, ID: int) -> bytearray | None:
         # split call for TRACE. gets values of a trace (1-indexed).
         # device form: trace {trace#} value
         if (isinstance(ID, int)) and (ID >= 1):
@@ -142,7 +144,7 @@ class MarkersTracesMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def trace_toggle(self, ID, val="on"):
+    def trace_toggle(self, ID: int, val: int | float | str = "on") -> bytearray | None:
         # split call for TRACE. toggle trace ON or OFF
         # full description: displays all or one trace information
         # or sets trace related information
@@ -165,7 +167,7 @@ class MarkersTracesMixin:
 
         return msgbytes
 
-    def trace_subtract(self, ID1, ID2):
+    def trace_subtract(self, ID1: int | float | str, ID2: int | float | str) -> bytearray | None:
         # split call for TRACE. subtracts a trace/traces. 
         # subtract ID1 FROM ID2
 
@@ -180,7 +182,7 @@ class MarkersTracesMixin:
 
         return msgbytes
 
-    def trace_copy(self, ID1, ID2):
+    def trace_copy(self, ID1: int | float | str, ID2: int | float | str) -> bytearray | None:
         # split call for TRACE. copies a trace/traces. 
 
         if (isinstance(ID1,int)) and (ID1 >= 1) and (isinstance(ID2,int)) and (ID2 >= 1):
@@ -194,7 +196,7 @@ class MarkersTracesMixin:
 
         return msgbytes
 
-    def trace_freeze(self, ID):
+    def trace_freeze(self, ID: int) -> bytearray | None:
         # split call for TRACE. sets the reference level of a trace
         # full description: displays all or one trace information
         # or sets trace related information
@@ -213,7 +215,7 @@ class MarkersTracesMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def trace_clear(self, val):
+    def trace_clear(self, val: int | float | str) -> bytearray | None:
         # split call for TRACE. clears a trace/traces. doesnt seem to take inputs
         # full description: displays all or one trace information
         # or sets trace related information
@@ -228,7 +230,7 @@ class MarkersTracesMixin:
         self.print_message("clearing trace(s)")
         return msgbytes
 
-    def trace_action(self, ID, val):
+    def trace_action(self, ID: int, val: int | float | str) -> bytearray | None:
         # split call for TRACE. toggle trace ON or OFF
         # full description: displays all or one trace information
         # or sets trace related information

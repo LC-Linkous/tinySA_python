@@ -11,8 +11,10 @@
 #   Author(s): Lauren Linkous
 ##--------------------------------------------------------------------------------------------------\
 
-class OutputSignalMixin:
-    def cal_output(self, val="off"):
+from .._host import MixinHost
+
+class OutputSignalMixin(MixinHost):
+    def cal_output(self, val: int | float | str = "off") -> bytearray | None:
         # disables or sets the caloutput to a specified frequency in MHz
         # usage: caloutput off|30|15|10|4|3|2|1
         # example return: bytearray(b'')
@@ -29,39 +31,39 @@ class OutputSignalMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def set_cal_output_off(self):
+    def set_cal_output_off(self) -> bytearray | None:
         # alias for cal_output()
         return self.cal_output("off")
 
-    def set_cal_output_30(self):
+    def set_cal_output_30(self) -> bytearray | None:
         # alias for cal_output()
         return self.cal_output(30)
 
-    def set_cal_output_15(self):
+    def set_cal_output_15(self) -> bytearray | None:
         # alias for cal_output()
         return self.cal_output(15)
 
-    def set_cal_output_10(self):
+    def set_cal_output_10(self) -> bytearray | None:
         # alias for cal_output()
         return self.cal_output(10)       
 
-    def set_cal_output_4(self):
+    def set_cal_output_4(self) -> bytearray | None:
         # alias for cal_output()
         return self.cal_output(4)
 
-    def set_cal_output_3(self):
+    def set_cal_output_3(self) -> bytearray | None:
         # alias for cal_output()
         return self.cal_output(3)
 
-    def set_cal_output_2(self):
+    def set_cal_output_2(self) -> bytearray | None:
         # alias for cal_output()
         return self.cal_output(2)
 
-    def set_cal_output_1(self):
+    def set_cal_output_1(self) -> bytearray | None:
         # alias for cal_output()
         return self.cal_output(1)
 
-    def direct(self, val, freq=None):
+    def direct(self, val: int | float | str, freq: int | None = None) -> bytearray | None:
         # Output mode for generating a square wave signal between 830MHz and 1130MHz
         # usage: direct {start|stop|on|off} {freq(Hz)}
         # example return: ''
@@ -87,23 +89,23 @@ class OutputSignalMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def set_direct_on(self):
+    def set_direct_on(self) -> bytearray | None:
         # alias for direct()
         return self.direct("on")
 
-    def set_direct_off(self):
+    def set_direct_off(self) -> bytearray | None:
         # alias for direct()
         return self.direct("off")
 
-    def set_direct_start(self, freq):
+    def set_direct_start(self, freq: int) -> bytearray | None:
         # alias for direct()
         return self.direct("start", freq)
 
-    def set_direct_stop(self, freq):
+    def set_direct_stop(self, freq: int) -> bytearray | None:
         # alias for direct()
         return self.direct("stop", freq)
 
-    def mode(self, val1="low", val2="input"):
+    def mode(self, val1: str = "low", val2: str = "input") -> bytearray | None:
         # sets the mode of the tinySA
         # usage: mode low|high input|output
         # example return: ''
@@ -120,24 +122,24 @@ class OutputSignalMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def set_low_input_mode(self):
+    def set_low_input_mode(self) -> bytearray | None:
         # alias for mode()
         return self.mode("low", "input")
 
-    def set_low_output_mode(self):
+    def set_low_output_mode(self) -> bytearray | None:
         # alias for mode()
         return self.mode("low", "output")
 
-    def set_high_input_mode(self):
+    def set_high_input_mode(self) -> bytearray | None:
         # alias for mode()
         return self.mode("high", "input")
 
-    def set_high_output_mode(self):
+    def set_high_output_mode(self) -> bytearray | None:
         # alias for mode()
         # TODO: ERROR CHECKING
         return self.mode("high", "output")
 
-    def modulation(self, val):
+    def modulation(self, val: int | float | str) -> bytearray | None:
         # sets the modulation in output mode
         # usage: modulation off|AM_1kHz|AM_10Hz|NFM|WFM|extern
         # example return: ''
@@ -154,31 +156,31 @@ class OutputSignalMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def set_mod_off(self):
+    def set_mod_off(self) -> bytearray | None:
         # alias for modulation()
         return self.modulation("off")
 
-    def set_mod_AM_1khz(self):
+    def set_mod_AM_1khz(self) -> bytearray | None:
         # alias for modulation()
         return self.modulation("AM_1kHz")
 
-    def set_mod_AM_10Hz(self):
+    def set_mod_AM_10Hz(self) -> bytearray | None:
         # alias for modulation()
         return self.modulation("AM_10Hz")
 
-    def set_mod_NFM(self):
+    def set_mod_NFM(self) -> bytearray | None:
         # alias for modulation()
         return self.modulation("NFM")
 
-    def set_mod_WFM(self):
+    def set_mod_WFM(self) -> bytearray | None:
         # alias for modulation()
         return self.modulation("WFM")
 
-    def set_mod_extern(self):
+    def set_mod_extern(self) -> bytearray | None:
         # alias for modulation()
         return self.modulation("extern")    
 
-    def output(self, val):
+    def output(self, val: int | float | str) -> bytearray | None:
         # sets the output on or off
         # usage: output on|off
         # example return: ''
@@ -194,15 +196,15 @@ class OutputSignalMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def set_output_on(self):
+    def set_output_on(self) -> bytearray | None:
         #alias for output()
         return self.output("on") 
 
-    def set_output_off(self):
+    def set_output_off(self) -> bytearray | None:
         #alias for output()
         return self.output("off")     
 
-    def ultra(self, val="off", freq=None):
+    def ultra(self, val: int | float | str = "off", freq: int | float | str | None = None) -> bytearray | None:
         # turn on/config tiny SA ultra mode
         # usage: ultra off|on|auto|start|harm {freq}
         # example return: bytearray(b'')
@@ -221,17 +223,17 @@ class OutputSignalMixin:
 
         return msgbytes
 
-    def set_ultra_on(self):
+    def set_ultra_on(self) -> bytearray | None:
         return self.ultra("on")
 
-    def set_ultra_off(self):
+    def set_ultra_off(self) -> bytearray | None:
         return self.ultra("off")
 
-    def set_ultra_auto(self):
+    def set_ultra_auto(self) -> bytearray | None:
         return self.ultra("auto")
 
-    def set_ultra_start(self, val):
+    def set_ultra_start(self, val: int | float | str) -> bytearray | None:
         return self.ultra("start", val)
 
-    def set_ultra_harmonic(self, val):
+    def set_ultra_harmonic(self, val: int | float | str) -> bytearray | None:
         return self.ultra("harm", val)
