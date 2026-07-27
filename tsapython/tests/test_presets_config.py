@@ -173,7 +173,7 @@ def test_clear_and_reset_sends_both_and_survives(tsa):
     # exceptions and must not propagate them. (The mock can't simulate the
     # disconnect; this only verifies both commands are sent and no exception
     # escapes. See diagnose_reset.py for the real-hardware behavior check.)
-    out = tsa.clear_and_reset()              # must not raise
+    tsa.clear_and_reset()                    # must not raise
     assert tsa._recorder.calls[0] == "clearconfig 1234\r\n"
     assert tsa._recorder.calls[1] == "reset\r\n"
     # return value is intentionally not asserted: it is None or msgbytes

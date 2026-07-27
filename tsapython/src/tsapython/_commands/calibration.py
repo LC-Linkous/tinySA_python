@@ -13,8 +13,10 @@
 
 import numpy as np
 
-class CalibrationMixin:
-    def actual_freq(self, val=None):
+from .._host import MixinHost
+
+class CalibrationMixin(MixinHost):
+    def actual_freq(self, val: int | float | str | None = None) -> bytearray | None:
         # Sets or gets the frequency correction set by CORRECT FREQUENCY menu in the expert menu settings
         # related to freq_corr
         # usage: actual_freq [{frequency}]
@@ -33,15 +35,15 @@ class CalibrationMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def set_actual_freq(self, val):
+    def set_actual_freq(self, val: int | float | str) -> bytearray | None:
         # alias for actual_freq()
         return self.actual_freq(val)      
 
-    def get_actual_freq(self):
+    def get_actual_freq(self) -> bytearray | None:
         # alias for actual_freq()
         return self.actual_freq(None)
 
-    def correction(self, argName="low", slot=None, freq=None, val=None):
+    def correction(self, argName: int | float | str = "low", slot: int | None = None, freq: int | None = None, val: int | float | str | None = None) -> bytearray | None:
         # sets or dumps the frequency level orrection table
         # usage: correction [0..9 {frequency} {level dB}]
         # usage: correction low|lna|ultra|ultra_lna|direct|direct_lna|harm|harm_lna|out|out_direct|out_adf|out_ultra|off|on 0-19 frequency(Hz) value(dB)
@@ -73,7 +75,7 @@ class CalibrationMixin:
                 self.print_message("ERROR: correction() frequency outside of device specs. see documentation")
                 msgbytes = self.error_byte_return()
                 return msgbytes
-            if (val is None) or not(-10 <= val <= 35):
+            if not isinstance(val, (int, float)) or not(-10 <= val <= 35):
                 self.print_message("ERROR: correction() val dB outside of  specs. see documentation")
                 msgbytes = self.error_byte_return()
                 return msgbytes
@@ -84,7 +86,7 @@ class CalibrationMixin:
                     " " + str(freq) + " " + str(val))
         return msgbytes
 
-    def freq(self, val):
+    def freq(self, val: int | float | str) -> bytearray | None:
         # pauses the sweep and sets the measurement frequency.
         # usage: freq {frequency}
         # example return: bytearray(b'')
@@ -99,11 +101,11 @@ class CalibrationMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def set_freq(self, val):
+    def set_freq(self, val: int | float | str) -> bytearray | None:
         # freq() alias
         return self.freq(val)
 
-    def freq_corr(self):
+    def freq_corr(self) -> bytearray | None:
         # get frequency correction
         # usage: freq_corr
         # example return: bytearray(b'0 ppb\r')
@@ -113,11 +115,11 @@ class CalibrationMixin:
         self.print_message("getting frequency correction")
         return msgbytes
 
-    def get_frequency_correction(self):
+    def get_frequency_correction(self) -> bytearray | None:
         # alias for freq_corr()
         return self.freq_corr()
 
-    def set_IF(self, val=0):
+    def set_IF(self, val: int = 0) -> bytearray | None:
         # the IF call, but avoiding reserved keywords
         # sets the IF to automatic or a specific value. 0 means automatic
         # usage: if ( 0 | 433M..435M )
@@ -137,7 +139,7 @@ class CalibrationMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def set_IF1(self, val):
+    def set_IF1(self, val: int | float | str) -> bytearray | None:
         # usage: if1 {975M..979M}\r\n977.555902MHz
         # example return: ''
 
@@ -146,7 +148,7 @@ class CalibrationMixin:
             writebyte = 'if1 '+str(0)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)      
             self.print_message("setIF1() set to auto")         
-        elif ((975e6) <=val <=(979e6)):
+        elif isinstance(val, (int, float)) and ((975e6) <=val <=(979e6)):
             writebyte = 'if1 '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)   
             self.print_message("setIF() set to "  + str(val))          
@@ -155,7 +157,7 @@ class CalibrationMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def level_offset(self, val, offset, isOutput=False):
+    def level_offset(self, val: int | float | str, offset: float, isOutput: bool = False) -> bytearray | None:
         # sets or dumps the level calibration data.
         # For the output corrections first ensure correct output 
         # levels at maximum output level. 
@@ -220,7 +222,7 @@ class CalibrationMixin:
         return msgbytes
 
 
-    def spur(self, val=None):
+    def spur(self, val: int | float | str | None = None) -> bytearray | None:
         # enables or disables spur reduction
         # usage: spur on|off
         # example return:
@@ -237,15 +239,15 @@ class CalibrationMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def spur_on(self):
+    def spur_on(self) -> bytearray | None:
         # alias for spur()
         return self.spur("on")
 
-    def spur_off(self):
+    def spur_off(self) -> bytearray | None:
         # alias for spur()
         return self.spur("off")
 
-    def vbat_offset(self, val=None):
+    def vbat_offset(self, val: int | float | str | None = None) -> bytearray | None:
         # displays or sets the battery offset value
         # usage: vbat_offset [{0..4095}]
         # example return: bytearray(b'300\r')
@@ -263,15 +265,15 @@ class CalibrationMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def get_vbat_offset(self, val=None):
+    def get_vbat_offset(self, val: int | float | str | None = None) -> bytearray | None:
         # alias for vbat_offset()
         return self.vbat_offset(val)
 
-    def set_vbat_offset(self, val=None):
+    def set_vbat_offset(self, val: int | float | str | None = None) -> bytearray | None:
         # alias for vbat_offset()
         return self.vbat_offset(val)
 
-    def zero(self, val=None):
+    def zero(self, val: int | float | str | None = None) -> bytearray | None:
         #get or set the zero offset in dBm
         # DO NOT CHANGE if unfamiliar with device and offset
         # usage: zero {level}\r\n174dBm
@@ -288,6 +290,6 @@ class CalibrationMixin:
 
         return msgbytes
 
-    def get_zero_offset(self, val=None):
+    def get_zero_offset(self, val: int | float | str | None = None) -> bytearray | None:
         # alias function for zero
         return self.zero(val)

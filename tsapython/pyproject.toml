@@ -42,3 +42,47 @@ python_files = ["test_*.py"]
 markers = [
     "hardware: tests that require a physically connected tinySA device (deselect with -m 'not hardware')",
 ]
+# PEP 735 dependency group used by `uv sync` and CI. The [project.optional-dependencies]
+# test extra above is kept for `pip install -e ".[test]"` compatibility.
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.6",
+    "mypy>=1.11",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+# Deliberately small blocking ruleset: F (pyflakes: real bugs -- unused imports,
+# undefined names) plus E9 (syntax errors). Style rules (E/W whitespace,
+# line length, None-comparisons) are a planned follow-up cleanup pass; enabling
+# them now would gate CI on ~680 pre-existing cosmetic findings.
+select = ["E9", "F"]
+
+[tool.mypy]
+# No python_version pin: numpy's bundled stubs use PEP 695 `type` statements,
+# which mypy rejects when the analysis version is pinned below 3.12. mypy runs
+# on CI's 3.12 environment; actual 3.10/3.11 compatibility is enforced by the
+# test matrix, which runs the real interpreter versions.
+files = ["src/tsapython"]
+# The package ships a py.typed marker, which promises downstream type-checkers
+# that the inline annotations are real. These settings are what make that
+# promise true -- every def in the shipped package must be annotated, or CI
+# fails. Tests and examples are deliberately not gated.
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+# pyserial ships no type stubs; treat its interface as dynamically typed rather
+# than failing the import.
+module = "serial.*"
+ignore_missing_imports = true
+

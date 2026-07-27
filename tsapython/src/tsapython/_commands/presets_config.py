@@ -11,12 +11,14 @@
 #   Author(s): Lauren Linkous
 ##--------------------------------------------------------------------------------------------------\
 
-class PresetsConfigMixin:
+from .._host import MixinHost
+
+class PresetsConfigMixin(MixinHost):
 ######################################################################
 # Serial command config, input error checking
 ######################################################################
 
-    def abort(self, val=None):
+    def abort(self, val: int | float | str | None = None) -> bytearray | None:
         # Sets the abort enabled status (on/off)
         # usage: abort [off|on]
         # example return: bytearray(b'')
@@ -46,19 +48,19 @@ class PresetsConfigMixin:
             msgbytes = bytearray(b'')
         return msgbytes
 
-    def enable_abort(self):
+    def enable_abort(self) -> bytearray | None:
         # alias for abort()
         return self.abort( "on")
 
-    def disable_abort(self):
+    def disable_abort(self) -> bytearray | None:
         # alias for abort()
         return self.abort("off")
 
-    def abort_action(self):
+    def abort_action(self) -> bytearray | None:
         # alias for abort()
         return self.abort()
 
-    def clear_config(self):
+    def clear_config(self) -> bytearray | None:
         # resets the configuration data to factory defaults. requires password
         # NOTE: does take other commands to fully clear all
         # usage: clearconfig 1234
@@ -71,7 +73,7 @@ class PresetsConfigMixin:
                           Reset manually to take effect.")
         return msgbytes
 
-    def clear_and_reset(self):
+    def clear_and_reset(self) -> bytearray | None:
         # alias function for full clear and reset process
         # NOTE: reset() disconnects the serial immediately, so it may raise a
         # SerialException or return nothing usable. We clear first, then reset,
@@ -85,7 +87,7 @@ class PresetsConfigMixin:
             self.print_message("reset() disconnected the serial (expected): " + str(err))
             return None
 
-    def device_id(self, ID=None):
+    def device_id(self, ID: int | None = None) -> bytearray | None:
         # sets or dumps a user settable number that can be used to identify a specific tinySA
         # usage: deviceid [{number}]
         # example return: bytearray(b'deviceid 12\r')
@@ -103,15 +105,15 @@ class PresetsConfigMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def get_device_id(self):
+    def get_device_id(self) -> bytearray | None:
         # alias for device_id()
         return self.device_id()
 
-    def set_device_id(self, ID):
+    def set_device_id(self, ID: int) -> bytearray | None:
         # alias for device_id()
         return self.device_id(ID)
 
-    def load(self, val=0):
+    def load(self, val: int = 0) -> bytearray | None:
         # loads a previously stored preset,where 0 is the startup preset 
         # usage: load [0-4]
         # example return: ''
@@ -128,7 +130,7 @@ class PresetsConfigMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def recall(self, val=0):
+    def recall(self, val: int = 0) -> bytearray | None:
         # loads a previously stored preset,where 0 is the startup preset 
         # usage: recall [0-4]
         # example return: ''
@@ -145,7 +147,7 @@ class PresetsConfigMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def remark(self, val):
+    def remark(self, val: int | float | str) -> bytearray | None:
         # does nothing
         # usage: remark {any text}
         # example return: bytearray(b'')
@@ -155,7 +157,7 @@ class PresetsConfigMixin:
         
         return msgbytes 
 
-    def repeat(self, val=1):
+    def repeat(self, val: int = 1) -> bytearray | None:
         # Sets the number of (re)measurements that 
         # should be taken at every frequency
         # usage: repeat
@@ -171,7 +173,7 @@ class PresetsConfigMixin:
             msgbytes = self.error_byte_return()
         return msgbytes 
 
-    def reset(self):
+    def reset(self) -> bytearray | None:
         # reset the tinySA Ultra. NOTE: will disconnect and fully reset
         # usage: reset
         # example return: throws error. raise SerialException
@@ -181,11 +183,11 @@ class PresetsConfigMixin:
         msgbytes = self.tinySA_serial(writebyte, printBool=False) 
         return msgbytes 
 
-    def reset_device(self):
+    def reset_device(self) -> bytearray | None:
         # alias function for reset()
         return self.reset()
 
-    def restart(self, val=0):
+    def restart(self, val: int = 0) -> bytearray | None:
         # restarts the  tinySA after the specified number of seconds
         # usage: restart {seconds}
         # example return: ''
@@ -204,15 +206,15 @@ class PresetsConfigMixin:
 
         return msgbytes
 
-    def restart_device(self, val):
+    def restart_device(self, val: int) -> bytearray | None:
         # alias function for restart
         return self.restart(val)
 
-    def cancel_restart(self):
+    def cancel_restart(self) -> bytearray | None:
         # alias function for restart
         return self.restart(val=0)
 
-    def save(self, val=1):
+    def save(self, val: int = 1) -> bytearray | None:
         # saves the current setting to a preset, where 0 is the startup preset
         # usage: save [0-4]
         # example return: ''
@@ -229,7 +231,7 @@ class PresetsConfigMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def save_config(self):
+    def save_config(self) -> bytearray | None:
         # saves the device configuration data
         # usage: saveconfig
         # example return: bytearray(b'Config saved.\r')
@@ -239,7 +241,7 @@ class PresetsConfigMixin:
         self.print_message("save_config() called")
         return msgbytes
 
-    def sd_delete(self, val):
+    def sd_delete(self, val: int | float | str) -> bytearray | None:
         # delete a specific file on the sd card
         # usage: sd_delete {filename}
         # example return:
@@ -249,7 +251,7 @@ class PresetsConfigMixin:
         self.print_message("deleting file from sd card")
         return msgbytes
 
-    def sd_list(self):
+    def sd_list(self) -> bytearray | None:
         # displays list of filenames with extension and sizes
         # usage: sd_list
         # example return: bytearray(b'-0.bmp 307322\r')
@@ -259,7 +261,7 @@ class PresetsConfigMixin:
         self.print_message("listing files from sd card")
         return msgbytes 
 
-    def sd_read(self, val):
+    def sd_read(self, val: int | float | str) -> bytearray | None:
         # read a specific file on the sd_card
         # usage: sd_read {filename}
         # example return: 
@@ -269,7 +271,7 @@ class PresetsConfigMixin:
         self.print_message("reading file from sd card")
         return msgbytes
 
-    def wait(self, val=0):
+    def wait(self, val: int = 0) -> bytearray | None:
         # wait for a single sweep to finish and pauses
         #  sweep or waits for specified number of seconds
         # usage: wait [{seconds}]

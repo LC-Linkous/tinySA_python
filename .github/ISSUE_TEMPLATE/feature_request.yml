@@ -1,0 +1,62 @@
+name: Feature request
+description: Suggest a new capability or improvement
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: this is deliberately a **non-GUI** API. GUI features are
+        out of scope. New device commands are in scope — note that the
+        `command()` function already provides raw access to any serial command,
+        so a request for a wrapped method is a request for validation, parsing,
+        and documentation around it.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / use case
+      description: What are you trying to do that the library doesn't currently support?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What would the method / behavior look like? A sketch of the signature is helpful.
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Acquisition (scan / sweep / data)
+        - Markers / traces
+        - Levels / gain
+        - Output / signal generator
+        - Calibration
+        - Display / UI commands
+        - Presets / config
+        - System info / connection / autodetect
+        - Docs / examples
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: devices
+    attributes:
+      label: Which device(s) does this apply to?
+      options:
+        - All tinySA models
+        - tinySA (Basic)
+        - tinySA Ultra
+        - tinySA Ultra+
+        - Not sure
+    validations:
+      required: false
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Existing workarounds, or why the raw `command()` passthrough doesn't cover it.
+    validations:
+      required: false

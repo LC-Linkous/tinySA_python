@@ -11,7 +11,7 @@ WARNING: this WILL reset your tinySA (it reboots). Read-only otherwise.
 
 Run from tsapython/ with the device connected:  python diagnose_reset.py
 """
-import sys, os, time, threading
+import sys, os, threading
 HERE = os.path.dirname(os.path.abspath(__file__))
 for cand in (os.path.join(HERE, "src"), os.path.join(HERE, "..", "..", "src"), HERE):
     if os.path.isdir(os.path.join(cand, "tsapython")):

@@ -11,10 +11,10 @@
 #   Author(s): Lauren Linkous
 ##--------------------------------------------------------------------------------------------------\
 
-import re
+from .._host import MixinHost
 
-class SystemInfoMixin:
-    def command(self, val):
+class SystemInfoMixin(MixinHost):
+    def command(self, val: int | float | str) -> bytearray | None:
         # if the command isn't already a function,
         #  use existing func setup to send command
         writebyte = str(val) + '\r\n'
@@ -23,7 +23,7 @@ class SystemInfoMixin:
         return msgbytes   
 
 
-    def dac(self, val=None):
+    def dac(self, val: int | float | str | None = None) -> bytearray | None:
         # sets or dumps the dac value
         # usage: dac [0..4095]
         # example return: bytearray(b'usage: dac {value(0-4095)}\r\ncurrent value: 1922\r')  
@@ -41,15 +41,15 @@ class SystemInfoMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def set_dac(self, val):
+    def set_dac(self, val: int | float | str) -> bytearray | None:
         # alias for dac()
         return self.dac(val)
 
-    def get_dac(self):
+    def get_dac(self) -> bytearray | None:
         # alias for dac()
         return self.dac()
 
-    def info(self):
+    def info(self) -> bytearray | None:
         # displays various SW and HW information
         # usage: info
         # example return: bytearray(b'tinySA ...\r')
@@ -59,11 +59,11 @@ class SystemInfoMixin:
         self.print_message("returning device info()")
         return msgbytes 
 
-    def get_info(self):
+    def get_info(self) -> bytearray | None:
         # alias for info()
         return self.info()
 
-    def nf(self):
+    def nf(self) -> bytearray | None:
         # get the noise floor in dB. 
         # This function CAN be used to set nf, 
         # but that might bypass a measurement process. UNKNOWN right now.
@@ -74,11 +74,11 @@ class SystemInfoMixin:
         self.print_message("getting saved noise floor value")
         return msgbytes
 
-    def get_nf(self):
+    def get_nf(self) -> bytearray | None:
         # alias function for nf()
         return self.nf()
 
-    def rbw(self, val="auto"):
+    def rbw(self, val: int | float | str = "auto") -> bytearray | None:
         # sets the rbw to either automatic or a specific value.
         # the number specifies the target rbw in kHz
         # usage: rbw auto|3..600 
@@ -96,11 +96,11 @@ class SystemInfoMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def set_rbw_auto(self):
+    def set_rbw_auto(self) -> bytearray | None:
         # alias for rbw()
         return self.rbw("auto")
 
-    def self_test(self, val=0):
+    def self_test(self, val: int = 0) -> bytearray | None:
         # performs one or all selftests
         # usage: selftest 0 0..9. 
         # 0 appears to be 'run all'
@@ -116,7 +116,7 @@ class SystemInfoMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def status(self):
+    def status(self) -> bytearray | None:
         # displays the current device status (paused/resumed)
         # usage: status
         # example return: bytearray(b'Resumed\r')
@@ -126,11 +126,11 @@ class SystemInfoMixin:
         self.print_message("getting device status() paused/resumed")
         return msgbytes
 
-    def get_status(self):
+    def get_status(self) -> bytearray | None:
         # alias for status()
         return self.status()
 
-    def temp(self):
+    def temp(self) -> bytearray | None:
         # gets the temperature
         # usage: k   (NOTE: single letter command)
         # example return:
@@ -140,11 +140,11 @@ class SystemInfoMixin:
         self.print_message("getting temperature")
         return msgbytes 
 
-    def get_temp(self):
+    def get_temp(self) -> bytearray | None:
         # alias for temp()
         return self.temp()
 
-    def threads(self):
+    def threads(self) -> bytearray | None:
         # lists information of the threads in the tinySA
         # usage: threads
         # example return:
@@ -155,7 +155,7 @@ class SystemInfoMixin:
         self.print_message("returning thread information for device")
         return msgbytes
 
-    def usart_cfg(self):
+    def usart_cfg(self) -> bytearray | None:
         # gets the current serial config
         # usage: usart_cfg
         # example return: bytearray(b'Serial: 115200 baud\r')
@@ -165,11 +165,11 @@ class SystemInfoMixin:
         self.print_message("usart_cfg() returning config vals")
         return msgbytes
 
-    def get_usart_cfg(self):
+    def get_usart_cfg(self) -> bytearray | None:
         #alias for usart_cfg()
         return self.usart_cfg()
 
-    def vbat(self):
+    def vbat(self) -> bytearray | None:
         # displays the battery voltage
         # usage: vbat
         # example return: bytearray(b'4132 mV\r')
@@ -178,11 +178,11 @@ class SystemInfoMixin:
         self.print_message("returning current battery voltage")
         return msgbytes
 
-    def get_vbat(self):
+    def get_vbat(self) -> bytearray | None:
         # alias for vbat
         return self.vbat()
 
-    def version(self):
+    def version(self) -> bytearray | None:
         # displays the version text
         # usage: version
         # example return: tinySA4_v1.4-143-g864bb27\r\nHW Version:V0.4.5.1.1
@@ -192,7 +192,7 @@ class SystemInfoMixin:
         self.print_message("getting device version information")
         return msgbytes
 
-    def get_version(self):
+    def get_version(self) -> bytearray | None:
         # alias for version()
         return self.version()
 
@@ -200,7 +200,7 @@ class SystemInfoMixin:
 # Device and library help
 ######################################################################
 
-    def help(self, val=0):
+    def help(self, val: int = 0) -> "bytes | bytearray | None":
         # val controls if the tinySA help is called or the 
         # 1 = library_help(), everything else is the tinySA_help()
 
@@ -210,13 +210,13 @@ class SystemInfoMixin:
             msgbytes = self.tinySA_help()    
         return msgbytes
 
-    def library_help(self):
+    def library_help(self) -> "bytes | bytearray | None":
         self.print_message("Returning command options for this library")
         self.print_message("IN PROGRESS. Include tinySA_help.py")
 
         return b''
 
-    def tinySA_help(self):
+    def tinySA_help(self) -> bytearray | None:
         # dumps a list of the available commands
         # usage: help
         # example return: bytearray(b'commands: freq time dac 

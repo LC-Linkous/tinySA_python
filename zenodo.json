@@ -2,6 +2,7 @@
   "title": "tsapython: An Unofficial Python API for the tinySA Device Series",
   "description": "A non-GUI Python API for the tinySA series of spectrum analyzer devices, providing programmatic control for automated measurements, data collection, and analysis. This is an unofficial community project and is not endorsed by the official tinySA product, owner, or company.",
   "upload_type": "software",
+  "version": "3.0.0",
   "license": "GPL-2.0-only",
   "access_right": "open",
   "creators": [

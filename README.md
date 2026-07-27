@@ -3,6 +3,7 @@
 <!-- Badges. Note on the DOI: 10.5281/zenodo.20546764 is the first-deposit DOI. -->
  
 [![PyPI version](https://badge.fury.io/py/tsapython.svg)](https://badge.fury.io/py/tsapython)
+[![Tests](https://github.com/LC-Linkous/tinySA_python/actions/workflows/tests.yml/badge.svg)](https://github.com/LC-Linkous/tinySA_python/actions/workflows/tests.yml)
 [![Python versions](https://img.shields.io/pypi/pyversions/tsapython.svg)](https://pypi.org/project/tsapython/)
 [![PyPI - Wheel](https://img.shields.io/pypi/wheel/tsapython.svg)](https://pypi.org/project/tsapython/)
 [![Downloads](https://static.pepy.tech/badge/tsapython)](https://pepy.tech/project/tsapython)
@@ -133,28 +134,12 @@ pip install dist/tsapython-3.0.0-py3-none-any.whl
 ```
 
 ## Requirements
-This project requires numpy and pyserial. 
-Use 'pip install -r requirements.txt' to install the following dependencies:
-```python
-pyserial
-numpy
-```
-The above dependencies are only for the API interfacing of the tinySA_python library. Additional dependencies should be installed if you are following the examples in this README. These can be installed with `pip install -r test_requirements.txt`:
-```python
-pyserial
-numpy
-matplotlib
-pyQt5   # Linux OS, some Windows machines
-```
+The library itself depends only on `pyserial` and `numpy`. The examples in this
+README additionally use `matplotlib` (and `pyQt5` on Linux, where it provides the
+GUI backend for the figures; it is not needed on all Windows machines).
 
-For anyone unfamiliar with using requirements files, or having issues with the libraries, these can also be installed manually in the terminal (we recommend a Python virtual environment) with:
-
-```python
-pip install pyserial numpy matplotlib pyQt5
-```
-`pyQt5` is used with `matplotlib` to draw the figures. It needs to be installed on Linux systems to follow the examples included in tinySA_python, but is not needed on all Windows machines.
-
-If you are installing the package itself (rather than the loose requirements files), the same optional dependencies are available as extras defined in `pyproject.toml`:
+All dependencies are declared in `pyproject.toml`, with the example dependencies
+available as the `plotting` extra:
 ```python
 # library only (numpy + pyserial)
 pip install tsapython
@@ -164,6 +149,12 @@ pip install "tsapython[plotting]"
 
 # development / running the test suite
 pip install -e ".[test]"
+```
+
+If you prefer installing the libraries manually (we recommend a Python virtual
+environment):
+```python
+pip install pyserial numpy matplotlib pyQt5
 ```
 
 ## Previous Versions
@@ -194,6 +185,7 @@ tsapython/
 │   └── tsapython/
 │       ├── __init__.py
 │       ├── core.py
+│       ├── _host.py
 │       ├── py.typed
 │       └── _commands/
 │           ├── __init__.py
@@ -208,6 +200,7 @@ tsapython/
 └── tests/
     ├── __init__.py
     ├── conftest.py
+    ├── diagnose_reset.py
     ├── test_smoke.py
     ├── test_acquisition.py
     ├── test_calibration.py
@@ -235,8 +228,6 @@ This library is also part of the `tinySA_python` repository, which includes more
 ```
 tinySA_python/
 ├── README.md
-├── requirements.txt
-├── test_requirements.txt
 ├── media/
 │   └── README images, screenshots
 └── tsapython/
@@ -246,12 +237,13 @@ tinySA_python/
     ├── LICENSE
     ├── .gitignore
     ├── examples/
-    │   ├── __init__.py
     │   ├── complete_workflow.py
     │   ├── hardware_walkthrough.py
     │   ├── identifying_serial_ports.py
     │   ├── using_autoconnect.py
     │   ├── using_command_func.py
+    │   ├── filtering_scan_artifacts.py
+    │   ├── find_peaks.py
     │   ├── plotting_scan.py
     │   ├── plotting_scanraw.py
     │   ├── plotting_waterfall_realtime.py
@@ -263,6 +255,7 @@ tinySA_python/
     │   └── tsapython/
     │       ├── __init__.py
     │       ├── core.py
+    │       ├── _host.py
     │       ├── py.typed
     │       └── _commands/
     │           ├── __init__.py
@@ -277,6 +270,7 @@ tinySA_python/
     └── tests/
         ├── __init__.py
         ├── conftest.py
+        ├── diagnose_reset.py
         ├── test_smoke.py
         ├── test_acquisition.py
         ├── test_calibration.py
@@ -305,67 +299,67 @@ The test suite uses [pytest](https://docs.pytest.org/). Tests must be run from t
 configuration and the `hardware` marker are defined in `pyproject.toml`. Running from a
 different directory will produce an `Unknown pytest.mark.hardware` warning.
 
-Install the test dependencies first:
+This is a configured [uv](https://docs.astral.sh/uv/) project with a committed
+`uv.lock`, so the recommended workflow is:
 ```bash
-pip install -e ".[test]"
-# or, using the requirements file:
-pip install pytest pytest-cov
+uv sync          # installs pyserial + numpy + the dev group, editable-installs tsapython
+uv run pytest    # hardware tests self-skip when no device is connected
 ```
 
-Run the suite (hardware tests self-skip when no device is connected):
-```bash
-python -m pytest
-```
-
-> **Note:** use `python -m pytest`, not `uv run pytest`. Running through `uv` here can
-> create a stray virtual environment inside the project directory and tangle the test
-> environment.
+Run everything through `uv run` so the synced environment is used. (If you are
+not using uv, `pip install -e ".[test]"` followed by `python -m pytest` also
+works.)
 
 The suite is split into hardware-free tests and tests that need a connected tinySA.
 The hardware tests are marked with `@pytest.mark.hardware` and are skipped automatically
 when no device is detected:
 ```bash
 # run ONLY the hardware-free tests (explicitly skip device tests)
-python -m pytest -m "not hardware"
+uv run pytest -m "not hardware"
 
 # run ONLY the hardware tests (requires a connected tinySA)
-python -m pytest -m hardware
+uv run pytest -m hardware
 ```
 
 To see coverage while testing:
 ```bash
-python -m pytest --cov=tsapython --cov-report=term-missing
+uv run pytest --cov=tsapython --cov-report=term-missing
+```
+
+Continuous integration runs the hardware-free suite on Windows, Linux, and macOS
+across Python 3.10–3.13 on every push and pull request, along with lint and
+type checks (`uv run ruff check .` and `uv run mypy` — the package ships
+`py.typed`, and the annotations are enforced) and a package build check.
+
+For example:
+```
+uv sync
+uv run pytest -m "not hardware"
+uv run ruff check .
+uv run mypy
 ```
 
 ### Capturing real device responses
 
-`tests/collect_samples.py` is a helper (not a pytest test) that connects to a real device,
-sends a set of read-only commands, and writes their responses to
+`tests/collect_samples.py` is a manual helper (not a pytest test) that connects to a real
+device, sends a set of read-only commands, and writes their responses to
 `tests/fixtures/captured_responses.py`. The `test_captured_hardware.py` tests then run the
 library's parsing logic against those real captures (these run without a device, since the
-bytes are frozen in the fixture):
-```bash
-python tests/collect_samples.py
-```
-
-
-### Collecting device samples
-`tests/collect_samples.py` is a manual helper (not a pytest test) for capturing real
-device responses to use as parsing fixtures. Run it with a tinySA connected:
+bytes are frozen in the fixture). Run it with a tinySA connected:
 ```python
 # auto-detect the serial port
-python tests/collect_samples.py
+uv run python tests/collect_samples.py
 
 # or specify the port explicitly
-python tests/collect_samples.py --port COM5            # Windows
-python tests/collect_samples.py --port /dev/ttyACM0    # Linux/Mac
+uv run python tests/collect_samples.py --port COM5            # Windows
+uv run python tests/collect_samples.py --port /dev/ttyACM0    # Linux/Mac
 ```
 
 ### Example scripts
 The files in `examples/` are runnable demonstrations (not part of the automated test
 suite) and require a connected device plus the plotting dependencies:
 ```python
-pip install "tsapython[plotting]"     # or: pip install -r test_requirements.txt
+pip install "tsapython[plotting]"
 python examples/complete_workflow.py
 python examples/hardware_walkthrough.py
 ```
@@ -1867,7 +1861,6 @@ Quick Link Table:
     * `enable_abort()`
     * `disable_abort()`
     * `abort_action()`
-* **CLI Wrapper Usage:**
 * **Notes:** WARNING: DOES NOT ON DEVELOPER'S DUT. When used without parameters the previous command still running will be aborted. Abort must be enabled before using the "abort on" command. Additional error checking has been added with the 'verbose' option. 
 
 ### **actual_freq**
@@ -1878,7 +1871,6 @@ Quick Link Table:
 * **Alias Functions:**
     * `set_actual_freq(val=Int)`
     * `set_actual_freq()`
-* **CLI Wrapper Usage:**
 * **Notes:**  freq in Hz going by the returns. Should be able to set the value with this, according to documentation, but it doesn't appear to set with the development DUT. 
 
 
@@ -1889,7 +1881,6 @@ Quick Link Table:
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * `set_agc(val="auto"|Int 0..7)`
-* **CLI Wrapper Usage:**
 * **Notes:** 
 
 
@@ -1900,7 +1891,6 @@ Quick Link Table:
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * `set_attenuation(val="auto"|Int 0..31)`
-* **CLI Wrapper Usage:**
 * **Notes:** 
 
 
@@ -1911,7 +1901,6 @@ Quick Link Table:
 * **Example Return:** `format: "bulk\r\n{X}{Y}{Width}{Height} {Pixeldata}\r\n"`
 * **Alias Functions:**
     *  `get_bulk_data()`
-* **CLI Wrapper Usage:**
 * **Notes:** 
  All numbers are binary coded 2 bytes little endian. The pixel data is encoded as 2 bytes per pixel. This is data returned by the device when in AUTO REFRESH mode. NOTE: may need to be paired with a continuous buffer read and dump, which will be tested in the next update           
             
@@ -1929,7 +1918,6 @@ Quick Link Table:
     * `set_calc_aver4()` 
     * `set_calc_aver16()` 
     * `set_calc_quasip()` 
-* **CLI Wrapper Usage:**
 * **Notes:** 
   * the commands are the same as those listed in the MEASURE menu
   * [tinySA Calc Menu](#https://tinysa.org/wiki/pmwiki.php?n=Main.CALC):
@@ -1957,7 +1945,6 @@ Quick Link Table:
     * `set_cal_output_3()`
     * `set_cal_output_2()`
     * `set_cal_output_1()`
-* **CLI Wrapper Usage:**
 * **Notes:** "controls the build in calibration reference generator. The output of the reference generator is connected to CAL connector. The output frequency can be 1,2,4,10,15 and 30MHz and the output level of the fundamental at 30MHz is -35.6dBm" - From [https://tinysa.org/wiki/pmwiki.php?n=TinySA4.MODE](https://tinysa.org/wiki/pmwiki.php?n=TinySA4.MODE)
 
 
@@ -1968,7 +1955,6 @@ Quick Link Table:
 * **Example Return:** `format:'\x00\x00\x00\x00\x00\x00\x00\...x00\x00\x00'`
 * **Alias Functions:**
     * `capture_screen()`
-* **CLI Wrapper Usage:**
 * **Notes:** tinySA original: 320x240, tinySA Ultra and newer: 480x320  
 
 
@@ -1979,7 +1965,6 @@ Quick Link Table:
 * **Example Return:** `b'Config and all calibration data cleared. \r\n Do reset manually to take effect. Then do touch calibration and save.\r'`
 * **Alias Functions:**
     * `clear_and_reset()`
-* **CLI Wrapper Usage:**
 * **Notes:** Requires password '1234'. Hardcoded. Other functions need to be used with this to complete the process.
 
 
@@ -1996,7 +1981,6 @@ Quick Link Table:
     * `get_all_colors()`
     * `get_marker_color(ID=Int|0..31)`
     * `set_marker_color(ID=Int|0..31, col=rgb24)`
-* **CLI Wrapper Usage:**
 * **Notes:**  the rgb24 hex value currently must be passed in as a string
 
 
@@ -2007,7 +1991,6 @@ Quick Link Table:
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * This function is complex enough that it is recommended to use the `command()` function for options not covered by the `correction(...)` library function
-* **CLI Wrapper Usage:**
 * **Notes:**  See [Correction Wiki](https://tinysa.org/wiki/pmwiki.php?n=Main.Correction). The current content of the table is shown by entering `correction low` without any arguments. The data in the table can be modified by specifying the slot number and the new values. There **MUST** be one entry in the low table for 30MHz and the correction for that frequency **MUST** be zero. 
 * **Future Work:** **Confirm table format across devices**. Value currently limited between -10 and 35, but this needs to be more specific.
 
@@ -2020,7 +2003,6 @@ Quick Link Table:
 * **Alias Functions:**
     * `set_dac(val=Int|0...4095)`
     * `get_dac()`
-* **CLI Wrapper Usage:**
 * **Notes:** 
 
 ### **data**
@@ -2032,7 +2014,6 @@ Quick Link Table:
     * `get_temporary_data()` 
     * `get_stored_trace_data()`
     * `dump_measurement_data()`
-* **CLI Wrapper Usage:**
 * **Notes:**   
     * 0 = temp value, 1 = stored trace, 2 = measurement. strength in decibels (dB) 
     * `get_temporary_data` not to be confused with `get_temp`, which returns temperature
@@ -2046,7 +2027,6 @@ Quick Link Table:
 * **Alias Functions:**
     * `get_device_id()`
     * `set_device_id(ID=Int|0....)`
-* **CLI Wrapper Usage:**
 * **Notes:** 
 
 
@@ -2060,7 +2040,6 @@ Quick Link Table:
     * `set_direct_off()`
     * `set_direct_start(freq=Int)`
     * `set_direct_stop(freq=Int)`
-* **CLI Wrapper Usage:**
 * **Notes:** 
     * NOTE: for start/stop, freq must be a positive number. No upper bound is enforced because the valid range is model-dependent; the device rejects out-of-range values.
     * might be tinySA Ultra and newer only.
@@ -2075,7 +2054,6 @@ Quick Link Table:
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * `set_ext_gain(val=Int|-100...100)`
-* **CLI Wrapper Usage:**
 * **Notes:** * Works in both input and output mode
 
 
@@ -2086,7 +2064,6 @@ Quick Link Table:
 * **Example Return:** `format: "fill\r\n{X}{Y}{Width}{Height} {Color}\r\n"`
 * **Alias Functions:**
     * `get_fill_data()`
-* **CLI Wrapper Usage:**
 * **Notes:**  All numbers returned are binary coded 2 bytes little endian. Similar to `bulk`
 
 
@@ -2097,7 +2074,6 @@ Quick Link Table:
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * `set_freq(val=Int)`
-* **CLI Wrapper Usage:**
 * **Notes:** Might need to `resume` the sweep after this. Could be device dependent.   
 
 
@@ -2108,7 +2084,6 @@ Quick Link Table:
 * **Example Return:** `b'0 ppb\r'`
 * **Alias Functions:**
     * `get_frequency_correction()`
-* **CLI Wrapper Usage:**
 * **Notes:**  This command returns the frequency correction, in parts per billion (ppb).
 
 
@@ -2120,7 +2095,6 @@ Quick Link Table:
 * **Example Return:**  `b'1500000000\r\n... \r\n3000000000\r'`
 * **Alias Functions:**
     * `get_last_freqs()`
-* **CLI Wrapper Usage:**
 * **Notes:**   
 
 
@@ -2133,7 +2107,6 @@ Quick Link Table:
     * `tinySAHelp()`
 * **Related Functions:**
     * `libraryHelp()` 
-* **CLI Wrapper Usage:**
 * **Notes:**  0 = tinySAHelp(), 1=libraryHelp(). Both functions can also be called directly. libraryHelp() has more information about this library and the inputs. 
 
 
@@ -2144,7 +2117,6 @@ Quick Link Table:
 * **Example Return:** e
 * **Alias Functions:**
     * `get_sample_pts(start=Int, stop=Int, inc=Int, use_pts=Bool)`
-* **CLI Wrapper Usage:**
 * **Notes:**  _Ultra only_. From [tinysa-org](https://tinysa-org.translate.goog/wiki/pmwiki.php?n=Main.USBInterface&_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en-US): if the 3rd parameter is below 450 it is assumed to be points, otherwise as step frequency Outmask selects if the frequency (1) or level (2) is output. 
 
 
@@ -2155,7 +2127,6 @@ Quick Link Table:
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * None
-* **CLI Wrapper Usage:**
 * **Notes:**  Val input of 0 is 'auto'. Added explicit 'auto' to match other library funcs.
 
 ### **if1**
@@ -2165,7 +2136,6 @@ Quick Link Table:
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * None
-* **CLI Wrapper Usage:**
 * **Notes:**  Val input of 0 is 'auto'. Added explicit 'auto' to match other library funcs.
 
 ### **info**
@@ -2175,7 +2145,6 @@ Quick Link Table:
 * **Example Return:** `b'tinySA ULTRA\r\n2019-2024 Copyright @Erik Kaashoek\r\n2016-2020 Copyright edy555\r\nSW licensed under GPL. See: https://github.com/erikkaashoek/tinySA\r\nVersion: tinySA4_v1.-143-g864bb27\r\nBuild Time: Jan 10 2024 - 11:14:08\r\nKernel: 4.0.0\r\nCompiler: GCC 7.2.1 20170904 (release) [ARM/embedded-7-branch revision 255204]\r\nArchitecture: ARMv7E-M Core Variant: Cortex-M4F\r\nPort Info: Advanced kernel mode\r\nPlatform:STM32F303xC Analog & DSP\r'`
 * **Alias Functions:**
     * `get_info()`
-* **CLI Wrapper Usage:**
 * **Notes:** 
 
 ### **level**
@@ -2185,7 +2154,6 @@ Quick Link Table:
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * `set_level()`
-* **CLI Wrapper Usage:**
 * **Notes:** Not all values in the range are available.  Might be device dependent. 
 
 ### **levelchange**
@@ -2195,7 +2163,6 @@ Quick Link Table:
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * `set_level_change()`
-* **CLI Wrapper Usage:**
 * **Notes:**  
 
 ### **leveloffset**
@@ -2213,7 +2180,6 @@ Quick Link Table:
         * output: `bytearray(b'')`
 * **Alias Functions:**
     * None
-* **CLI Wrapper Usage:**
 * **Notes:**  
     * NOT ALL COMBINATIONS ARE VALID.
     * Calibration tables:
@@ -2238,7 +2204,6 @@ Quick Link Table:
 * **Alias Functions:**
     * `line_off()`
     * `set_line(val=Int|Float)`
-* **CLI Wrapper Usage:**
 * **Notes:**   
 
 ### **load**
@@ -2248,7 +2213,6 @@ Quick Link Table:
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * None
-* **CLI Wrapper Usage:**
 * **Notes:**  0 is the startup preset
 
 ### **lna**
@@ -2259,7 +2223,6 @@ Quick Link Table:
 * **Alias Functions:**
     * `set_lna_on()`
     * `set_lna_off()`
-* **CLI Wrapper Usage:**
 * **Notes:**  Should not be enabled when AGC is enabled - [tinySA wiki SETTINGS2](https://tinysa.org/wiki/pmwiki.php?n=Main.SETTINGS2)
 
 
@@ -2270,7 +2233,6 @@ Quick Link Table:
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * `set_lna2(val="auto"|0..7)`
-* **CLI Wrapper Usage:**
 * **Notes:** 
 
 
@@ -2286,7 +2248,6 @@ Quick Link Table:
     * `marker_peak(ID=Int|1..4)`
     * `marker_freq(ID=Int|1..4)`
     * `marker_index(ID=Int|1..4)`
-* **CLI Wrapper Usage:**
 * **Notes:**   where id=1..4 index=0..num_points-1
 Marker levels will use the selected unit Marker peak will activate the marker (if not done already), position the marker on the strongest signal and display the marker info The frequency must be within the selected sweep range mode. Alias functions need error checking. 
 
@@ -2300,7 +2261,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** unknown. depends on menu button 'clicked'
 * **Alias Functions:**
     * None
-* **CLI Wrapper Usage:**
 * **Notes:**  [tinySA Menu Tree](https://tinysa.org/wiki/pmwiki.php?n=TinySA4.MenuTree) for more information. There's no error checking on this function due to the number of nested menus and buttons. 
 
 ### **mode**
@@ -2313,7 +2273,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
     * `set_low_output_mode()`
     * `set_high_input_mode()`
     * `set_high_output_mode()`
-* **CLI Wrapper Usage:**
 * **Notes:**  [tinySA Wiki MODE](https://tinysa.org/wiki/pmwiki.php?n=Main.MODE)
     * LOW INPUT activates the 0.1-350MHz input mode
     * HIGH INPUT activates the 240MHz-960MHz input mode
@@ -2333,7 +2292,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
     * `set_mod_NFM()`
     * `set_mod_WFM()`
     * `set_mod_extern()`
-* **CLI Wrapper Usage:**
 * **Notes:** 
     * OFF -  Turns modulation off. NO modulation 
     * AM_1kHz - Set AM modulation 1 kHz
@@ -2352,7 +2310,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** `b'usage: nf {value}\r\n4.000000000\r'`
 * **Alias Functions:**
     * `get_nf()`
-* **CLI Wrapper Usage:**
 * **Notes:** 
 * The tinySA Ultra can measure, store, and validate the tinySA noise figure (NF). It can also measure amplifier (AMP) NF. 
 * While it is possible to set this value programmatically, until more documentation is online it is recommended to only GET the nf value. 
@@ -2367,7 +2324,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Alias Functions:**
     * `set_output_on()`
     * `set_output_off()`
-* **CLI Wrapper Usage:**
 * **Notes:** 
 
 
@@ -2378,7 +2334,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * None
-* **CLI Wrapper Usage:**
 * **Notes:** 
 
 
@@ -2389,7 +2344,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:**  empty bytearray
 * **Alias Functions:**
     * `set_rbw_auto()`
-* **CLI Wrapper Usage:**
 * **Notes:**  
 * The number specifies the target rbw in kHz. 
 * Frequencies listed in tinySA Basic documentation: 3 kHz, 10 kHz, 30 kHz, 100 kHz, 300 kHz, 600 kHz. [https://tinysa.org/wiki/pmwiki.php?n=Main.RBW](https://tinysa.org/wiki/pmwiki.php?n=Main.RBW)
@@ -2404,7 +2358,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * None
-* **CLI Wrapper Usage:**
 * **Notes:** Same functionality as `load()`. 0 is the startup preset.
 
 
@@ -2416,7 +2369,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Alias Functions:**
     * `refresh_on()`
     * `refresh_off()`
-* **CLI Wrapper Usage:**
 * **Notes:** 
 
 
@@ -2427,7 +2379,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * None
-* **CLI Wrapper Usage:**
 * **Notes:** 
 
 
@@ -2438,7 +2389,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * None
-* **CLI Wrapper Usage:**
 * **Notes:** 
 * [https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface](https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface)
 * potential use: adding comments to scripts and denoting that the line does nothing with `remark` as the first word.
@@ -2451,7 +2401,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * None
-* **CLI Wrapper Usage:**
 * **Notes:**  increasing the repeat reduces the noise per frequency, repeat 1 is the normal scanning mode. Has int(val) conversion.
 
 
@@ -2462,7 +2411,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** empty bytearray, serial error message. depends on the system.
 * **Alias Functions:**
     * `reset_device()`
-* **CLI Wrapper Usage:**
 * **Notes:**  Disconnects the serial too.
 
 
@@ -2474,7 +2422,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Alias Functions:**
     * `restart_device()`
     * `cancel_restart()`
-* **CLI Wrapper Usage:**
 * **Notes:** 
     *  Has not worked in testing on development DUT, but appears to work on some devices online.
     *  0 seconds stops the restarting process. 
@@ -2487,7 +2434,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * None
-* **CLI Wrapper Usage:**
 * **Notes:** 
 
 
@@ -2498,7 +2444,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * None
-* **CLI Wrapper Usage:**
 * **Notes:**  where 0 is the startup preset
 
 ### **saveconfig**
@@ -2508,7 +2453,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * None
-* **CLI Wrapper Usage:**
 * **Notes:** Takes no arguments.
  
 
@@ -2527,7 +2471,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
     * Results: `bytearray(b'5.343750e+00 0.000000000 \r\n5.843750e+00 0.000000000 \r\n5.843750e+00 0.000000000 \r\n5.343750e+00 0.000000000 \r\n5.843750e+00 0.000000000 \r')`
 * **Alias Functions:**
     * None, but see`plotting_scan.py` example
-* **CLI Wrapper Usage:**
 * **Notes:**  
     * `[points]` is the number of points in the scan. The MAX points is device dependent. Basic is 290, Ultra is 450 .
     * `[outmask]`  1=frequencies, 2=measured data, 4=stored data. 3 not in documentation, but appears to blend 1 and 2.
@@ -2545,7 +2488,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
     * Results: `bytearray(b'{xs\nxu\nx\x8a\nx^\nx\xf2\x0b')`
 * **Alias Functions:**
     *  None, but see`plotting_scanraw.py` example
-* **CLI Wrapper Usage:**
 * **Notes:** 
     * **WARNING: the screen will not match the data output during this function. That is expected.** 
     * "The measured data is the level in dBm and is send as '{' ('x' MSB LSB)*points '}'. To get the dBm level from the 16 bit data, divide by 32 and subtract 128 for the tinySA and 174 for the tinySA Ultra. The option, when present, can be either 0,1,2 or 3 being the sum of 1=unbuffered and 2=continuous." - [https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface](https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface) 
@@ -2560,7 +2502,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
     * If a file is not deleted: `bytearray(b'')`
 * **Alias Functions:**
     * None
-* **CLI Wrapper Usage:**
 * **Notes:** 
 
 ### **sd_list**
@@ -2570,7 +2511,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** format example: `-0.bmp 307322`
 * **Alias Functions:**
     * None
-* **CLI Wrapper Usage:**
 * **Notes:** 
   
 ### **sd_read**
@@ -2582,7 +2522,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
     * If file does not exist on SD card, then `bytearray(b'err: (4) no file\r')` will be returned. 
 * **Alias Functions:**
     * None
-* **CLI Wrapper Usage:**
 * **Notes:** The error return message is built into the device, but has not been exhaustively tested with this library. 
 
 ### **selftest**
@@ -2592,7 +2531,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * `all_self_tests()`
-* **CLI Wrapper Usage:**
 * **Notes:**  
     * MUST have cable connected to RF and CAL. 
     * The prompt for TOUCH still happens after
@@ -2609,7 +2547,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Alias Functions:**
     * `spur_on()`
     * `spur_off()`
-* **CLI Wrapper Usage:**
 * **Notes:** 
  
 
@@ -2620,7 +2557,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** `b'Resumed'`
 * **Alias Functions:**
     * `get_status()`
-* **CLI Wrapper Usage:**
 * **Notes:** 
 
 ### **sweep**
@@ -2638,7 +2574,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
     * `set_sweep_span(val=Int|Float)`
     * `set_sweep_cw(val=Int|Float)`
     * `run_sweep(start=FREQ, stop=FREQ, pts=INT)`
-* **CLI Wrapper Usage:**
 * **Notes:**  sweep without arguments lists the current sweep settings, the frequencies specified should be within the permissible range. The sweep commands apply both to input and output modes. MAX PTS is device dependent; 290 for tinySA Basic and 450 for tinySA Ultra and newer
 * `sweep start {integer}`: sets the start frequency of the sweep.
 * `sweep stop {integer}`: sets the stop frequency of the sweep.
@@ -2655,7 +2590,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * None
-* **CLI Wrapper Usage:**
 * **Notes:** the time specified may end in a letter where  m=milli and u=micro
 
 ### **temperature**
@@ -2665,7 +2599,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** `bytearray(b'43.25\r')`
 * **Alias Functions:**
     * `get_temp()`
-* **CLI Wrapper Usage:**
 * **Notes:** single letter command. might not work on tinySA Basic model.
 
 
@@ -2676,7 +2609,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * None
-* **CLI Wrapper Usage:**
 * **Notes:**  where keypadtext is the text used. Example: text 12M. Currently does not work for entering file names. 
 
 ### **threads**
@@ -2686,7 +2618,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** `b'stklimit|        |stk free|    addr|refs|prio|    state|        name\r\n20000200|2000054C|00000248|200016A8|   0| 128|  CURRENT|        main\r\n20001530|2000157C|0000008C|20001650|   0|   1|    READY|        idle\r\n200053D8|200056C4|00000250|200059B0|   0| 127|    READY|       sweep\r'`
 * **Alias Functions:**
     * None
-* **CLI Wrapper Usage:**
 * **Notes:** 
 
 ### **touch**
@@ -2696,7 +2627,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * `perform_touch(x=Int, y=Int)`
-* **CLI Wrapper Usage:**
 * **Notes:**  The upper left corner of the screen is "0 0"
 
 ### **touchcal**
@@ -2706,7 +2636,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * `start_touch_cal()`
-* **CLI Wrapper Usage:**
 * **Notes:**  
 
 ### **touchtest**
@@ -2716,7 +2645,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * `start_touch_test()`
-* **CLI Wrapper Usage:**
 * **Notes:**  instructions on screen "touch panel, draw lines, press button to complete"
 
 ### **trace**
@@ -2743,7 +2671,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Alias Functions:**
     * None, see direct library function calls
     * it is also suggested to use the `command()` function to perform more complex actions because this is a complicated command structure
-* **CLI Wrapper Usage:**
 * **Notes:** For readability, this command was split into multiple functions initially rather than using complex alias functions. There is a mismatch of information of commands between versions, so this library uses the documentation returned by the device. 
     * `trace_select()`: tinySA Ultra has 4 traces to choose from. Other devices may have other numbers of traces.
     * `trace_reflevel(...)` : adjusts the reference level of a trace. Levels are specified in dB(m) and can be specified using a floating point notation. E.g. 10 or 2.5 [https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface](https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface)
@@ -2759,7 +2686,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
     * `trigger_normal()`
     * `trigger_single()`
     * `trigger_level(FREQ)`
-* **CLI Wrapper Usage:**
 * **Notes:**  the trigger level is always set in dBm
 
 
@@ -2774,7 +2700,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
     * `set_ultra_auto()`
     * `set_ultra_start(val=FREQ)`
     * `set_ultra_harmonic(val=FREQ)`
-* **CLI Wrapper Usage:**
 * **Notes:**  
     * ultra on: enable ultra mode
     * ultra off {freq}: disable ultra mode
@@ -2791,7 +2716,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** `b'Serial: 115200 baud\r'`
 * **Alias Functions:**
     * `usart_cfg()`
-* **CLI Wrapper Usage:**
 * **Notes:**  default is 115,200
 
 ### **vbat**
@@ -2801,7 +2725,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * `get_vbat()`
-* **CLI Wrapper Usage:**
 * **Notes:** 
 
 ### **vbat_offset**
@@ -2812,7 +2735,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Alias Functions:**
     * `get_vbat_offset()`
     * `set_vbat_offset(val=Int)`
-* **CLI Wrapper Usage:**
 * **Notes:** 
 
 ### **version**
@@ -2822,7 +2744,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * `get_version()`
-* **CLI Wrapper Usage:**
 * **Notes:** 
 
 ### **wait**
@@ -2832,7 +2753,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * None
-* **CLI Wrapper Usage:**
 * **Notes:** Without an argument, this puts device in the WAIT state and it needs to manually RESUME
 
 ### **zero**
@@ -2842,7 +2762,6 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * `get_zero_offset()`
-* **CLI Wrapper Usage:**
 * **Notes:** If unfamiliar with device and operation, DO NOT CHANGE THIS VALUE.
 
 
@@ -2883,7 +2802,6 @@ Other commands: version reset data frequencies scan hop scanraw test touchcal to
 * **Example Return:** command dependent
 * **Alias Functions:**
     * None
-* **CLI Wrapper Usage:**
 * **Notes:** If unfamiliar with device and operation, DO NOT USE THIS. There is no error checking and you will be interfacing with the tinySA device directly.
 
 

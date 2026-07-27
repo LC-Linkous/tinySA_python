@@ -13,8 +13,10 @@
 
 import numpy as np
 
-class LevelsGainMixin:
-    def agc(self, val='auto'):
+from .._host import MixinHost
+
+class LevelsGainMixin(MixinHost):
+    def agc(self, val: int | float | str = 'auto') -> bytearray | None:
         # Enables/disables the build in Automatic Gain Control
         # usage: agc 0..7|auto
         # example return: bytearray(b'')
@@ -31,11 +33,11 @@ class LevelsGainMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def set_agc(self, val):
+    def set_agc(self, val: int | float | str) -> bytearray | None:
         # alias for agc()
         return self.agc(val)
 
-    def attenuate(self, val='auto'):
+    def attenuate(self, val: int | float | str = 'auto') -> bytearray | None:
         # sets the internal attenuation to automatic or a specific value
         # usage: attenuate [auto|0-31]
         # example return: bytearray(b'')
@@ -52,11 +54,11 @@ class LevelsGainMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def set_attenuation(self, val):
+    def set_attenuation(self, val: int | float | str) -> bytearray | None:
         # alias for attenuate()
         return self.attenuate(val)
 
-    def calc(self, val="off"):
+    def calc(self, val: int | float | str = "off") -> bytearray | None:
         # sets or cancels one of the measurement modes
         # the commands are the same as those listed 
         # in the MEASURE menu
@@ -76,28 +78,28 @@ class LevelsGainMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def set_calc_off(self):
+    def set_calc_off(self) -> bytearray | None:
         return self.calc("off")
 
-    def set_calc_minh(self):
+    def set_calc_minh(self) -> bytearray | None:
         return self.calc("minh")
 
-    def set_calc_maxh(self):
+    def set_calc_maxh(self) -> bytearray | None:
         return self.calc("maxh")
 
-    def set_calc_maxd(self):
+    def set_calc_maxd(self) -> bytearray | None:
         return self.calc("maxd")
 
-    def set_calc_aver4(self):
+    def set_calc_aver4(self) -> bytearray | None:
         return self.calc("aver4")
 
-    def set_calc_aver16(self):
+    def set_calc_aver16(self) -> bytearray | None:
         return self.calc("aver16")
 
-    def set_calc_quasip(self):
+    def set_calc_quasip(self) -> bytearray | None:
         return self.calc("quasip")
 
-    def ext_gain(self, val):
+    def ext_gain(self, val: int | float | str) -> bytearray | None:
         # sets the external attenuation/amplification.
         # Works in both input and output mode
         # usage: ext_gain -100..100
@@ -113,11 +115,11 @@ class LevelsGainMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def set_ext_gain(self, val):
+    def set_ext_gain(self, val: int | float | str) -> bytearray | None:
         # alias for ext_gain()
         return self.ext_gain(val)
 
-    def level(self, val):
+    def level(self, val: int | float | str) -> bytearray | None:
         # sets the output level. Not all values in the range are available
         # usage: level -76..13
         # example return: b''
@@ -135,11 +137,11 @@ class LevelsGainMixin:
             msgbytes =  self.error_byte_return()
         return msgbytes
 
-    def set_level(self, val):
+    def set_level(self, val: int | float | str) -> bytearray | None:
         # alias for level()
         return self.level(val)
 
-    def level_change(self, val):
+    def level_change(self, val: int | float | str) -> bytearray | None:
         # sets the output level delta for low output mode level sweep
         # usage: levelchange -70..+70
         # example return: ''
@@ -157,11 +159,11 @@ class LevelsGainMixin:
             msgbytes =  self.error_byte_return()
         return msgbytes
 
-    def set_level_change(self, val):
+    def set_level_change(self, val: int | float | str) -> bytearray | None:
         # alias for level_change()
         return self.level_change(val)
 
-    def lna(self, val):
+    def lna(self, val: int | float | str) -> bytearray | None:
         # toggle lna usage off/on
         # usage: lna off|on
         # example return: ''
@@ -178,15 +180,15 @@ class LevelsGainMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def set_lna_on(self):
+    def set_lna_on(self) -> bytearray | None:
         #alias for lna1()
         return self.lna("on")
 
-    def set_lna_off(self):
+    def set_lna_off(self) -> bytearray | None:
         #alias for lna1()
         return self.lna("off")   
 
-    def lna2(self, val="auto"):
+    def lna2(self, val: int | float | str = "auto") -> bytearray | None:
         # Set the second LNA usage off/on. 
         # The Ultra Plus devices have a 2nd LNA at a higher frequency range.
         # usage: lna2 0..7|auto
@@ -204,6 +206,6 @@ class LevelsGainMixin:
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def set_lna2(self, val):
+    def set_lna2(self, val: int | float | str) -> bytearray | None:
         #alias for lna2()
         return self.lna2(val)
