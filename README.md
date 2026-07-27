@@ -185,6 +185,7 @@ tsapython/
 │   └── tsapython/
 │       ├── __init__.py
 │       ├── core.py
+│       ├── _host.py
 │       ├── py.typed
 │       └── _commands/
 │           ├── __init__.py
@@ -254,6 +255,7 @@ tinySA_python/
     │   └── tsapython/
     │       ├── __init__.py
     │       ├── core.py
+    │       ├── _host.py
     │       ├── py.typed
     │       └── _commands/
     │           ├── __init__.py
@@ -325,8 +327,17 @@ uv run pytest --cov=tsapython --cov-report=term-missing
 ```
 
 Continuous integration runs the hardware-free suite on Windows, Linux, and macOS
-across Python 3.10–3.13 on every push and pull request, along with a lint check
-(`uv run ruff check .`) and a package build check.
+across Python 3.10–3.13 on every push and pull request, along with lint and
+type checks (`uv run ruff check .` and `uv run mypy` — the package ships
+`py.typed`, and the annotations are enforced) and a package build check.
+
+For example:
+```
+uv sync
+uv run pytest -m "not hardware"
+uv run ruff check .
+uv run mypy
+```
 
 ### Capturing real device responses
 

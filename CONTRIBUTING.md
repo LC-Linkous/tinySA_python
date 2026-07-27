@@ -44,10 +44,13 @@ Run these from the `tsapython/` directory:
 ```bash
 uv run pytest -m "not hardware"     # full hardware-free suite must pass
 uv run ruff check .                 # lint (blocking ruleset: E9 + F)
+uv run mypy                         # type check (blocking; the package ships py.typed)
 ```
 
 CI runs the same suite across Windows, Linux, and macOS on Python 3.10–3.13,
-plus the lint check and a package build check.
+plus the lint + type checks and a package build check. New and changed code
+must be fully annotated (`disallow_untyped_defs` is enforced on
+`src/tsapython`); tests and examples are not type-gated.
 
 ## Adding a command
 
