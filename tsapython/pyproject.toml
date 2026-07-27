@@ -42,3 +42,22 @@ python_files = ["test_*.py"]
 markers = [
     "hardware: tests that require a physically connected tinySA device (deselect with -m 'not hardware')",
 ]
+# PEP 735 dependency group used by `uv sync` and CI. The [project.optional-dependencies]
+# test extra above is kept for `pip install -e ".[test]"` compatibility.
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.6",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+# Deliberately small blocking ruleset: F (pyflakes: real bugs -- unused imports,
+# undefined names) plus E9 (syntax errors). Style rules (E/W whitespace,
+# line length, None-comparisons) are a planned follow-up cleanup pass; enabling
+# them now would gate CI on ~680 pre-existing cosmetic findings.
+select = ["E9", "F"]
