@@ -152,7 +152,9 @@ def main():
     # FuncAnimation drives redraws on the GUI event loop, keeping the window
     # responsive. interval is the redraw period in ms; acquisition runs
     # independently in the background thread.
-    ani = animation.FuncAnimation(
+    # keep a reference: FuncAnimation is garbage-collected (and the animation
+    # stops) if the return value is discarded
+    ani = animation.FuncAnimation(  # noqa: F841
         fig, plotter.update, fargs=(line, ax),
         interval=200, blit=False, cache_frame_data=False)
 
