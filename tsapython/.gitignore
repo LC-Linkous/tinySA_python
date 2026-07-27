@@ -169,7 +169,9 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
-uv.lock
+# uv.lock is deliberately COMMITTED (see the commented note above near the
+# Pipfile.lock section): it pins the dev environment for contributors and CI.
+# Do not re-add it here.
 
 
 # macOS system files
