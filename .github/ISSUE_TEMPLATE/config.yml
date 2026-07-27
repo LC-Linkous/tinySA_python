@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Official tinySA documentation
+    url: https://tinysa.org/wiki/
+    about: Authoritative reference for device behavior, valid ranges, and safe operation. Check here first.
+  - name: tinySA community (groups.io)
+    url: https://groups.io/g/tinysa
+    about: Device-usage questions belong here. Note they do NOT support this library — library issues stay on this repo.
+  - name: Question / usage help for this library
+    url: https://github.com/LC-Linkous/tinySA_python/discussions
+    about: For "how do I..." questions about tsapython, open a Discussion rather than an issue.

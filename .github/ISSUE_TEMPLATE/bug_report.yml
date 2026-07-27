@@ -1,0 +1,77 @@
+name: Bug report
+description: Something isn't working as documented
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. This library talks to real hardware over serial,
+        so please include device and OS details — many issues are
+        firmware- or environment-specific.
+
+        For questions about **device behavior** (not this library), the
+        [official tinySA wiki](https://tinysa.org/wiki/) and the tinySA
+        community at groups.io are the right places — they do not support this
+        library, and library issues belong here, not there.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: The exact minimal code. Include the command string the library sent if you have it (set_verbose(True) output helps).
+      render: python
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: "e.g. Windows 11 23H2 / Ubuntu 24.04 / macOS 14"
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version
+      placeholder: "output of: python --version"
+    validations:
+      required: true
+  - type: input
+    id: tsapython
+    attributes:
+      label: tsapython version
+      placeholder: "output of: pip show tsapython | grep Version (or 'local build from <commit>')"
+    validations:
+      required: true
+  - type: dropdown
+    id: device
+    attributes:
+      label: Device model
+      options:
+        - tinySA (Basic)
+        - tinySA Ultra
+        - tinySA Ultra+
+        - "No device connected (reproduces without hardware)"
+        - Other / not sure
+    validations:
+      required: true
+  - type: textarea
+    id: firmware
+    attributes:
+      label: Device firmware / info
+      description: Paste the output of `tsa.info()` if a device is involved (redact the serial if you wish).
+      render: shell
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / traceback
+      description: Full traceback or output. Run with `set_verbose(True)` and `set_error_byte_return(True)` if possible.
+      render: shell
