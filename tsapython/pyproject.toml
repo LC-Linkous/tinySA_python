@@ -7,9 +7,14 @@ authors = [
 description = "An UNOFFICIAL Python API for the tinySA series of devices"
 readme = "README.md"
 requires-python = ">=3.10"
+keywords = ["tinysa", "spectrum analyzer", "rf", "sdr", "serial", "ultra"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "Environment :: Console",
 ]
 dependencies = [
     "numpy>=2.2.6",
@@ -29,8 +34,10 @@ test = [
 ]
 
 [project.urls]
+"Homepage" = "https://github.com/LC-Linkous/tinySA_python"
 "Repository" = "https://github.com/LC-Linkous/tinySA_python"
 "Issues" = "https://github.com/LC-Linkous/tinySA_python/issues"
+"Changelog" = "https://github.com/LC-Linkous/tinySA_python/blob/main/CHANGELOG.md"
 
 [build-system]
 requires = ["uv_build>=0.8.11,<0.9.0"]
@@ -57,11 +64,13 @@ line-length = 100
 target-version = "py310"
 
 [tool.ruff.lint]
-# Deliberately small blocking ruleset: F (pyflakes: real bugs -- unused imports,
-# undefined names) plus E9 (syntax errors). Style rules (E/W whitespace,
-# line length, None-comparisons) are a planned follow-up cleanup pass; enabling
-# them now would gate CI on ~680 pre-existing cosmetic findings.
-select = ["E9", "F"]
+# Blocking ruleset: F (pyflakes: real bugs -- unused imports, undefined
+# names), E9 (syntax errors), and W (whitespace hygiene; the pre-existing
+# findings were autofixed when W was enabled). Full E remains a deferred
+# cleanup pass: ~70 findings, mostly line-length (E501) and None/bool
+# comparison style (E711/E712), which touch code lines and deserve their
+# own reviewed commit rather than riding along here.
+select = ["E9", "F", "W"]
 
 [tool.mypy]
 # No python_version pin: numpy's bundled stubs use PEP 695 `type` statements,
