@@ -42,7 +42,7 @@ jobs:
         run: uv sync
 
       - name: Run test suite (hardware tests deselected)
-        run: uv run pytest -m "not hardware" --cov=tsapython --cov-report=xml --cov-report=term-missing
+        run: uv run pytest -m "not hardware" --cov=tsapython --cov-report=xml --cov-report=term-missing --cov-fail-under=85
 
       - name: Upload coverage to Codecov
         # Optional: only does anything once the repo is linked at
