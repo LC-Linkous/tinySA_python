@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Repository and packaging polish, ported from the hackrfpy hardening pass:
+  `SECURITY.md` (private vulnerability reporting, scope, and the
+  hardware-damage carve-out), a `.gitattributes` line-ending policy (LF
+  everywhere, binary protections, one-time renormalize), PyPI metadata
+  (`Homepage` and `Changelog` project URLs, `keywords`, richer classifiers),
+  a CI coverage gate at 85% minimum (measured 86% at adoption), the ruff
+  blocking ruleset expanded to `E9 + F + W` (pre-existing whitespace
+  findings autofixed; full `E` remains a deferred, reviewed cleanup), a
+  written coverage-and-platform policy plus PR expectations in
+  CONTRIBUTING, and Keep-a-Changelog compare links in this file.
 - Continuous integration: GitHub Actions workflow running the hardware-free
   test suite across Windows, Linux, and macOS on Python 3.10–3.13, plus a
   ruff + mypy lint job and a package build check, on every push and pull
@@ -94,3 +104,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the [GitHub releases](https://github.com/LC-Linkous/tinySA_python/releases)
 for pre-3.0.0 history, when the library shipped as a single-class module.
+
+[Unreleased]: https://github.com/LC-Linkous/tinySA_python/compare/v3.0.0...HEAD
+[3.0.0]: https://github.com/LC-Linkous/tinySA_python/releases/tag/v3.0.0
