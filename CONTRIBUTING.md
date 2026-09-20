@@ -43,7 +43,7 @@ Run these from the `tsapython/` directory:
 
 ```bash
 uv run pytest -m "not hardware"     # full hardware-free suite must pass
-uv run ruff check .                 # lint (blocking ruleset: E9 + F)
+uv run ruff check .                 # lint (blocking ruleset: E9 + F + W)
 uv run mypy                         # type check (blocking; the package ships py.typed)
 ```
 
@@ -51,6 +51,28 @@ CI runs the same suite across Windows, Linux, and macOS on Python 3.10–3.13,
 plus the lint + type checks and a package build check. New and changed code
 must be fully annotated (`disallow_untyped_defs` is enforced on
 `src/tsapython`); tests and examples are not type-gated.
+
+Also expected with a code PR:
+
+- **A CHANGELOG entry** under `[Unreleased]` — say what changed and why.
+- **Coverage** — CI gates at 85% (`--cov-fail-under=85`); new code arrives
+  with its tests.
+- **Hardware evidence for core changes** — any change under `src/tsapython/`
+  should include evidence of a run against a real tinySA (hardware tests
+  passing); paste the pytest tail in the PR. Docs, examples, and test-only
+  changes are exempt. CI cannot attach a device, so this half of the gate is
+  enforced by review.
+
+## Test coverage and platform policy
+
+CI gates coverage at **85% minimum** (`--cov-fail-under=85`) on every leg of
+the matrix. Coverage below the gate fails the build; new code arrives with
+the tests that keep it above.
+
+**Supported platforms are the ones verified against a real tinySA** —
+currently Windows (primary). A platform is promoted when the full suite,
+hardware tests included, passes there with a real device, and is then held
+to the same standards.
 
 ## Adding a command
 
