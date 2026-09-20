@@ -3,9 +3,9 @@
 ##-------------------------------------------------------------------------------\
 #   tinySA_python (tsapython)
 #   './examples/plotting_scanraw.py'
-#   This is a visual comparison of SCAN and SCANRAW to work out some errors in 
-#   the decode process. We don't expect SCAN and SCANRAW to be exactly the same, 
-#   because the number of points taken are not the same, but they 
+#   This is a visual comparison of SCAN and SCANRAW to work out some errors in
+#   the decode process. We don't expect SCAN and SCANRAW to be exactly the same,
+#   because the number of points taken are not the same, but they
 #   should be relatively similar values when SCANRAW is decoded
 #
 #   Last update: June 3, 2026
@@ -30,14 +30,14 @@ except ImportError as exc:
 
 def convert_data_to_arrays(start, stop, pts, data):
     # FOR PLOTTING
-    # using the start and stop frequencies, and the number of points, 
+    # using the start and stop frequencies, and the number of points,
 
-    freq_arr = np.linspace(start, stop, pts) # note that the decimals might go out to many places. 
-                                                # you can truncate this because its only used 
+    freq_arr = np.linspace(start, stop, pts) # note that the decimals might go out to many places.
+                                                # you can truncate this because its only used
                                                 # for plotting in this example
 
-    # As of the Jan. 2024 build in some data returned with SWEEP or SCAN calls there is error data.  
-    # https://groups.io/g/tinysa/topic/tinasa_ultra_sweep_command/104194367  
+    # As of the Jan. 2024 build in some data returned with SWEEP or SCAN calls there is error data.
+    # https://groups.io/g/tinysa/topic/tinasa_ultra_sweep_command/104194367
     # this shows up as "-:.000000e+01" (and the unsigned ":.000000e-01" / ":.000000e+01").
     # The ':' is ASCII 0x3A, one past '9' (0x39): the firmware overflows a single digit
     # slot, so what should read "10" renders as ":". Both signed AND unsigned forms occur.
@@ -45,10 +45,10 @@ def convert_data_to_arrays(start, stop, pts, data):
     # noise floor. More advanced filtering should be applied for actual analysis.
     # NOTE: order matters -- handle the negative form first, then the bare/unsigned form.
     data1 =bytearray(data.replace(b"-:.0", b"-10.0").replace(b":.0", b"10.0"))
-    
+
     # get both values in each row returned (for reference)
-    #data_arr = [list(map(float, line.split())) for line in data.decode('utf-8').split('\n') if line.strip()] 
-   
+    #data_arr = [list(map(float, line.split())) for line in data.decode('utf-8').split('\n') if line.strip()]
+
     # get first value in each returned row
     data_arr = [float(line.split()[0]) for line in data1.decode('utf-8').split('\n') if line.strip()]
 
@@ -70,10 +70,10 @@ def convert_data_to_arrays(start, stop, pts, data):
 
     return freq_arr, data_arr
 
-# create a new tinySA object    
+# create a new tinySA object
 tsa = tinySA()
 
-# set the return message preferences 
+# set the return message preferences
 tsa.set_verbose(True) #detailed messages
 tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
 
@@ -92,7 +92,7 @@ else: # if port found and connected, then complete task(s) and disconnect
     outmask = 2     # for scan(): get measured data (y axis)
     unbuf = 1       # for scan_raw(): unbuffered mode (1/2/3), NOT an outmask
     # scan raw call - reads until end of stream
-    # this CAN be run in a loop. the limiting factor is time to plot. 
+    # this CAN be run in a loop. the limiting factor is time to plot.
 
     # SCAN
     scan_data_bytes = tsa.scan(start, stop, pts, outmask)
@@ -113,27 +113,27 @@ else: # if port found and connected, then complete task(s) and disconnect
     freq_arr, data_arr = convert_data_to_arrays(start, stop, pts, scan_data_bytes)
 
     # PROCESS SCANRAW into an array & reuse the FREQ_ARR value
-    # remove the intro curly brace ({) 
+    # remove the intro curly brace ({)
     bin_scanraw = scanraw_data_bytes[1:] #skip the first char because it's the remaining curly brace
     # use struct.unpack() because of the repeating pattern
         # <: indicates little-endian byte order, meaning the least significant byte is stored first
         # 'xH'*pts: a repetition of the format 'xH' once per point.
         # 'x': represents a pad byte, which is ignored
         # 'H': represents an unsigned short integer (2 bytes)
-    
+
     expected_len = 3 * pts
     actual_len = len(bin_scanraw)
     print(f"Expected length: {expected_len}, Actual length: {actual_len}")
-    
+
     if actual_len == expected_len:
-        # SCANRAW has returned the expected amount of data for the read. 
+        # SCANRAW has returned the expected amount of data for the read.
         # sometimes this function (and not SCAN) does not read the buffer properly
         # a fix is in progress for LINUX systems. it works fine for Windows
         processed_scanraw = struct.unpack( '<' + 'xH'*pts, bin_scanraw ) # ignore trailing '}ch> '
         processed_scanraw = np.array(processed_scanraw, dtype=np.uint16 ).reshape(-1, 1) #unit8 has overflow error
 
         # CONVERT to dBm Power
-        # take the processed binary data and convert it to dBm. 
+        # take the processed binary data and convert it to dBm.
         # The equation is from tinySA.org & official documentation
         SCALE_FACTOR = 174  # tinySA Basic: 128, tinySA Ultra and newer is 174
         dBm_data = processed_scanraw / 32 - SCALE_FACTOR

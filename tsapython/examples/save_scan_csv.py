@@ -25,36 +25,36 @@ except ImportError as exc:
     ) from exc
 
 def convert_data_to_arrays(start, stop, pts, data):
-    # using the start and stop frequencies, and the number of points, 
+    # using the start and stop frequencies, and the number of points,
 
-    freq_arr = np.linspace(start, stop, pts) # note that the decimals might go out to many places. 
-                                                # you can truncate this because its only used 
+    freq_arr = np.linspace(start, stop, pts) # note that the decimals might go out to many places.
+                                                # you can truncate this because its only used
                                                 # for plotting in this example
 
-    # As of the Jan. 2024 build in some data returned with SWEEP or SCAN calls there is error data.  
-    # https://groups.io/g/tinysa/topic/tinasa_ultra_sweep_command/104194367  
+    # As of the Jan. 2024 build in some data returned with SWEEP or SCAN calls there is error data.
+    # https://groups.io/g/tinysa/topic/tinasa_ultra_sweep_command/104194367
     # this shows up as "-:.000000e+01" (and the unsigned ":.000000e-01" / ":.000000e+01").
     # The ':' is ASCII 0x3A, one past '9' (0x39): the firmware overflows a single digit
     # slot, so what should read "10" renders as ":". Both signed AND unsigned forms occur.
     # TEMP fix - replace the colon form with 10. This puts the 'filled in' points around the
     # noise floor. More advanced filtering should be applied for actual analysis.
     # NOTE: order matters -- handle the negative form first, then the bare/unsigned form.
-    
+
     data1 = bytearray(data.replace(b"-:.0", b"-10.0").replace(b":.0", b"10.0"))
-    
+
     # get both values in each row returned (for reference)
-    #data_arr = [list(map(float, line.split())) for line in data.decode('utf-8').split('\n') if line.strip()] 
-   
+    #data_arr = [list(map(float, line.split())) for line in data.decode('utf-8').split('\n') if line.strip()]
+
     # get first value in each returned row
     data_arr = [float(line.split()[0]) for line in data1.decode('utf-8').split('\n') if line.strip()]
 
     return freq_arr, data_arr
 
 
-# create a new tinySA object    
+# create a new tinySA object
 tsa = tinySA()
 
-# set the return message preferences 
+# set the return message preferences
 tsa.set_verbose(True) #detailed messages
 tsa.set_error_byte_return(True) #get explicit b'ERROR' if error thrown
 
@@ -88,18 +88,18 @@ else: # if port found and connected, then complete task(s) and disconnect
 
     # Save the data to CSV
     filename = "scan_sample.csv"
-        
+
     # Write out to csv where column 1 is frequency and col 2 is data
     with open(filename, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        
+
         # Write header row
         writer.writerow(['Frequency_Hz', 'Signal_Strength_dBm'])
-        
+
         # Write data rows (frequency, signal strength pairs)
         for freq, signal in zip(freq_arr, data_arr):
             writer.writerow([f'{freq:.0f}', signal])
-    
+
     print(f"Data saved to {filename}")
     print(f"CSV contains {len(freq_arr)} frequency/signal pairs")
 
