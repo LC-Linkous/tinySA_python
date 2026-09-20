@@ -1,0 +1,10 @@
+# Line-ending policy: LF everywhere, on every platform.
+# Identical working trees on Windows and Linux mean one patch/diff flavor
+# and byte-identical checkouts; modern Windows tooling is LF-clean.
+* text=auto eol=lf
+
+# Binary payloads: never normalize.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
