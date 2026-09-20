@@ -24,8 +24,8 @@ class OutputSignalMixin(MixinHost):
         #check input
         if (val in accepted_vals):
             writebyte = 'caloutput '+str(val)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)   
-            self.print_message("caloutput() set with " + str(val))        
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
+            self.print_message("caloutput() set with " + str(val))
         else:
             self.print_message("ERROR: caloutput() takes vals 1|2|3|4|10|15|30|\"off\"")
             msgbytes = self.error_byte_return()
@@ -45,7 +45,7 @@ class OutputSignalMixin(MixinHost):
 
     def set_cal_output_10(self) -> bytearray | None:
         # alias for cal_output()
-        return self.cal_output(10)       
+        return self.cal_output(10)
 
     def set_cal_output_4(self) -> bytearray | None:
         # alias for cal_output()
@@ -71,7 +71,7 @@ class OutputSignalMixin(MixinHost):
         #check input
         if (str(val)=="on") or (str(val) =="off"):
             writebyte = 'direct '+str(val)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)     
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("direct() set with " + str(val))
         elif (str(val)=="start") or (str(val)=="stop"):
             # freq must be a positive number. No upper bound is enforced: the
@@ -79,8 +79,8 @@ class OutputSignalMixin(MixinHost):
             # so the device itself rejects out-of-range values.
             if (isinstance(freq, (int, float))) and (freq > 0):
                 writebyte = 'direct '+str(val)+' ' +str(freq)+ '\r\n'
-                msgbytes = self.tinySA_serial(writebyte, printBool=False)     
-                self.print_message("direct() set with " + str(val) + " frequency of " + str(freq))            
+                msgbytes = self.tinySA_serial(writebyte, printBool=False)
+                self.print_message("direct() set with " + str(val) + " frequency of " + str(freq))
             else:
                 self.print_message("ERROR: direct() start/stop requires freq as a positive number")
                 msgbytes = self.error_byte_return()
@@ -116,7 +116,7 @@ class OutputSignalMixin(MixinHost):
         #check input
         if (val1 in accepted_val1) and (val2 in accepted_val2):
             writebyte = 'mode '+str(val1)+ ' ' +str(val2)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)           
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
         else:
             self.print_message("ERROR: output() takes vals [on|off]")
             msgbytes = self.error_byte_return()
@@ -150,7 +150,7 @@ class OutputSignalMixin(MixinHost):
         #check input
         if (str(val) in accepted_vals):
             writebyte = 'modulation '+str(val)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)           
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
         else:
             self.print_message("ERROR: modulation() takes vals [off|AM_1kHz|AM_10Hz|NFM|WFM|extern]")
             msgbytes = self.error_byte_return()
@@ -178,7 +178,7 @@ class OutputSignalMixin(MixinHost):
 
     def set_mod_extern(self) -> bytearray | None:
         # alias for modulation()
-        return self.modulation("extern")    
+        return self.modulation("extern")
 
     def output(self, val: int | float | str) -> bytearray | None:
         # sets the output on or off
@@ -190,7 +190,7 @@ class OutputSignalMixin(MixinHost):
         #check input
         if (str(val) in accepted_vals):
             writebyte = 'output '+str(val)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)           
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
         else:
             self.print_message("ERROR: output() takes vals [on|off]")
             msgbytes = self.error_byte_return()
@@ -198,11 +198,11 @@ class OutputSignalMixin(MixinHost):
 
     def set_output_on(self) -> bytearray | None:
         #alias for output()
-        return self.output("on") 
+        return self.output("on")
 
     def set_output_off(self) -> bytearray | None:
         #alias for output()
-        return self.output("off")     
+        return self.output("off")
 
     def ultra(self, val: int | float | str = "off", freq: int | float | str | None = None) -> bytearray | None:
         # turn on/config tiny SA ultra mode
@@ -211,11 +211,11 @@ class OutputSignalMixin(MixinHost):
 
         if str(val) in ["off", "on", "auto"]:
             writebyte = 'ultra ' + str(val) +'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("configuring ultra() " + str(val))
         elif str(val) in ["start", "harm"]:
             writebyte = 'ultra ' + str(val) + ' ' + str(freq) +'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("configuring ultra() " + str(val) + " at " + str(freq))
         else:
             self.print_message("ERROR: ultra() currently only takes on/off as args")

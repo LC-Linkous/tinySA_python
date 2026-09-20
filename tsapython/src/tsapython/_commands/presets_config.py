@@ -24,12 +24,12 @@ class PresetsConfigMixin(MixinHost):
         # example return: bytearray(b'')
 
         # #explicitly allowed vals
-        accepted_vals =  ["off", "on"]        
+        accepted_vals =  ["off", "on"]
 
         #check input
         if (str(val) in accepted_vals): #toggle state
             writebyte = 'abort '+str(val)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             if val == "on":
                 self.print_message("ABORT option ENABLED")
                 self.abortEnabled = True
@@ -39,7 +39,7 @@ class PresetsConfigMixin(MixinHost):
         elif val == None: #action
             if self.abortEnabled == True:
                 writebyte = 'abort\r\n'
-                msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+                msgbytes = self.tinySA_serial(writebyte, printBool=False)
             else:
                 self.print_message("ABORT option must be ENABLED before use")
                 msgbytes = bytearray(b'')
@@ -65,10 +65,10 @@ class PresetsConfigMixin(MixinHost):
         # NOTE: does take other commands to fully clear all
         # usage: clearconfig 1234
         # example return: bytearray(b'Config and all cal data cleared.
-        # \r\nDo reset manually to take effect. 
+        # \r\nDo reset manually to take effect.
         # Then do touch cal and save.\r')
         writebyte = 'clearconfig 1234\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("clear_config() with password. Config and all cal data cleared. \
                           Reset manually to take effect.")
         return msgbytes
@@ -93,12 +93,12 @@ class PresetsConfigMixin(MixinHost):
         # example return: bytearray(b'deviceid 12\r')
 
         if ID == None:
-            #get the device ID        
+            #get the device ID
             writebyte = 'deviceid\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)   
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
         elif isinstance(ID, int):
             writebyte = 'deviceid '+str(ID)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)   
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("device ID set to " + str(ID))
         else:
             self.print_message("ERROR: device_id() takes either None or integers")
@@ -114,7 +114,7 @@ class PresetsConfigMixin(MixinHost):
         return self.device_id(ID)
 
     def load(self, val: int = 0) -> bytearray | None:
-        # loads a previously stored preset,where 0 is the startup preset 
+        # loads a previously stored preset,where 0 is the startup preset
         # usage: load [0-4]
         # example return: ''
 
@@ -123,15 +123,15 @@ class PresetsConfigMixin(MixinHost):
         #check input
         if (val in accepted_vals):
             writebyte = 'load '+str(val)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)    
-            self.print_message("load() called for preset # " + str(val))       
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
+            self.print_message("load() called for preset # " + str(val))
         else:
             self.print_message("ERROR: load() takes vals [0 - 4]")
             msgbytes = self.error_byte_return()
         return msgbytes
 
     def recall(self, val: int = 0) -> bytearray | None:
-        # loads a previously stored preset,where 0 is the startup preset 
+        # loads a previously stored preset,where 0 is the startup preset
         # usage: recall [0-4]
         # example return: ''
 
@@ -141,7 +141,7 @@ class PresetsConfigMixin(MixinHost):
         if (val in accepted_vals):
             writebyte = 'recall '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
-            self.print_message("recall() set to value " + str(val))           
+            self.print_message("recall() set to value " + str(val))
         else:
             self.print_message("ERROR: recall() takes vals [0 - 4]")
             msgbytes = self.error_byte_return()
@@ -152,13 +152,13 @@ class PresetsConfigMixin(MixinHost):
         # usage: remark {any text}
         # example return: bytearray(b'')
         writebyte = 'remark ' + str(val) + '\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("remark " + str(val))
-        
-        return msgbytes 
+
+        return msgbytes
 
     def repeat(self, val: int = 1) -> bytearray | None:
-        # Sets the number of (re)measurements that 
+        # Sets the number of (re)measurements that
         # should be taken at every frequency
         # usage: repeat
         # example return: bytearray(b'')
@@ -166,12 +166,12 @@ class PresetsConfigMixin(MixinHost):
         val = int(val)
         if (1<=val<=1000):
             writebyte = 'repeat ' + str(val) + '\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("setting the repeat() measurement to " + str(val))
         else:
             self.print_message("ERROR: repeat() takes integer vals [0 - 1000]")
             msgbytes = self.error_byte_return()
-        return msgbytes 
+        return msgbytes
 
     def reset(self) -> bytearray | None:
         # reset the tinySA Ultra. NOTE: will disconnect and fully reset
@@ -180,8 +180,8 @@ class PresetsConfigMixin(MixinHost):
 
         writebyte = 'reset\r\n'
         self.print_message("sending reset signal. Serial will disconnect...")
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
-        return msgbytes 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
+        return msgbytes
 
     def reset_device(self) -> bytearray | None:
         # alias function for reset()
@@ -194,11 +194,11 @@ class PresetsConfigMixin(MixinHost):
         val = int(val)
         if val == 0:
             writebyte = 'restart ' + str(val) + '\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
-            self.print_message("restarting cancelled.")       
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
+            self.print_message("restarting cancelled.")
         elif (0<val):
             writebyte = 'restart ' + str(val) + '\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("restarting the device in " + str(val) + " seconds.")
         else:
             self.print_message("ERROR: restart() takes vals 0 or greater")
@@ -225,7 +225,7 @@ class PresetsConfigMixin(MixinHost):
         if (val in accepted_vals):
             writebyte = 'save '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
-            self.print_message("saving to preset " + str(val))           
+            self.print_message("saving to preset " + str(val))
         else:
             self.print_message("ERROR: save() takes vals [0 - 4] as integers")
             msgbytes = self.error_byte_return()
@@ -237,7 +237,7 @@ class PresetsConfigMixin(MixinHost):
         # example return: bytearray(b'Config saved.\r')
 
         writebyte = 'saveconfig\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("save_config() called")
         return msgbytes
 
@@ -247,7 +247,7 @@ class PresetsConfigMixin(MixinHost):
         # example return:
 
         writebyte = 'sd_delete ' + str(val)+ '\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("deleting file from sd card")
         return msgbytes
 
@@ -257,17 +257,17 @@ class PresetsConfigMixin(MixinHost):
         # example return: bytearray(b'-0.bmp 307322\r')
 
         writebyte = 'sd_list\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("listing files from sd card")
-        return msgbytes 
+        return msgbytes
 
     def sd_read(self, val: int | float | str) -> bytearray | None:
         # read a specific file on the sd_card
         # usage: sd_read {filename}
-        # example return: 
+        # example return:
 
         writebyte = 'sd_read ' + str(val)+ '\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("reading file from sd card")
         return msgbytes
 
@@ -279,11 +279,11 @@ class PresetsConfigMixin(MixinHost):
 
         if val == None:
             writebyte = 'wait\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("device in wait() state. manually resume")
         elif val>0:
             writebyte = 'wait ' + str(val) + '\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("device wait() trigged for " + str(val) + " seconds.")
         else:
             self.print_message("ERROR: wait() takes None or positive ints")

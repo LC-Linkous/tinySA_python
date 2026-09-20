@@ -23,12 +23,12 @@ class CalibrationMixin(MixinHost):
         # example return: bytearray(b'3000000000\r')
 
         if val == None:
-            #get the dac       
+            #get the dac
             writebyte = 'actual_freq\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)   
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
         elif (isinstance(val, (int, float))) and (self.minSADeviceFreq <= val <=self.maxSADeviceFreq ):
             writebyte = 'actual_freq '+str(val)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)   
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("actual_freq set to " + str(val))
         else:
             self.print_message("ERROR: actual_freq() takes either None or integers")
@@ -37,7 +37,7 @@ class CalibrationMixin(MixinHost):
 
     def set_actual_freq(self, val: int | float | str) -> bytearray | None:
         # alias for actual_freq()
-        return self.actual_freq(val)      
+        return self.actual_freq(val)
 
     def get_actual_freq(self) -> bytearray | None:
         # alias for actual_freq()
@@ -47,15 +47,15 @@ class CalibrationMixin(MixinHost):
         # sets or dumps the frequency level orrection table
         # usage: correction [0..9 {frequency} {level dB}]
         # usage: correction low|lna|ultra|ultra_lna|direct|direct_lna|harm|harm_lna|out|out_direct|out_adf|out_ultra|off|on 0-19 frequency(Hz) value(dB)
-        # example return:  
+        # example return:
 
         # explicitly allowed vals
-        accepted_table_args = ["low", "lna", "ultra", "ultra_lna", 
-                               "direct", "direct_lna",  "harm", 
-                               "harm_lna", "out", "out_direct", 
+        accepted_table_args = ["low", "lna", "ultra", "ultra_lna",
+                               "direct", "direct_lna",  "harm",
+                               "harm_lna", "out", "out_direct",
                                "out_adf", "out_ultra", "off", "on"]
 
-        accepted_slots = np.arange(0, 20, 1) # max exclusive. 
+        accepted_slots = np.arange(0, 20, 1) # max exclusive.
 
         if (argName in accepted_table_args) and (slot==None):
             # prints out the table as it currently is
@@ -95,7 +95,7 @@ class CalibrationMixin(MixinHost):
         if (isinstance(val, (int, float))) and (self.minSADeviceFreq<= val <=self.maxSADeviceFreq):
             writebyte = 'freq '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
-            self.print_message("freq() set to " + str(val))       
+            self.print_message("freq() set to " + str(val))
         else:
             self.print_message("ERROR: freq() takes integer vals [100 kHz - 5.3 GHz] as Hz for the tinySA Ultra")
             msgbytes = self.error_byte_return()
@@ -111,7 +111,7 @@ class CalibrationMixin(MixinHost):
         # example return: bytearray(b'0 ppb\r')
 
         writebyte = 'freq_corr\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("getting frequency correction")
         return msgbytes
 
@@ -128,12 +128,12 @@ class CalibrationMixin(MixinHost):
         #check input
         if (val == 0) or (val=='auto'):
             writebyte = 'if '+str(0)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)        
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("setIF() set to auto")
         elif ((433e6) <=val <=(435e6)):
             writebyte = 'if '+str(val)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)                 
-            self.print_message("setIF() set to "  + str(val))       
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
+            self.print_message("setIF() set to "  + str(val))
         else:
             self.print_message("ERROR: if() takes vals ['auto'|0|433M...435M] in Hz as integers")
             msgbytes = self.error_byte_return()
@@ -146,12 +146,12 @@ class CalibrationMixin(MixinHost):
         #check input
         if (val == 0) or (val=='auto'):
             writebyte = 'if1 '+str(0)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)      
-            self.print_message("setIF1() set to auto")         
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
+            self.print_message("setIF1() set to auto")
         elif isinstance(val, (int, float)) and ((975e6) <=val <=(979e6)):
             writebyte = 'if1 '+str(val)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)   
-            self.print_message("setIF() set to "  + str(val))          
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
+            self.print_message("setIF() set to "  + str(val))
         else:
             self.print_message("ERROR: if1() takes vals ['auto'|0|975M...979M] in Hz as integers")
             msgbytes = self.error_byte_return()
@@ -159,11 +159,11 @@ class CalibrationMixin(MixinHost):
 
     def level_offset(self, val: int | float | str, offset: float, isOutput: bool = False) -> bytearray | None:
         # sets or dumps the level calibration data.
-        # For the output corrections first ensure correct output 
-        # levels at maximum output level. 
+        # For the output corrections first ensure correct output
+        # levels at maximum output level.
         # For the low output set the output to -50dBm and
-        # measure and correct the level with 
-        # "leveloffset switch error" where for all output 
+        # measure and correct the level with
+        # "leveloffset switch error" where for all output
         # leveloffset commands measure the level with the
         # leveloffset to zero and calculate
         # error = measured level - specified level
@@ -190,14 +190,14 @@ class CalibrationMixin(MixinHost):
                     # success message
                     writebyte = 'leveloffset '+str(val)+ ' output ' + str(float(offset)) +'\r\n'
                     msgbytes = self.tinySA_serial(writebyte, printBool=False)
-                    self.print_message("leveloffset() set to " + str(val) + " output " + str(offset))    
+                    self.print_message("leveloffset() set to " + str(val) + " output " + str(offset))
 
 
                 elif isOutput == False:
                     # success message
                     writebyte = 'leveloffset '+str(val)+ ' ' + str(float(offset)) +'\r\n'
                     msgbytes = self.tinySA_serial(writebyte, printBool=False)
-                    self.print_message("leveloffset() set to " + str(val) +  " "  + str(offset))    
+                    self.print_message("leveloffset() set to " + str(val) +  " "  + str(offset))
 
                 else:
                     # just for the error check when bulking this function out
@@ -205,14 +205,14 @@ class CalibrationMixin(MixinHost):
                     self.print_message("ERROR: value set to" + str(isOutput))
                     msgbytes =  self.error_byte_return()
                     return msgbytes
-                        
+
 
             else:
                 self.print_message("ERROR: leveloffset() takes offset vals as floats [-20.0 - 20.0]")
                 self.print_message("ERROR: value set to" + str(offset))
                 msgbytes =  self.error_byte_return()
-               
-       
+
+
         else:
             self.print_message("ERROR: leveloffset() takes value arguments low|switch|receive_switch|out_switch|lna|" \
             "harmonic|shift|shift1|shift2|shift3|drive1|drive2|drive3|direct|" \
@@ -233,7 +233,7 @@ class CalibrationMixin(MixinHost):
         if (str(val) in accepted_vals):
             writebyte = 'spur '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
-            self.print_message("spur() set to " + str(val))           
+            self.print_message("spur() set to " + str(val))
         else:
             self.print_message("ERROR: spur() takes vals [on|off]")
             msgbytes = self.error_byte_return()
@@ -253,12 +253,12 @@ class CalibrationMixin(MixinHost):
         # example return: bytearray(b'300\r')
 
         if val == None:
-            #get the offset       
+            #get the offset
             writebyte = 'vbat_offset\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)   
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
         elif (isinstance(val, (int, float))) and (0<= val <=4095):
             writebyte = 'vbat_offset '+str(val)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)   
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("vbat_offset set to " + str(val))
         else:
             self.print_message("ERROR: vbat_offset() takes either None or [0 - 4095] integers")
@@ -281,11 +281,11 @@ class CalibrationMixin(MixinHost):
 
         if val == None:
             writebyte = 'zero\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("returning zero offset")
         else:
             writebyte = 'zero ' + str(val) + '\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("device zero offset is " + str(val) + " dBm.")
 
         return msgbytes

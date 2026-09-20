@@ -54,7 +54,7 @@ class tinySA(
 
         # VARS BELOW HERE will be largely replaced with device class config calls
         # # this will allow for user settings and device presets
-        
+
         # other overrides
         self.ultraEnabled = False
         self.abortEnabled = False
@@ -71,7 +71,7 @@ class tinySA(
         self.maxSGDeviceFreq = 960e6 #960 MHz
         # battery
         self.maxDeviceBattery = 4095
-        # screen 
+        # screen
         self.screenWidth = 480
         self.screenHeight = 320
 
@@ -95,7 +95,7 @@ class tinySA(
 # Explicit error return
 # set_error_byte_return()  - set if explicit b'ERROR' is returned
 # get_error_byte_return()  - get the return mode True/False
-# error_byte_return()  - return 'ERROR' message or empty. 
+# error_byte_return()  - return 'ERROR' message or empty.
 ######################################################################
 
     def set_error_byte_return(self, errByte: bool = False) -> None:
@@ -113,13 +113,13 @@ class tinySA(
 ######################################################################
 # Set Device Params
 #   Library specific functions. These set the boundaries & features for
-#   error checking in the library 
-#    
+#   error checking in the library
+#
 # WARNING: these DO NOT change the settings on the DEVICE. just the library.
 ######################################################################
 
     def select_existing_device(self, tinySAModel: str) -> None:
-        # uses pre-set config files. 
+        # uses pre-set config files.
         # tinySAModel var must be one of the following:
         # "BASIC", "ZS405", "ZS406", "ZS407"
         try:
@@ -142,7 +142,7 @@ class tinySA(
             self.maxSGDeviceFreq = 960e6 #960 MHz
             # battery
             self.maxDeviceBattery = 4095
-            # screen 
+            # screen
             self.screenWidth = 480
             self.screenHeight = 320
 
@@ -173,7 +173,7 @@ class tinySA(
     def set_harmonic_mode(self, harmonicMode: bool = False) -> None:
         self.harmonicEnabled = harmonicMode
 
-    
+
     # error check boundaries
     ## signal analyzer specific
 
@@ -181,7 +181,7 @@ class tinySA(
         self.minSADeviceFreq = float(f)
 
     def get_min_SA_freq(self) -> float:
-        return self.minSADeviceFreq 
+        return self.minSADeviceFreq
 
     def set_max_SA_freq(self, f: int | float | str) -> None:
         self.maxSADeviceFreq = float(f)
@@ -189,13 +189,13 @@ class tinySA(
     def get_max_SA_freq(self) -> float:
         return self.maxSADeviceFreq
 
-    ## signal generator specific 
+    ## signal generator specific
 
     def set_min_SG_freq(self, f: int | float | str) -> None:
         self.minSGDeviceFreq = float(f)
 
     def get_min_SG_freq(self) -> float:
-        return self.minSGDeviceFreq 
+        return self.minSGDeviceFreq
 
     def set_max_SG_freq(self, f: int | float | str) -> None:
         self.maxSGDeviceFreq = float(f)
@@ -208,7 +208,7 @@ class tinySA(
 ######################################################################
 
     def autoconnect(self, timeout: float = 1) -> tuple[bool, bool]:
-        # attempt to autoconnect to a detected port. 
+        # attempt to autoconnect to a detected port.
         # returns: found_bool, connected_bool
         # True if successful, False otherwise
 
@@ -218,14 +218,14 @@ class tinySA(
         for port_info in ports:
 
             # print out which port we're trying
-            port = port_info.device 
+            port = port_info.device
             self.print_message(f"Checking port: {port}")
             vid = port_info.vid
             pid = port_info.pid
 
             # check if it's a tinySA or nanoVNA:
             if (vid==None):
-                pass 
+                pass
             elif (hex(vid) == '0x483') and (hex(pid)=='0x5740'):
                 self.print_message(f"tinySA device identified at port: {port}")
                 connected_bool = self.connect(port, timeout)
@@ -236,7 +236,7 @@ class tinySA(
         return False, False # no tinySA found, not connected
 
     def connect(self, port: str, timeout: float = 1) -> bool:
-        # attempt connection to provided port. 
+        # attempt connection to provided port.
         # returns: True if successful, False otherwise
 
         try:
@@ -262,7 +262,7 @@ class tinySA(
 
     def tinySA_serial(self, writebyte: str, printBool: bool = False, pts: int | None = None) -> bytearray | None:
         # write out to serial, get message back, clean up, return
-        
+
         ser = self._require_serial()
         # clear INPUT buffer
         ser.reset_input_buffer()
@@ -302,19 +302,19 @@ class tinySA(
                 try:
                     # split the stream to take a chunk at a time
                     # get up to '>' of the prompt
-                    complete = buffer[:buffer.index(b'>')+1]  
+                    complete = buffer[:buffer.index(b'>')+1]
                     # leave the rest in buffer
-                    buffer = buffer[buffer.index(b'ch>')+1:]  
+                    buffer = buffer[buffer.index(b'ch>')+1:]
                 except ValueError:
                     # this is an acceptable err, so can skip it and keep looping
-                    continue 
+                    continue
                 except Exception as err:
                     # otherwise, something else is wrong
                     self.print_message("ERROR: exception thrown while reading serial")
                     self.print_message(err)
                     return None
                 break
-            
+
         return bytearray(complete)
 
     def get_binary_return(self, pts: int | None = None, timeout: float = 10.0, idle_timeout: float = 1.0) -> bytearray:
@@ -443,18 +443,18 @@ class tinySA(
 ######################################################################
 
     def convert_frequency(self, txtstr: str) -> None:
-        # this takes the user input (as text) and converts it. 
+        # this takes the user input (as text) and converts it.
         #  From documentation:
-        #       Frequencies can be specified using an integer optionally postfixed with a the letter 
+        #       Frequencies can be specified using an integer optionally postfixed with a the letter
         #       'k' for kilo 'M' for Mega or 'G' for Giga. E.g. 0.1M (100kHz), 500k (0.5MHz) or 12000000 (12MHz)
         # However the abbreviation makes error checking with numerics more difficult. so convert everything to Hz.
         #  e notation is fine
         pass
 
     def convert_time(self, txtstr: str) -> None:
-        # this takes the user input (as text) and converts it. 
-        #  From documentation:        
-        #        Time is specified in seconds optionally postfixed with the letters 'm' for mili 
+        # this takes the user input (as text) and converts it.
+        #  From documentation:
+        #        Time is specified in seconds optionally postfixed with the letters 'm' for mili
         #        or 'u' for micro. E.g. 1 (1 second), 2.5 (2.5 seconds), 120m (120 milliseconds)
 
 

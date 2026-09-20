@@ -18,23 +18,23 @@ class SystemInfoMixin(MixinHost):
         # if the command isn't already a function,
         #  use existing func setup to send command
         writebyte = str(val) + '\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("command() called with ::" + str(val))
-        return msgbytes   
+        return msgbytes
 
 
     def dac(self, val: int | float | str | None = None) -> bytearray | None:
         # sets or dumps the dac value
         # usage: dac [0..4095]
-        # example return: bytearray(b'usage: dac {value(0-4095)}\r\ncurrent value: 1922\r')  
+        # example return: bytearray(b'usage: dac {value(0-4095)}\r\ncurrent value: 1922\r')
 
         if val == None:
-            #get the dac       
+            #get the dac
             writebyte = 'dac\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)   
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
         elif (isinstance(val, (int, float))) and (0<= val <=4095):
             writebyte = 'dac '+str(val)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)   
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("dac set to " + str(val))
         else:
             self.print_message("ERROR: dac() takes either None or integers")
@@ -55,22 +55,22 @@ class SystemInfoMixin(MixinHost):
         # example return: bytearray(b'tinySA ...\r')
 
         writebyte = 'info\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("returning device info()")
-        return msgbytes 
+        return msgbytes
 
     def get_info(self) -> bytearray | None:
         # alias for info()
         return self.info()
 
     def nf(self) -> bytearray | None:
-        # get the noise floor in dB. 
-        # This function CAN be used to set nf, 
+        # get the noise floor in dB.
+        # This function CAN be used to set nf,
         # but that might bypass a measurement process. UNKNOWN right now.
         # usage: nf {value}\r\n
         # example return: ''
         writebyte = 'nf\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("getting saved noise floor value")
         return msgbytes
 
@@ -81,16 +81,16 @@ class SystemInfoMixin(MixinHost):
     def rbw(self, val: int | float | str = "auto") -> bytearray | None:
         # sets the rbw to either automatic or a specific value.
         # the number specifies the target rbw in kHz
-        # usage: rbw auto|3..600 
+        # usage: rbw auto|3..600
         # example return: ''
 
         #check input
         if (val == "auto"):
             writebyte = 'rbw '+str(val)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)                
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
         elif (isinstance(val, int)):
             writebyte = 'rbw '+str(val)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)           
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
         else:
             self.print_message("ERROR: rbw() takes vals [auto |0 - 600] in kHz as integers")
             msgbytes = self.error_byte_return()
@@ -102,7 +102,7 @@ class SystemInfoMixin(MixinHost):
 
     def self_test(self, val: int = 0) -> bytearray | None:
         # performs one or all selftests
-        # usage: selftest 0 0..9. 
+        # usage: selftest 0 0..9.
         # 0 appears to be 'run all'
         # example return: msgbytes = bytearray(b'')
 
@@ -110,7 +110,7 @@ class SystemInfoMixin(MixinHost):
         if (isinstance(val, int)):
             writebyte = 'selftest ' + str(val) + '\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
-            self.print_message("SELFTEST RUNNING. CHECK CONNECTION CAL to RF")           
+            self.print_message("SELFTEST RUNNING. CHECK CONNECTION CAL to RF")
         else:
             self.print_message("ERROR: self_test() takes interger vals. 0 to run all.")
             msgbytes = self.error_byte_return()
@@ -120,9 +120,9 @@ class SystemInfoMixin(MixinHost):
         # displays the current device status (paused/resumed)
         # usage: status
         # example return: bytearray(b'Resumed\r')
-       
+
         writebyte = 'status\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("getting device status() paused/resumed")
         return msgbytes
 
@@ -136,9 +136,9 @@ class SystemInfoMixin(MixinHost):
         # example return:
         #  b'43.25\r'
         writebyte = 'k\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("getting temperature")
-        return msgbytes 
+        return msgbytes
 
     def get_temp(self) -> bytearray | None:
         # alias for temp()
@@ -149,9 +149,9 @@ class SystemInfoMixin(MixinHost):
         # usage: threads
         # example return:
         # bytearray(b'stklimit| ...\r')
-        
+
         writebyte = 'threads\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("returning thread information for device")
         return msgbytes
 
@@ -159,9 +159,9 @@ class SystemInfoMixin(MixinHost):
         # gets the current serial config
         # usage: usart_cfg
         # example return: bytearray(b'Serial: 115200 baud\r')
-        
+
         writebyte = 'usart_cfg\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("usart_cfg() returning config vals")
         return msgbytes
 
@@ -174,7 +174,7 @@ class SystemInfoMixin(MixinHost):
         # usage: vbat
         # example return: bytearray(b'4132 mV\r')
         writebyte = 'vbat\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("returning current battery voltage")
         return msgbytes
 
@@ -186,9 +186,9 @@ class SystemInfoMixin(MixinHost):
         # displays the version text
         # usage: version
         # example return: tinySA4_v1.4-143-g864bb27\r\nHW Version:V0.4.5.1.1
-       
+
         writebyte = 'version\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("getting device version information")
         return msgbytes
 
@@ -201,13 +201,13 @@ class SystemInfoMixin(MixinHost):
 ######################################################################
 
     def help(self, val: int = 0) -> "bytes | bytearray | None":
-        # val controls if the tinySA help is called or the 
+        # val controls if the tinySA help is called or the
         # 1 = library_help(), everything else is the tinySA_help()
 
         if val == 1:
-            msgbytes = self.library_help() 
+            msgbytes = self.library_help()
         else:
-            msgbytes = self.tinySA_help()    
+            msgbytes = self.tinySA_help()
         return msgbytes
 
     def library_help(self) -> "bytes | bytearray | None":
@@ -219,20 +219,20 @@ class SystemInfoMixin(MixinHost):
     def tinySA_help(self) -> bytearray | None:
         # dumps a list of the available commands
         # usage: help
-        # example return: bytearray(b'commands: freq time dac 
+        # example return: bytearray(b'commands: freq time dac
         # nf saveconfig clearconfig zero sweep pause resume wait
         #  repeat status caloutput save recall trace trigger
-        #  marker line usart_cfg vbat_offset color if if1 lna2 
+        #  marker line usart_cfg vbat_offset color if if1 lna2
         # agc actual_freq freq_corr attenuate level sweeptime
-        #  leveloffset levelchange modulation rbw mode spur 
-        # lna direct ultra load ext_gain output deviceid 
+        #  leveloffset levelchange modulation rbw mode spur
+        # lna direct ultra load ext_gain output deviceid
         # correction calc menu text remark\r\nOther commands:
-        #  version reset data frequencies scan hop scanraw test 
+        #  version reset data frequencies scan hop scanraw test
         # touchcal touchtest usart capture refresh touch release
-        #  vbat help info selftest sd_list sd_read sd_delete 
+        #  vbat help info selftest sd_list sd_read sd_delete
         # threads\r')
 
         writebyte = 'help\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("Returning command options for tinySA device")
         return msgbytes

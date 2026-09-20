@@ -26,7 +26,7 @@ class LevelsGainMixin(MixinHost):
         #check input
         if (str(val) == "auto") or (val in accepted_vals):
             writebyte = 'agc '+str(val)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)     
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("agc() set with " + str(val))
         else:
             self.print_message("ERROR: agc() takes vals [0 - 7]|\"auto\"")
@@ -48,7 +48,7 @@ class LevelsGainMixin(MixinHost):
         if (str(val) == "auto") or (val in accepted_vals):
             writebyte = 'attenuate '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
-            self.print_message("attenuate() set with " + str(val))           
+            self.print_message("attenuate() set with " + str(val))
         else:
             self.print_message("ERROR: attenuate() takes vals [0 - 31]|\"auto\"")
             msgbytes = self.error_byte_return()
@@ -60,18 +60,18 @@ class LevelsGainMixin(MixinHost):
 
     def calc(self, val: int | float | str = "off") -> bytearray | None:
         # sets or cancels one of the measurement modes
-        # the commands are the same as those listed 
+        # the commands are the same as those listed
         # in the MEASURE menu
         # usage: calc off|minh|maxh|maxd|aver4|aver16|quasip
         # example return:
 
         #explicitly allowed vals
-        accepted_vals =  ["off", "minh", "maxh", "maxd", 
+        accepted_vals =  ["off", "minh", "maxh", "maxd",
                           "aver4", "aver16", "quasip"]
         #check input
         if (str(val) in accepted_vals):
             writebyte = 'calc '+str(val)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)     
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("calc() set with " + str(val))
         else:
             self.print_message("ERROR: calc() takes vals \"off\"|\"minh\"|\"maxh\"|\"maxd\"|\"aver4\"|\"aver16\"|\"quasip\"")
@@ -103,13 +103,13 @@ class LevelsGainMixin(MixinHost):
         # sets the external attenuation/amplification.
         # Works in both input and output mode
         # usage: ext_gain -100..100
-        # example return: ''        
-        
+        # example return: ''
+
         #check input
         if (isinstance(val, (int, float))) and (-100<= val <=100):
             writebyte = 'ext_gain '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
-            self.print_message("ext_gain() set to " + str(val))       
+            self.print_message("ext_gain() set to " + str(val))
         else:
             self.print_message("ERROR: ext_gain() takes vals [-100 - 100]")
             msgbytes = self.error_byte_return()
@@ -130,7 +130,7 @@ class LevelsGainMixin(MixinHost):
         if val in accepted_vals:
             writebyte = 'level '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
-            self.print_message("level() set to " + str(val))   
+            self.print_message("level() set to " + str(val))
         else:
             self.print_message("ERROR: level() takes vals [-76 to 13]")
             self.print_message("ERROR: value given: " + str(val))
@@ -152,7 +152,7 @@ class LevelsGainMixin(MixinHost):
         if (val in accepted_vals):
             writebyte = 'levelchange '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
-            self.print_message("levelchange() set to " + str(val))           
+            self.print_message("levelchange() set to " + str(val))
         else:
             self.print_message("ERROR: levelchange() takes vals [-70 - 70]")
             self.print_message("ERROR: value set to" + str(val))
@@ -173,8 +173,8 @@ class LevelsGainMixin(MixinHost):
         #check input
         if (str(val) in accepted_vals):
             writebyte = 'lna '+str(val)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)   
-            self.print_message("lna() set to " + str(val))        
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
+            self.print_message("lna() set to " + str(val))
         else:
             self.print_message("ERROR: lna() takes vals [on|off]")
             msgbytes = self.error_byte_return()
@@ -186,10 +186,10 @@ class LevelsGainMixin(MixinHost):
 
     def set_lna_off(self) -> bytearray | None:
         #alias for lna1()
-        return self.lna("off")   
+        return self.lna("off")
 
     def lna2(self, val: int | float | str = "auto") -> bytearray | None:
-        # Set the second LNA usage off/on. 
+        # Set the second LNA usage off/on.
         # The Ultra Plus devices have a 2nd LNA at a higher frequency range.
         # usage: lna2 0..7|auto
         # example return: ''
@@ -199,8 +199,8 @@ class LevelsGainMixin(MixinHost):
         #check input
         if (val == "auto") or (val in accepted_vals):
             writebyte = 'lna2 '+str(val)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)     
-            self.print_message("lna2() set to " + str(val))      
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
+            self.print_message("lna2() set to " + str(val))
         else:
             self.print_message("ERROR: lna2() takes vals [0 - 7]|auto")
             msgbytes = self.error_byte_return()

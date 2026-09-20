@@ -20,12 +20,12 @@ class MarkersTracesMixin(MixinHost):
         # example return: ''
         if (val=="off"):
             writebyte = 'line '+str(val)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)    
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("horizontal line turned off")
-        elif (isinstance(val, (int, float))): # or (isinstance(val, float)):    
+        elif (isinstance(val, (int, float))): # or (isinstance(val, float)):
             writebyte = 'line '+str(val)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)    
-            self.print_message("horizontal line turned off")  
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
+            self.print_message("horizontal line turned off")
         else:
             self.print_message("ERROR: line takes arguments 'off' or level")
             msgbytes = self.error_byte_return()
@@ -44,7 +44,7 @@ class MarkersTracesMixin(MixinHost):
         # where id=1..4 index=0..num_points-1
         # Marker levels will use the selected unit.
         # Marker peak will:
-        # 1) activate the marker (if not done already), 
+        # 1) activate the marker (if not done already),
         # 2) position the marker on the strongest signal, and
         # 3) display the marker info.
         # The frequency must be within the selected sweep range
@@ -54,19 +54,19 @@ class MarkersTracesMixin(MixinHost):
         #explicitly allowed vals
         accepted_vals =  ["on", "off", "peak"]
         #check input
-        if ID == None: 
+        if ID == None:
             self.print_message("ERROR: marker() takes ID=Int|0..4")
             msgbytes = self.error_byte_return()
             return msgbytes
 
         if (str(val) in accepted_vals):
             writebyte = 'marker ' + str(ID) + ' ' +str(val)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)     
-            self.print_message("marker set to " + str(val))      
-        elif (isinstance(val, (int, float))): # or (isinstance(val, float)):  
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
+            self.print_message("marker set to " + str(val))
+        elif (isinstance(val, (int, float))): # or (isinstance(val, float)):
             writebyte = 'marker ' + str(ID) + ' ' +str(val)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)     
-            self.print_message("marker set to " + str(val)) 
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
+            self.print_message("marker set to " + str(val))
         else:
             self.print_message("ERROR: marker() takes ID=Int|0..4, and frequency or index in Int or Float")
             msgbytes = self.error_byte_return()
@@ -97,7 +97,7 @@ class MarkersTracesMixin(MixinHost):
         # NOTE: tinySA traces are 1-indexed (trace 0 does not exist).
         if (isinstance(ID, int)) and (ID >= 1):
             writebyte = 'trace '+ str(ID) +'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("selecting trace")
         else:
             self.print_message("ERROR: trace numbers must be integers >= 1. see device documentation for max")
@@ -111,7 +111,7 @@ class MarkersTracesMixin(MixinHost):
 
         if (isinstance(ID, int)) and (ID >= 1) and (str(val) in accepted_vals):
             writebyte = 'trace '+ str(ID) + ' ' + str(val) +'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("setting trace " + str(ID) + " units to " + str(val))
         else:
             self.print_message("ERROR: trace_units() takes ID >= 1 and units 'dBm'|'dBmV'|'dBuV'|'RAW'|'V'|'Vpp'|'W'")
@@ -121,14 +121,14 @@ class MarkersTracesMixin(MixinHost):
     def trace_scale(self, val: int | float | str = "auto") -> bytearray | None:
         # split call for TRACE. scales a trace/traces.
         writebyte = 'trace scale ' + str(val) + '\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("scaling trace")
         return msgbytes
 
     def trace_reflevel(self, val: int | float | str = "auto") -> bytearray | None:
         # split call for TRACE. sets the reference level of a trace
         writebyte = 'trace reflevel ' + str(val) + '\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("setting reference level of trace")
         return msgbytes
 
@@ -137,7 +137,7 @@ class MarkersTracesMixin(MixinHost):
         # device form: trace {trace#} value
         if (isinstance(ID, int)) and (ID >= 1):
             writebyte = 'trace ' + str(ID) + ' value\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("getting raw trace values")
         else:
             self.print_message("ERROR: trace_value() takes ID >= 1")
@@ -148,18 +148,18 @@ class MarkersTracesMixin(MixinHost):
         # split call for TRACE. toggle trace ON or OFF
         # full description: displays all or one trace information
         # or sets trace related information
-        # usage: 
-        # trace [ {0..2} | 
+        # usage:
+        # trace [ {0..2} |
         # dBm|dBmV|dBuV|V|W |store|clear|subtract | (scale|
         # reflevel) auto|{level}
-        # example return: 
+        # example return:
 
         accepted_vals = ["on", "off"]
 
         if (isinstance(ID,int)) and (ID >= 1) and (str(val) in accepted_vals):
             # device form: trace {trace#} view on|off  (1-indexed)
             writebyte = 'trace ' + str(ID) + ' view ' +str(val)+ '\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("toggling trace " +str(val))
         else:
             self.print_message("ERROR: trace_toggle() takes ID >= 1 and val='on'|'off'")
@@ -168,13 +168,13 @@ class MarkersTracesMixin(MixinHost):
         return msgbytes
 
     def trace_subtract(self, ID1: int | float | str, ID2: int | float | str) -> bytearray | None:
-        # split call for TRACE. subtracts a trace/traces. 
+        # split call for TRACE. subtracts a trace/traces.
         # subtract ID1 FROM ID2
 
         if (isinstance(ID1,int)) and (ID1 >= 1) and (isinstance(ID2,int)) and (ID2 >= 1):
             # device form: trace {trace#} subtract {trace#}  (1-indexed)
             writebyte = 'trace ' + str(ID1) + ' subtract ' +str(ID2)+ '\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("subtracting traces")
         else:
             self.print_message("ERROR: trace IDs must be ints >= 1")
@@ -183,12 +183,12 @@ class MarkersTracesMixin(MixinHost):
         return msgbytes
 
     def trace_copy(self, ID1: int | float | str, ID2: int | float | str) -> bytearray | None:
-        # split call for TRACE. copies a trace/traces. 
+        # split call for TRACE. copies a trace/traces.
 
         if (isinstance(ID1,int)) and (ID1 >= 1) and (isinstance(ID2,int)) and (ID2 >= 1):
             # device form: trace {trace#} copy {trace#}  (1-indexed)
             writebyte = 'trace ' + str(ID1) + ' copy ' +str(ID2)+ '\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("copying traces")
         else:
             self.print_message("ERROR: trace IDs must be ints >= 1")
@@ -200,15 +200,15 @@ class MarkersTracesMixin(MixinHost):
         # split call for TRACE. sets the reference level of a trace
         # full description: displays all or one trace information
         # or sets trace related information
-        # usage: 
-        # trace [ {0..2} | 
+        # usage:
+        # trace [ {0..2} |
         # dBm|dBmV|dBuV|V|W |store|clear|subtract | (scale|
         # reflevel) auto|{level}
-        # example return: 
+        # example return:
         if (isinstance(ID,int)) and (ID >= 1):
             # device form: trace {trace#} freeze  (1-indexed)
             writebyte = 'trace ' + str(ID) + ' freeze\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("freezing trace")
         else:
             self.print_message("ERROR: trace_freeze() takes ID >= 1")
@@ -219,14 +219,14 @@ class MarkersTracesMixin(MixinHost):
         # split call for TRACE. clears a trace/traces. doesnt seem to take inputs
         # full description: displays all or one trace information
         # or sets trace related information
-        # usage: 
-        # trace [ {0..2} | 
+        # usage:
+        # trace [ {0..2} |
         # dBm|dBmV|dBuV|V|W |store|clear|subtract | (scale|
         # reflevel) auto|{level}
-        # example return: 
+        # example return:
 
         writebyte = 'trace ' + str(val) + ' clear\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("clearing trace(s)")
         return msgbytes
 
@@ -234,18 +234,18 @@ class MarkersTracesMixin(MixinHost):
         # split call for TRACE. toggle trace ON or OFF
         # full description: displays all or one trace information
         # or sets trace related information
-        # usage: 
-        # trace [ {0..2} | 
+        # usage:
+        # trace [ {0..2} |
         # dBm|dBmV|dBuV|V|W |store|clear|subtract | (scale|
         # reflevel) auto|{level}
-        # example return: 
+        # example return:
 
         accepted_vals = ["copy","freeze","subtract","view","value"]
 
         if (isinstance(ID,int)) and (ID >= 1) and (str(val) in accepted_vals):
             # device form: trace {trace#} {action} ...  (1-indexed)
             writebyte = 'trace ' + str(ID) + ' ' +str(val)+ '\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("setting trace action")
         else:
             self.print_message("ERROR: trace_action() takes ID >= 1 and val 'copy'|'freeze'|'subtract'|'view'|'value'")

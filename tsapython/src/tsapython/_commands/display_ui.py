@@ -26,8 +26,8 @@ class DisplayUIMixin(MixinHost):
         # encoded as 2 bytes per pixel. similar to fill()
 
         writebyte = 'bulk\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
-        self.print_message("bulk() called for screen data")   
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
+        self.print_message("bulk() called for screen data")
         return msgbytes
 
     def get_bulk_data(self) -> bytearray | None:
@@ -35,13 +35,13 @@ class DisplayUIMixin(MixinHost):
         return self.bulk()
 
     def capture(self) -> bytearray | None:
-        # requests a screen dump to be sent in binary format 
+        # requests a screen dump to be sent in binary format
         # of 320x240 pixels of each 2 bytes
         # usage: capture
         # example return: bytearray(b'\x00 ...\x00\x00\x00')
         writebyte = 'capture\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
-        self.print_message("capture() called for screen data")   
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
+        self.print_message("capture() called for screen data")
         return msgbytes
 
     def capture_screen(self) -> bytearray | None:
@@ -50,17 +50,17 @@ class DisplayUIMixin(MixinHost):
     def color(self, ID: int | None = None, RGB: str | None = '0xF8FCF8') -> bytearray | None:
         # sets or dumps the colors used
         # usage: color [{id} {rgb24}]
-        # example return: 
-         
+        # example return:
+
         # explicitly allowed vals
         accepted_ID = np.arange(0, 31, 1) # max exclusive
 
         if ID == None:
-            # get the color       
+            # get the color
             writebyte = 'color\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
         elif (ID in accepted_ID) and (RGB is not None) and (self.is_rgb24(RGB)==True):
-            # set the color based on ID       
+            # set the color based on ID
             writebyte = 'color ' + str(ID) + ' ' + str(RGB) + '\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("color() set with ID: " +str(ID) + " RGB: " + str(RGB))
@@ -86,8 +86,8 @@ class DisplayUIMixin(MixinHost):
             match = re.search(pattern, msgbytes.decode("utf-8", errors="replace"))
             if match:
                 return f"0x{match.group(1)}" #return rgb24 value if found
-        
-            # if not found, then 
+
+            # if not found, then
             self.print_message("ERROR: color() takes either None, or ID as int 0..31 and RGB as a hex value")
             return self.error_byte_return()
         return msgbytes
@@ -104,8 +104,8 @@ class DisplayUIMixin(MixinHost):
         # bytes little endian. Similar ot bulk()
 
         writebyte = 'fill\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
-        self.print_message("fill() called for screen data")   
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
+        self.print_message("fill() called for screen data")
         return msgbytes
 
     def get_fill_data(self) -> bytearray | None:
@@ -118,9 +118,9 @@ class DisplayUIMixin(MixinHost):
         # example return: ''
 
         writebyte = 'menu ' + str(val) + '\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("clicking menu button")
-        return msgbytes 
+        return msgbytes
 
     def refresh(self, val: int | float | str) -> bytearray | None:
         # enables/disables the auto refresh mode
@@ -133,7 +133,7 @@ class DisplayUIMixin(MixinHost):
         if (str(val) in accepted_vals):
             writebyte = 'refresh '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
-            self.print_message("refresh() set to " + str(val))           
+            self.print_message("refresh() set to " + str(val))
         else:
             self.print_message("ERROR: refresh() takes vals [on|off]")
             msgbytes = self.error_byte_return()
@@ -153,26 +153,26 @@ class DisplayUIMixin(MixinHost):
         # example return: bytearray(b'')
 
         writebyte = 'release\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("sending touch release signal")
-        return msgbytes 
+        return msgbytes
 
     def text(self, val: int | float | str = "") -> bytearray | None:
-        # specifies the text entry for the active keypad 
+        # specifies the text entry for the active keypad
         # usage: text(val="")
         # example return: b''
-       
+
         if len(str(val))>0:
             writebyte = 'text ' + str(val) +'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("text() entered is " + str(val))
         else:
             self.print_message("ERROR: text needs non-empty values")
             msgbytes = self.error_byte_return()
-        return msgbytes 
+        return msgbytes
 
     def touch(self, x: int = 0, y: int = 0) -> bytearray | None:
-        # sends the coordinates of a touch. 
+        # sends the coordinates of a touch.
         # The upper left corner of the screen is 0 0
         # usage: touch {X coordinate} {Y coordinate}
         # example return:
@@ -182,16 +182,16 @@ class DisplayUIMixin(MixinHost):
         if (x<0) or (self.screenWidth<x):
             self.print_message("ERROR: touch() needs a valid x coordinate")
             msgbytes = self.error_byte_return()
-            return msgbytes 
+            return msgbytes
         # check if valid y
         if (y<0) or (self.screenHeight<y):
             self.print_message("ERROR: touch() needs a valid y coordinate")
             msgbytes = self.error_byte_return()
-            return msgbytes 
+            return msgbytes
         writebyte = 'touch ' + str(x) + ' ' + str(y) + '\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("setting the touch() (" + str(x)+"," + str(y) + ")")
-        return msgbytes 
+        return msgbytes
 
     def preform_touch(self, x: int = 0, y: int = 0) -> bytearray | None:
         #alias for touch()
@@ -202,7 +202,7 @@ class DisplayUIMixin(MixinHost):
         # usage: touchcal
         # example return: bytearray(b'')
         writebyte = 'touchcal\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("starting touchcal")
         return msgbytes
 
@@ -213,9 +213,9 @@ class DisplayUIMixin(MixinHost):
         # starts the touch test
         # usage: touchtest
         # example return: bytearray(b'')
-        
+
         writebyte = 'touchtest\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("starting the touch_test()")
         return msgbytes
 

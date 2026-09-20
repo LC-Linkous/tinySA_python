@@ -17,23 +17,23 @@ from .._host import MixinHost
 
 class AcquisitionMixin(MixinHost):
     def data(self, val: int = 0) -> bytearray | None:
-        # dumps the trace data. 
+        # dumps the trace data.
         # usage: data [0-2]
         # 0=temp value, 1=stored trace, 2=measurement
         # example return: bytearray(b'-8.671875e+01\r\n... -8.337500e+01\r\n-8.237500e+01\r')
-        
+
         #explicitly allowed vals
         accepted_vals = [0,1,2]
         #check input
         if val in accepted_vals:
             writebyte = 'data '+str(val)+'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False)  
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             if val == 0:
-                self.print_message("returning temp value data") 
+                self.print_message("returning temp value data")
             elif val == 1:
-                self.print_message("returning stored trace data") 
+                self.print_message("returning stored trace data")
             elif val == 2:
-                self.print_message("returning measurement data") 
+                self.print_message("returning measurement data")
         else:
             self.print_message("ERROR: data() takes vals [0-2]")
             msgbytes = self.error_byte_return()
@@ -57,7 +57,7 @@ class AcquisitionMixin(MixinHost):
         # example return: bytearray(b'1500000000\r\n... \r\n3000000000\r')
 
         writebyte = 'frequencies\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("getting frequencies from the last sweep")
         return msgbytes
 
@@ -78,11 +78,11 @@ class AcquisitionMixin(MixinHost):
             elif outmask ==None:
                 writebyte = 'hop ' + str(start) + ' ' + str(stop) + ' ' + str(inc) + '\r\n'
 
-            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("sampling over frequency range")
             return msgbytes
 
-        else: 
+        else:
             self.print_message("hop() takes arguments start=Int, stop=Int, inc=Int, outmask=None|Int")
 
         return None
@@ -97,9 +97,9 @@ class AcquisitionMixin(MixinHost):
         # example return: ''
 
         writebyte = 'pause\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("pausing tinySA device")
-        return msgbytes 
+        return msgbytes
 
     def resume(self) -> bytearray | None:
         # resumes the sweeping in either input or output mode
@@ -107,9 +107,9 @@ class AcquisitionMixin(MixinHost):
         # example return: ''
 
         writebyte = 'resume\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("resuming sweep")
-        return msgbytes 
+        return msgbytes
 
     def scan(self, start: int, stop: int, pts: int = 250, outmask: int | None = None) -> bytearray | None:
         # Performs a scan and optionally outputs the measured data.
@@ -121,21 +121,21 @@ class AcquisitionMixin(MixinHost):
         if (0<=start) and (start < stop) and (pts <= self.maxPoints):
             if outmask == None:
                 writebyte = 'scan '+str(start)+' '+str(stop)+' '+str(pts)+'\r\n'
-            else: 
+            else:
                  writebyte = 'scan '+str(start)+' '+str(stop)+' '+str(pts)+ ' '+str(outmask)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
-            self.print_message("scanning...")           
+            self.print_message("scanning...")
         else:
             self.print_message("ERROR: scan takes START STOP PTS OUTMASK as args. Check doc for format and limits")
             msgbytes = self.error_byte_return()
         return msgbytes
 
     def scan_raw(self, start: int, stop: int, pts: int = 250, unbuf: int = 1) -> bytearray | None:
-        # performs a scan of unlimited amount of points 
+        # performs a scan of unlimited amount of points
         # and sends the data in binary form
         # usage: scanraw {start(Hz)} {stop(Hz)} [points] [unbuffered]
             # The measured data is sent as:
-            #  '{' ('x' MSB LSB)*points '}' 
+            #  '{' ('x' MSB LSB)*points '}'
             #  where the 16 bit data is scaled by 32 & shifted based on device.
             # the README has examples for processing
 
@@ -144,7 +144,7 @@ class AcquisitionMixin(MixinHost):
                 writebyte = 'scanraw '+str(start)+' '+str(stop)+' '+str(pts)+ ' '+str(unbuf)+'\r\n'
 
                 # write out to serial, get message back, clean up, return
-                self.print_message("scanning...")  
+                self.print_message("scanning...")
                 msgbytes = self.tinySA_serial(writebyte, printBool=False, pts=pts) #pts added for error checking
                 return msgbytes
             else:
@@ -193,26 +193,26 @@ class AcquisitionMixin(MixinHost):
             yield frame
             emitted += 1
 
-    def config_sweep(self, argName: int | float | str | None = None, val: int | float | str | None = None) -> bytearray | None: 
+    def config_sweep(self, argName: int | float | str | None = None, val: int | float | str | None = None) -> bytearray | None:
             # split call for SWEEP
             # Set sweep boundaries.
-            # Sweep without arguments lists the current sweep 
-            # settings. The frequencies specified should be 
-            # within the permissible range. The sweep commands 
-            # apply both to input and output modes        
-            # usage: 
-            # sweep [(start|stop|center|span|cw {frequency}) | 
+            # Sweep without arguments lists the current sweep
+            # settings. The frequencies specified should be
+            # within the permissible range. The sweep commands
+            # apply both to input and output modes
+            # usage:
+            # sweep [(start|stop|center|span|cw {frequency}) |
             #   ({start(Hz)} {stop(Hz)} [0..290])]
             # EXAMPLES:
             # sweep start {frequency}: sets the start frequency of the sweep.
             # sweep stop {frequency}: sets the stop frequency of the sweep.
             # sweep center {frequency}: sets the center frequency of the sweep.
             # sweep span {frequency}: sets the span of the sweep.
-            # sweep cw {frequency}: sets the continuous wave frequency (zero span sweep). 
-            # # example return:  b'' 
+            # sweep cw {frequency}: sets the continuous wave frequency (zero span sweep).
+            # # example return:  b''
 
         # explicitly allowed vals
-        accepted_table_args = ["start", "stop", "center", 
+        accepted_table_args = ["start", "stop", "center",
                                "span", "cw"]
 
         if (argName==None) and (val==None):
@@ -220,7 +220,7 @@ class AcquisitionMixin(MixinHost):
             writebyte = 'sweep\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
 
-        elif (argName in accepted_table_args): 
+        elif (argName in accepted_table_args):
             if val == None:
                 #error
                 self.print_message("ERROR: sweep " + str(argName) + " needs a value")
@@ -238,39 +238,39 @@ class AcquisitionMixin(MixinHost):
         return msgbytes
 
     def get_sweep_params(self) -> bytearray | None:
-        # alias for config_sweep() 
+        # alias for config_sweep()
         return self.config_sweep()
 
     def set_sweep_start(self, val: int | float | str) -> bytearray | None:
-        # alias for config_sweep() 
+        # alias for config_sweep()
         return self.config_sweep("start", val)
 
     def set_sweep_stop(self, val: int | float | str) -> bytearray | None:
-        # alias for config_sweep() 
+        # alias for config_sweep()
         return self.config_sweep("stop", val)
 
     def set_sweep_center(self, val: int | float | str) -> bytearray | None:
-        # alias for config_sweep() 
+        # alias for config_sweep()
         return self.config_sweep("center", val)
 
     def set_sweep_span(self, val: int | float | str) -> bytearray | None:
-        # alias for config_sweep() 
+        # alias for config_sweep()
         return self.config_sweep("span", val)
 
     def set_sweep_cw(self, val: int | float | str) -> bytearray | None:
-        # alias for config_sweep() 
-        return self.config_sweep("cw", val)   
+        # alias for config_sweep()
+        return self.config_sweep("cw", val)
 
     def run_sweep(self, startVal: int | float | str | None = None, stopVal: int | float | str | None = None, pts: int | None = 250) -> bytearray | None:
             # split call for SWEEP
             # Execute sweep.
-            # The frequencies specified should be 
-            # within the permissible range. The sweep commands 
-            # apply both to input and output modes        
-            # usage: 
-            # sweep [(start|stop|center|span|cw {frequency}) | 
+            # The frequencies specified should be
+            # within the permissible range. The sweep commands
+            # apply both to input and output modes
+            # usage:
+            # sweep [(start|stop|center|span|cw {frequency}) |
             #   ({start(Hz)} {stop(Hz)} [0..290])]
-            # # example return:  
+            # # example return:
         msgbytes: bytearray | None
         if (startVal==None) or (stopVal==None):
             self.print_message("ERROR: sweep start and stop need non-empty values")
@@ -284,7 +284,7 @@ class AcquisitionMixin(MixinHost):
             writebyte = 'sweep '+str(startVal)+' '+str(stopVal)+' '+str(pts)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
 
-        return msgbytes 
+        return msgbytes
 
     def sweep_time(self, val: int | float | str) -> bytearray | None:
         # sets the sweeptime
@@ -292,12 +292,12 @@ class AcquisitionMixin(MixinHost):
         # specified may end in a letter where
         # m=mili and u=micro
         # example return:  b''
-        
-        
+
+
         # needs some error checking
 
         writebyte = 'sweeptime '+str(val)+'\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False)   
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("sweeptime set to " + str(val))
         return msgbytes
 
@@ -305,17 +305,17 @@ class AcquisitionMixin(MixinHost):
         # sets the trigger type or level
         # usage: trigger auto|normal|single|{level(dBm)}
         # the trigger level is always set in dBm and is the only numerical input
-        # example return:  
+        # example return:
         # #explicitly allowed vals
-        accepted_vals =  ["auto", "normal", "single"]        
+        accepted_vals =  ["auto", "normal", "single"]
 
         if str(val) in accepted_vals:
             writebyte = 'trigger ' + str(val) +'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("setting trigger to " + str(val))
         elif val==None and isinstance(freq,int):
             writebyte = 'trigger ' + str(freq) +'\r\n'
-            msgbytes = self.tinySA_serial(writebyte, printBool=False) 
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("setting trigger level (dBm) to " + str(freq))
         else:
             self.print_message("ERROR: trigger takes inputs auto|normal|single|{level(dBm)}")
@@ -328,7 +328,7 @@ class AcquisitionMixin(MixinHost):
 
     def trigger_normal(self) -> bytearray | None:
         # alias for trigger
-        return self.trigger("normal")    
+        return self.trigger("normal")
 
     def trigger_single(self) -> bytearray | None:
         # alias for trigger
