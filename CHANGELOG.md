@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Work on the current development branch. Entries move to a versioned section on
+release.
+
+## [3.0.1] - 2026-09-19
+
+Tooling, metadata, and repository-hygiene release. No API or behavior
+changes: the shipped package gains full type annotations (now CI-enforced,
+making the long-standing `py.typed` marker a kept promise) and the
+repository gains the quality gates and health files below.
+
 ### Added
 - Repository and packaging polish, ported from the hackrfpy hardening pass:
   `SECURITY.md` (private vulnerability reporting, scope, and the
@@ -105,5 +115,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 See the [GitHub releases](https://github.com/LC-Linkous/tinySA_python/releases)
 for pre-3.0.0 history, when the library shipped as a single-class module.
 
-[Unreleased]: https://github.com/LC-Linkous/tinySA_python/compare/v3.0.0...HEAD
+[Unreleased]: https://github.com/LC-Linkous/tinySA_python/compare/v3.0.1...HEAD
+[3.0.1]: https://github.com/LC-Linkous/tinySA_python/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/LC-Linkous/tinySA_python/releases/tag/v3.0.0
