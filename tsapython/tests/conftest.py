@@ -42,7 +42,7 @@ class SerialRecorder:
         self.calls = []            # list of writebyte strings, in order
         self.next_return = bytearray(b"")
 
-    def __call__(self, writebyte, printBool=False, pts=None):
+    def __call__(self, writebyte, printBool=False, pts=None, _raw=False):
         self.calls.append(writebyte)
         return self.next_return
 
@@ -89,6 +89,10 @@ def tsa(recorder):
 
     dev.tinySA_serial = recorder
     dev._recorder = recorder          # handy backref for assertions
+    # 4.0.0: command-construction tests run with the RF output gate open and the
+    # Ultra ZS405 profile selected, so gated calls are exercised rather than refused.
+    dev.select_existing_device("ZS405")
+    dev.set_output_allowed(True)
     return dev
 
 

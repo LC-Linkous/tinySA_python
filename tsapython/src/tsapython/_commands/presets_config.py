@@ -257,6 +257,8 @@ class PresetsConfigMixin(MixinHost):
         # example return: bytearray(b'-0.bmp 307322\r')
         # Ultra family only (the Basic has no SD card).
 
+        if not self._check_command("sd_list"):
+            return self.error_byte_return()
         if pattern:
             writebyte = 'sd_list ' + str(pattern) + '\r\n'
         else:
@@ -333,6 +335,8 @@ class PresetsConfigMixin(MixinHost):
         # Needs tinySA firmware v1.4-216 (Nov 2025) or later; older firmware
         # answers 'waitscan?'.
         # example return: bytearray(b'')
+        if not self._check_command("waitscan"):
+            return self.error_byte_return()
         if isinstance(count, int) and not isinstance(count, bool) and count >= 1:
             writebyte = 'waitscan ' + str(count) + '\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)

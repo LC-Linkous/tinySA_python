@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import serial
+    from ._profiles import DeviceProfile
 
 
 class MixinHost:
@@ -41,6 +42,13 @@ class MixinHost:
         abortEnabled: bool
         harmonicEnabled: bool
 
+        # 4.0.0: device profile and gates
+        profile: "DeviceProfile"
+        profileDetected: bool
+        deviceCommands: "frozenset[str] | None"
+        firmwareBuild: "tuple[int, int, int] | None"
+        outputAllowed: bool
+
         # device parameter boundaries (library-side error checking)
         maxPoints: int
         minSADeviceFreq: float
@@ -53,11 +61,20 @@ class MixinHost:
 
         # host methods the mixins rely on (implemented in core.py)
         def tinySA_serial(
-            self, writebyte: str, printBool: bool = ..., pts: "int | None" = ...
+            self, writebyte: str, printBool: bool = ..., pts: "int | None" = ...,
+            _raw: bool = ...
         ) -> "bytearray | None": ...
+
+        def _require_serial(self) -> "serial.Serial": ...
 
         def print_message(self, msg: object) -> None: ...
 
         def error_byte_return(self) -> bytearray: ...
 
         def is_rgb24(self, hexStr: str) -> bool: ...
+
+        def _check_command(self, name: str) -> bool: ...
+
+        def _check_word(self, command: str, word: object, words: "tuple[str, ...]") -> bool: ...
+
+        def _check_output_allowed(self, what: str) -> bool: ...

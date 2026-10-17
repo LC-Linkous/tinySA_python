@@ -28,6 +28,8 @@ The PyPI page: [https://pypi.org/project/tsapython/](https://pypi.org/project/ts
 
 Zenodo archive with DOI: [https://doi.org/10.5281/zenodo.20546764](https://doi.org/10.5281/zenodo.20546764)
 
+Web UI built on this library: [https://lc-linkous.github.io/tinysa-web/](https://lc-linkous.github.io/tinysa-web/). The web UI tracks the latest stable library release; it will be updated for 4.0.0 once 4.0.0 is stable.
+
 ## Table of Contents
 * [The tinySA Series of Devices](#the-tinysa-series-of-devices)
 * [Library Usage](#library-usage)
@@ -485,13 +487,15 @@ A bare command, or one with `?`, is a query. The device answers a query with a u
 
 ### Serial read timeout
 
-By default the library waits for the device prompt for as long as it takes, because a scan with a narrow RBW or a long sweep time can legitimately run for minutes. To get control back from a device that has stopped answering:
+The library waits up to **120 seconds** for the device prompt (`tinySA.DEFAULT_SERIAL_TIMEOUT`). The firmware's longest sweep time is 60 s, so any single reply completes well inside that. Three ways to change it:
 
 ```python
-tsa.set_serial_timeout(30)      # seconds; None (the default) waits indefinitely
+tinySA.DEFAULT_SERIAL_TIMEOUT = 30        # every instance created afterwards
+tsa = tinySA(serial_timeout=30)           # one instance
+tsa.set_serial_timeout(30)                # at any time; None waits indefinitely (the 3.x behaviour)
 ```
 
-On a timeout the call returns `None`, which is the value a failed serial read already returned.
+On a timeout the call returns `None`, which is the value a failed serial read already returned, and the [log](#logging) records a `timeout` status.
 
 
 ## Firmware Compatibility

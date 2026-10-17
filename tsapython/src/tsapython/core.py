@@ -26,8 +26,11 @@ import sys
 import time
 
 from ._identify import (
-    classify_reply, identify_device, STATUS_BLOCKED, STATUS_TIMEOUT)
+    classify_reply, identify_device, STATUS_BLOCKED, STATUS_REFUSED, STATUS_TIMEOUT,
+    STATUS_UNKNOWN, STATUS_USAGE)
 from ._log import JsonlLog, LOG_FORMAT, LOG_LEVELS
+from ._profiles import (
+    DeviceProfile, DEFAULT, FIRMWARE_FLOOR, PROFILES, profile_for)
 
 
 from ._commands.acquisition import AcquisitionMixin
@@ -49,7 +52,15 @@ class tinySA(
     DisplayUIMixin,
     SystemInfoMixin,
 ):
-    def __init__(self, parent: object | None = None) -> None:
+    # Default wait for the device prompt, in seconds. The firmware's own limits
+    # bound a single reply: the longest sweep time is 60 s ('sweeptime 0.003..60'),
+    # so a scan on any setting completes well inside this. Change it for every
+    # instance here, for one instance with tinySA(serial_timeout=...), or at any
+    # time with set_serial_timeout(). None waits indefinitely, as 3.x did.
+    DEFAULT_SERIAL_TIMEOUT: float | None = 120.0
+
+    def __init__(self, parent: object | None = None,
+                 serial_timeout: float | None = DEFAULT_SERIAL_TIMEOUT) -> None:
         # serial port
         self.ser: serial.Serial | None = None
 
@@ -57,10 +68,9 @@ class tinySA(
         self.verboseEnabled = False
         self.returnErrorByte = False
 
-        # serial read timeout in seconds. None keeps the historic behaviour:
-        # wait for the device prompt for as long as it takes (a slow sweep can
-        # take minutes). See set_serial_timeout().
-        self.serialTimeout: float | None = None
+        # serial read timeout in seconds; see DEFAULT_SERIAL_TIMEOUT above.
+        # On timeout a call returns None, the same value a failed read returns.
+        self.serialTimeout: float | None = None if serial_timeout is None else float(serial_timeout)
 
         # optional log file (see set_log_file). None = logging off.
         self._log: JsonlLog | None = None
@@ -80,7 +90,17 @@ class tinySA(
         self.abortEnabled = False
         self.harmonicEnabled = False
 
-        #select device vars - hardcoding for the Ultra for now
+        # 4.0.0: device profile. DEFAULT until connect() identifies the device or
+        # select_existing_device() is called. See _profiles.py.
+        self.profile: DeviceProfile = DEFAULT
+        self.profileDetected = False
+        self.deviceCommands: frozenset[str] | None = None   # from the device's own 'help' reply
+        self.firmwareBuild: tuple[int, int, int] | None = None
+        self.identifyOnConnect = True
+        # RF output gate: output("on") and cal_output() send nothing until this is True
+        self.outputAllowed = False
+
+        #select device vars - the DEFAULT profile; replaced by _apply_profile()
         # device params
         self.maxPoints = 450
         # spectrum analyzer
@@ -143,13 +163,10 @@ class tinySA(
 # set_serial_timeout()  - seconds to wait for the device prompt, or None
 # get_serial_timeout()  - the current setting
 #
-# DEFAULT IS None: wait indefinitely, exactly as earlier versions did.
-# A scan with a narrow RBW or a long sweep time can legitimately take
-# minutes, so any fixed default would break working scripts. Set a value
-# when you would rather get control back from a device that has stopped
-# answering. On timeout the call returns None (the same value a failed
-# serial read already returned) and, if a log file is open, a record with
-# status 'timeout' is written.
+# 4.0.0: the default is DEFAULT_SERIAL_TIMEOUT (120 s). Earlier versions
+# waited indefinitely; pass None to get that back. On timeout the call
+# returns None (the same value a failed serial read already returned) and,
+# if a log file is open, a record with status 'timeout' is written.
 ######################################################################
 
     def set_serial_timeout(self, seconds: float | None = None) -> None:
@@ -219,9 +236,9 @@ class tinySA(
             self._log = None            # do not log the identification reads
             self.serialTimeout = 3.0 if saved_timeout is None else saved_timeout
             try:
-                reply = self.tinySA_serial('version\r\n', printBool=False)
+                reply = self.tinySA_serial('version\r\n', printBool=False, _raw=True)
                 version_reply = bytes(reply).decode("utf-8", errors="replace").strip() if reply else ""
-                reply = self.tinySA_serial('info\r\n', printBool=False)
+                reply = self.tinySA_serial('info\r\n', printBool=False, _raw=True)
                 info_reply = bytes(reply).decode("utf-8", errors="replace").strip() if reply else ""
             except Exception as err:    # logging must never break the caller
                 self.print_message("WARNING: could not identify the device for the log: " + str(err))
@@ -254,41 +271,125 @@ class tinySA(
 # WARNING: these DO NOT change the settings on the DEVICE. just the library.
 ######################################################################
 
-    def select_existing_device(self, tinySAModel: str) -> None:
-        # uses pre-set config files.
-        # tinySAModel var must be one of the following:
-        # "BASIC", "ZS405", "ZS406", "ZS407"
-        try:
-            # self.dev is the planned device-config module; not implemented yet.
-            # The bare except below is what makes this a safe no-op today.
-            noErrors = self.dev.select_preset_model(tinySAModel)  # type: ignore[attr-defined]
-            if noErrors == False:
-                print("ERROR: device configuration unable to be set.This feature is underdevelopment")
-                return
-
-            # set variables from device configs.
-            # these are placeholders  tes for now
-            # device params
-            self.maxPoints = 450
-            # spectrum analyzer
-            self.minSADeviceFreq = 100e3  #100 kHz
-            self.maxSADeviceFreq = 12e9 #5.3 GHz for normal operation, but 12 GHz for edge of harmonics
-            # signal generator
-            self.minSGDeviceFreq = 100e3  #100 kHz
-            self.maxSGDeviceFreq = 960e6 #960 MHz
-            # battery
-            self.maxDeviceBattery = 4095
-            # screen
-            self.screenWidth = 480
-            self.screenHeight = 320
-
-
-        except:
-            print("ERROR: device configuration unable to be set.This feature is underdevelopment")
+    def select_existing_device(self, tinySAModel: str) -> bool:
+        # Choose the device profile by name instead of asking the device.
+        # tinySAModel: "BASIC" | "ZS304" | "ULTRA" | "ZS405" | "ULTRA+" | "ZS406" | "ZS407"
+        # Returns True if the name was known. connect() normally does this for
+        # you (see identify()); call this for scripts that must not query the
+        # device, or to override what was detected.
+        key = str(tinySAModel).strip().upper()
+        if key not in PROFILES:
+            self.print_message("ERROR: select_existing_device() takes one of " + ", ".join(sorted(PROFILES)))
+            return False
+        self._apply_profile(PROFILES[key], detected=False)
+        return True
 
     def load_custom_config(self, configFile: str) -> None:
         # TODO: for loading modified or other devices working on the same firmware
         pass
+
+    def _apply_profile(self, profile: DeviceProfile, detected: bool) -> None:
+        self.profile = profile
+        self.profileDetected = detected
+        self.maxPoints = profile.max_points
+        self.minSADeviceFreq = profile.min_freq
+        self.maxSADeviceFreq = profile.max_freq_ultra
+        self.minSGDeviceFreq = profile.min_sg_freq
+        self.maxSGDeviceFreq = profile.max_sg_freq
+        self.screenWidth = profile.screen_width
+        self.screenHeight = profile.screen_height
+        if self._log is not None:
+            self._log.write("event", {"event": "profile", "detail": profile.name
+                                      + (" (detected)" if detected else " (selected)")})
+
+    def get_profile(self) -> DeviceProfile:
+        return self.profile
+
+    def identify(self) -> dict[str, object]:
+        # Ask the connected device what it is, choose its profile, and read its
+        # command list. Called by connect() unless identifyOnConnect is False.
+        # Returns the identify_device() dict plus 'commands' and 'profile'.
+        # Uses a 3 s read timeout for these three commands only, so a silent or
+        # foreign device cannot hang the connect.
+        saved = self.serialTimeout
+        self.serialTimeout = 3.0 if saved is None else min(saved, 3.0)
+        try:
+            version_reply = self._reply_text('version\r\n')
+            info_reply = self._reply_text('info\r\n')
+            help_reply = self._reply_text('help\r\n')
+        finally:
+            self.serialTimeout = saved
+        found = identify_device(version_reply, info_reply)
+        family = str(found["family"])
+        board = str(found["board"])
+        build = found["build"]
+        self.firmwareBuild = (int(build[0]), int(build[1]), int(build[2])) if isinstance(build, list) else None
+        if help_reply:
+            words = re.sub(r"(Other )?commands:", " ", help_reply).split()
+            self.deviceCommands = frozenset(words) if words else None
+        else:
+            self.deviceCommands = None
+        if family == "unknown":
+            self.print_message("WARNING: device did not answer 'version' as a tinySA; keeping the default profile")
+            self._apply_profile(DEFAULT, detected=False)
+        else:
+            self._apply_profile(profile_for(family, board), detected=True)
+        if self.firmwareBuild is not None and self.firmwareBuild < FIRMWARE_FLOOR:
+            self.print_message("WARNING: firmware build %s is older than the oldest build this library is "
+                               "written for (v%d.%d-%d); commands added since then will be refused by the device"
+                               % (version_reply.split("\r\n")[0], *FIRMWARE_FLOOR))
+            if self._log is not None:
+                self._log.write("event", {"event": "firmware-below-floor",
+                                          "detail": version_reply.split("\r\n")[0]})
+        found["commands"] = sorted(self.deviceCommands) if self.deviceCommands else []
+        found["profile"] = self.profile.name
+        return found
+
+    def _reply_text(self, writebyte: str) -> str:
+        reply = self.tinySA_serial(writebyte, printBool=False, _raw=True)
+        return bytes(reply).decode("utf-8", errors="replace").strip() if reply else ""
+
+######################################################################
+# 4.0.0 gates
+#   _check_command : is this command in the connected device's firmware?
+#   _check_word    : is this argument word accepted by this device family?
+#   _check_output_allowed : has the caller enabled the RF output?
+# Each prints an ERROR message (so the log carries the reason) and returns
+# False when the call must not be sent.
+######################################################################
+
+    def _check_command(self, name: str) -> bool:
+        known = self.deviceCommands if self.deviceCommands is not None else self.profile.commands
+        if name in known:
+            return True
+        where = "this device's firmware" if self.deviceCommands is not None else self.profile.name
+        self.print_message("ERROR: '%s' is not a command in %s" % (name, where))
+        return False
+
+    def _check_word(self, command: str, word: object, words: tuple[str, ...]) -> bool:
+        if str(word) in words:
+            return True
+        self.print_message("ERROR: %s does not accept '%s' on the %s; it takes %s"
+                           % (command, word, self.profile.name, "|".join(words)))
+        return False
+
+    def set_output_allowed(self, allowed: bool = False) -> None:
+        # The RF output gate. Off by default: output("on"), set_output_on() and
+        # cal_output() with any value but "off" return the error value and send
+        # nothing until set_output_allowed(True) has been called. Turning it on
+        # sends nothing to the device. output("off") always works.
+        self.outputAllowed = bool(allowed)
+        if self._log is not None:
+            self._log.write("event", {"event": "output-allowed", "detail": str(self.outputAllowed)})
+
+    def get_output_allowed(self) -> bool:
+        return self.outputAllowed
+
+    def _check_output_allowed(self, what: str) -> bool:
+        if self.outputAllowed:
+            return True
+        self.print_message("ERROR: %s refused: call set_output_allowed(True) first to enable the RF output" % what)
+        return False
 
 ######################################################################
 # Direct overrides
@@ -380,6 +481,8 @@ class tinySA(
             if self._log is not None:
                 self._log.write("event", {"event": "connect", "detail": str(port)})
                 self._log_session()
+            if self.identifyOnConnect:
+                self.identify()
             return True
         except Exception as err:
             self.print_message("ERROR: cannot open port at " + str(port))
@@ -401,8 +504,15 @@ class tinySA(
         if self._log is not None:
             self._log.write("event", {"event": "disconnect", "detail": ""})
 
-    def tinySA_serial(self, writebyte: str, printBool: bool = False, pts: int | None = None) -> bytearray | None:
+    def tinySA_serial(self, writebyte: str, printBool: bool = False, pts: int | None = None,
+                      _raw: bool = False) -> bytearray | None:
         # write out to serial, get message back, clean up, return
+        #
+        # 4.0.0: if the DEVICE rejects the command (a 'usage:' line for a setter,
+        # 'name?' for a command this firmware lacks, or a refusal such as
+        # 'usb disk mode active'), the error value is returned instead of the
+        # device's text. _raw=True (used by command() and the readback helpers)
+        # returns the device's text unchanged, as 3.x did for everything.
 
         ser = self._require_serial()
         # clear INPUT buffer
@@ -442,13 +552,14 @@ class tinySA(
         finally:
             self._serial_busy = False
 
+        if self._serial_timed_out:
+            status, reason = STATUS_TIMEOUT, "no prompt from the device within the timeout"
+        elif binary:
+            status, reason = classify_reply("", msgbytes)   # binary data is never 'usage'
+        else:
+            status, reason = classify_reply(writebyte, msgbytes)
+
         if self._log is not None:
-            if self._serial_timed_out:
-                status, reason = STATUS_TIMEOUT, "no prompt from the device within the timeout"
-            elif binary:
-                status, reason = classify_reply("", msgbytes)   # binary data is never 'usage'
-            else:
-                status, reason = classify_reply(writebyte, msgbytes)
             self._log_reason = ""
             self._log.write_command(sys._getframe(1).f_code.co_name, writebyte, status,
                                     int((time.monotonic() - started) * 1000),
@@ -456,6 +567,13 @@ class tinySA(
 
         if printBool == True:
             print(msgbytes) #overrides verbose for debug
+
+        if (not _raw) and status in (STATUS_USAGE, STATUS_UNKNOWN, STATUS_REFUSED):
+            self.print_message("ERROR: device rejected '%s': %s" % (writebyte.strip(), reason))
+            if msgbytes:
+                self.print_message("device said: " + bytes(msgbytes).decode("utf-8", errors="replace").strip())
+            self._log_reason = ""
+            return bytearray(b'ERROR') if self.returnErrorByte else bytearray(b'')
 
         return msgbytes
 
@@ -746,7 +864,7 @@ class tinySA(
 
     def _query_value(self, command: str) -> str | None:
         # send a query and return the LAST non-usage line of the reply as text
-        reply = self.tinySA_serial(command + '\r\n', printBool=False)
+        reply = self.tinySA_serial(command + '\r\n', printBool=False, _raw=True)
         if not reply:
             return None
         lines = [ln.strip() for ln in bytes(reply).decode("utf-8", errors="replace").splitlines()]
@@ -818,7 +936,7 @@ class tinySA(
 
     def get_sweep_range(self) -> tuple[int, int, int] | None:
         # (start_hz, stop_hz, points) from the bare 'sweep' command
-        reply = self.tinySA_serial('sweep\r\n', printBool=False)
+        reply = self.tinySA_serial('sweep\r\n', printBool=False, _raw=True)
         if not reply:
             return None
         parts = bytes(reply).decode("utf-8", errors="replace").split()

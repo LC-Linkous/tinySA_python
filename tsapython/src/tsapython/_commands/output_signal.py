@@ -23,6 +23,8 @@ class OutputSignalMixin(MixinHost):
         accepted_vals =  ["off", 'off', 1,2,3,4,10,15,30]
         #check input
         if (val in accepted_vals):
+            if str(val) != "off" and not self._check_output_allowed("caloutput " + str(val)):
+                return self.error_byte_return()
             writebyte = 'caloutput '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("caloutput() set with " + str(val))
@@ -118,6 +120,8 @@ class OutputSignalMixin(MixinHost):
         accepted_val2= ["input", "output"]
         #check input
         if (val1 in accepted_val1) and (val2 in accepted_val2):
+            if not self._check_word("mode", val1, self.profile.mode_words):
+                return self.error_byte_return()
             writebyte = 'mode '+str(val1)+ ' ' +str(val2)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
         else:
@@ -166,10 +170,14 @@ class OutputSignalMixin(MixinHost):
             "NFM": ("nfm", None), "WFM": ("wfm", None)}
         #check input
         if (str(val) in accepted_vals):
+            if not self._check_word("modulation", val, self.profile.modulation_words):
+                return self.error_byte_return()
             writebyte = 'modulation '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
         elif (str(val) in legacy_vals):
             keyword, rate = legacy_vals[str(val)]
+            if not self._check_word("modulation", keyword, self.profile.modulation_words):
+                return self.error_byte_return()
             writebyte = 'modulation '+keyword+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             if rate is not None:
@@ -199,6 +207,8 @@ class OutputSignalMixin(MixinHost):
         # usage: modulation depth {percent}
         # example return: ''
 
+        if not self._check_word("modulation", "fm", self.profile.modulation_words):
+            return self.error_byte_return()   # depth exists only where fm does (Ultra family)
         if isinstance(val, (int, float)) and (not isinstance(val, bool)) and (0 <= val <= 100):
             writebyte = 'modulation depth '+str(int(val))+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
@@ -213,6 +223,8 @@ class OutputSignalMixin(MixinHost):
         # The device stores the deviation in steps of 100 Hz.
         # example return: ''
 
+        if not self._check_word("modulation", "fm", self.profile.modulation_words):
+            return self.error_byte_return()
         if isinstance(val, (int, float)) and (not isinstance(val, bool)) and (100 <= val <= 300000):
             writebyte = 'modulation deviation '+str(int(val))+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
@@ -268,6 +280,10 @@ class OutputSignalMixin(MixinHost):
         accepted_vals =  ["on", "off", "normal", "mixer"]
         #check input
         if (str(val) in accepted_vals):
+            if not self._check_word("output", val, self.profile.output_words):
+                return self.error_byte_return()
+            if str(val) == "on" and not self._check_output_allowed("output on"):
+                return self.error_byte_return()
             writebyte = 'output '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
         else:

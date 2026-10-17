@@ -72,6 +72,8 @@ class AcquisitionMixin(MixinHost):
         # Ultra family only: the Basic firmware has no hop command.
         # example return: ''
 
+        if not self._check_command("hop"):
+            return self.error_byte_return()
         if (isinstance(start, (int, float))) and (isinstance(stop, (int, float))) and (isinstance(inc, (int, float))):
             if (isinstance(outmask, int)) and (not isinstance(outmask, bool)) and (1 <= outmask <= 3):
                 writebyte = 'hop ' + str(start) + ' ' + str(stop)  + ' ' + str(inc) + ' ' + str(outmask) + '\r\n'
@@ -153,14 +155,14 @@ class AcquisitionMixin(MixinHost):
             # the README has examples for processing
             #
             # unbuf: 0 = buffered, 1 = unbuffered (sent point by point).
-            # FIRMWARE NOTE: from tinySA firmware v1.4-177 (Aug 2024) this argument
-            # is a bit field, and 2 or 3 mean "repeat the sweep until interrupted".
-            # This function reads ONE frame, so on that firmware 2 and 3 leave the
-            # device still sending. They are still accepted here because they
-            # were before; prefer 0 or 1.
+            # 4.0.0: ONLY 0 and 1. From firmware v1.4-177 the argument is a bit
+            # field and 2 or 3 make the device repeat sweeps until interrupted,
+            # which this one-frame reader cannot consume. Use
+            # continuous_scanraw() (one frame per call, any firmware) or
+            # scan_raw_stream() (the device-side repeat, v1.4-177 or later).
 
         if (0<=start) and (start <= stop) and (pts <= self.maxPoints):
-            if unbuf in (0, 1, 2, 3):
+            if unbuf in (0, 1):
                 writebyte = 'scanraw '+str(start)+' '+str(stop)+' '+str(pts)+ ' '+str(unbuf)+'\r\n'
 
                 # write out to serial, get message back, clean up, return
@@ -203,7 +205,7 @@ class AcquisitionMixin(MixinHost):
         if not ((0 <= start) and (start < stop) and (pts <= self.maxPoints)):
             self.print_message("ERROR: continuous_scanraw takes START STOP PTS UNBUF; check limits")
             return
-        if unbuf not in (0, 1, 2, 3):
+        if unbuf not in (0, 1):
             self.print_message("ERROR: unrecognized UNBUF for continuous_scanraw")
             return
 
@@ -212,6 +214,56 @@ class AcquisitionMixin(MixinHost):
             frame = self.scan_raw(start, stop, pts, unbuf)
             yield frame
             emitted += 1
+
+    def scan_raw_stream(self, start: int, stop: int, pts: int = 250, count: int | None = None,
+                        unbuffered: bool = True) -> "Iterator[bytearray | None]":
+        # Device-side continuous SCANRAW: one 'scanraw ... {pts} {options}' with
+        # bit 2 set makes the firmware repeat the sweep and stream frame after
+        # frame until another command arrives. Needs firmware v1.4-177 (Aug 2024)
+        # or later; on older firmware this returns without yielding.
+        #
+        # Yields one raw frame ('{' + 3*pts bytes) per iteration. Stop by
+        # breaking out of the loop (or passing count); the generator then sends
+        # 'pause' to interrupt the device and discards what is left in the
+        # buffer. UNTESTED ON HARDWARE at the time of writing: marked
+        # experimental, see the README.
+        from .._profiles import SCANRAW_STREAM_BUILD
+        if self.firmwareBuild is not None and self.firmwareBuild < SCANRAW_STREAM_BUILD:
+            self.print_message("ERROR: scan_raw_stream() needs firmware v%d.%d-%d or later" % SCANRAW_STREAM_BUILD)
+            return
+        if not ((0 <= start) and (start <= stop) and (pts <= self.maxPoints)):
+            self.print_message("ERROR: scan_raw_stream takes START STOP PTS; check limits")
+            return
+        import time as _time
+        ser = self._require_serial()
+        options = 2 | (1 if unbuffered else 0)
+        frame_len = 1 + 3 * pts + 1              # '{' + 3 bytes per point + '}'
+        idle_limit = 5.0
+        ser.reset_input_buffer()
+        ser.write(bytes('scanraw %d %d %d %d\r\n' % (start, stop, pts, options), 'utf-8'))
+        emitted = 0
+        buffer = bytes()
+        last_data = _time.monotonic()
+        try:
+            while (count is None) or (emitted < count):
+                if ser.in_waiting > 0:
+                    buffer += ser.read(ser.in_waiting)
+                    last_data = _time.monotonic()
+                start_idx = buffer.find(b'{')
+                if start_idx != -1 and len(buffer) - start_idx >= frame_len:
+                    frame = buffer[start_idx:start_idx + frame_len]
+                    buffer = buffer[start_idx + frame_len:]
+                    yield bytearray(frame[:-1])   # same shape as scan_raw(): '{' + data
+                    emitted += 1
+                    continue
+                if (_time.monotonic() - last_data) > idle_limit:
+                    self.print_message("WARNING: scan_raw_stream: no frame for %.0f s" % idle_limit)
+                    return
+                _time.sleep(0.001)
+        finally:
+            ser.write(b'pause\r\n')          # any command interrupts the device-side loop
+            _time.sleep(0.2)
+            ser.reset_input_buffer()
 
     def config_sweep(self, argName: int | float | str | None = None, val: int | float | str | None = None) -> bytearray | None:
             # split call for SWEEP

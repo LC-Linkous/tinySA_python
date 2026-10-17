@@ -14,8 +14,16 @@ PROMPT = b"ch> "
 
 # --- optional read timeout ----------------------------------------------------
 
-def test_timeout_default_is_none(parsing_tsa):
-    assert parsing_tsa.get_serial_timeout() is None
+def test_timeout_default_is_120_s(parsing_tsa):
+    from tsapython import tinySA
+    assert tinySA.DEFAULT_SERIAL_TIMEOUT == 120.0
+    assert parsing_tsa.get_serial_timeout() == 120.0
+
+
+def test_timeout_constructor_argument():
+    from tsapython import tinySA
+    assert tinySA(serial_timeout=5).get_serial_timeout() == 5.0
+    assert tinySA(serial_timeout=None).get_serial_timeout() is None
 
 
 def test_timeout_returns_none_when_device_is_silent(parsing_tsa):
@@ -37,7 +45,7 @@ def test_timeout_does_not_affect_a_normal_reply(parsing_tsa):
 @pytest.mark.parametrize("bad", [0, -1])
 def test_timeout_rejects_non_positive(parsing_tsa, bad):
     parsing_tsa.set_serial_timeout(bad)
-    assert parsing_tsa.get_serial_timeout() is None
+    assert parsing_tsa.get_serial_timeout() == 120.0     # unchanged
 
 
 def test_timeout_can_be_cleared(parsing_tsa):

@@ -59,6 +59,10 @@ class MarkersTracesMixin(MixinHost):
             msgbytes = self.error_byte_return()
             return msgbytes
 
+        if isinstance(ID, int) and not (1 <= ID <= self.profile.markers):
+            self.print_message("ERROR: the %s has markers 1..%d" % (self.profile.name, self.profile.markers))
+            return self.error_byte_return()
+
         if (str(val) in accepted_vals):
             writebyte = 'marker ' + str(ID) + ' ' +str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
@@ -145,6 +149,9 @@ class MarkersTracesMixin(MixinHost):
         accepted_vals =  ["dBm", "dBmV", "dBuV", "V", "W", "Vpp", "RAW", "dBV"]
 
         if (isinstance(ID, int)) and (ID >= 1) and (str(val) in accepted_vals):
+            if ID > self.profile.traces:
+                self.print_message("ERROR: the %s has %d traces" % (self.profile.name, self.profile.traces))
+                return self.error_byte_return()
             writebyte = 'trace '+ str(ID) + ' ' + str(val) +'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("setting trace " + str(ID) + " units to " + str(val))
