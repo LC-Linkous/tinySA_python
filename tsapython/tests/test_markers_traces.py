@@ -125,14 +125,48 @@ def test_trace_subtract_invalid(tsa, a, b):
 # --- trace_freeze (the corrected single definition) -----------------------
 
 def test_trace_freeze_valid(tsa):
+    # the firmware ignores 'trace 2 freeze' without on|off, so "on" is the default
     tsa.trace_freeze(2)
-    assert tsa._recorder.last == "trace 2 freeze\r\n"
+    assert tsa._recorder.last == "trace 2 freeze on\r\n"
+
+
+def test_trace_freeze_off_and_alias(tsa):
+    tsa.trace_freeze(2, "off")
+    assert tsa._recorder.last == "trace 2 freeze off\r\n"
+    tsa.trace_unfreeze(3)
+    assert tsa._recorder.last == "trace 3 freeze off\r\n"
 
 
 @pytest.mark.parametrize("bad", ["two", 0])
 def test_trace_freeze_invalid(tsa, bad):
     tsa.trace_freeze(bad)
     assert tsa._recorder.count == 0
+
+
+def test_trace_freeze_bad_word(tsa):
+    tsa.trace_freeze(2, "maybe")
+    assert tsa._recorder.count == 0
+
+
+def test_trace_units_dbv(tsa):
+    tsa.trace_units(1, "dBV")
+    assert tsa._recorder.last == "trace 1 dBV\r\n"
+
+
+@pytest.mark.parametrize("action,arg,expected", [
+    ("copy", 2, "trace 1 copy 2\r\n"),
+    ("view", "on", "trace 1 view on\r\n"),
+    ("freeze", "off", "trace 1 freeze off\r\n"),
+])
+def test_trace_action_with_argument(tsa, action, arg, expected):
+    tsa.trace_action(1, action, arg)
+    assert tsa._recorder.last == expected
+
+
+def test_trace_clear_still_callable(tsa):
+    # deprecated (keyword left the firmware in 2021) but not removed
+    tsa.trace_clear(2)
+    assert tsa._recorder.last == "trace 2 clear\r\n"
 
 
 # --- trace_action ---------------------------------------------------------

@@ -35,9 +35,11 @@ class DisplayUIMixin(MixinHost):
         return self.bulk()
 
     def capture(self) -> bytearray | None:
-        # requests a screen dump to be sent in binary format
-        # of 320x240 pixels of each 2 bytes
+        # requests a screen dump to be sent in binary format,
+        # 2 bytes per pixel (RGB565): 480x320 on the Ultra family, 320x240 on the Basic
         # usage: capture
+        # Returns exactly screenWidth * screenHeight * 2 bytes when the screen
+        # size set in the library matches the device (see core.get_capture_return).
         # example return: bytearray(b'\x00 ...\x00\x00\x00')
         writebyte = 'capture\r\n'
         msgbytes = self.tinySA_serial(writebyte, printBool=False)
@@ -53,7 +55,7 @@ class DisplayUIMixin(MixinHost):
         # example return:
 
         # explicitly allowed vals
-        accepted_ID = np.arange(0, 31, 1) # max exclusive
+        accepted_ID = np.arange(0, 32, 1) # max exclusive, so 0..31 (the firmware palette has 32 entries)
 
         if ID == None:
             # get the color

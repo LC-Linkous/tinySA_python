@@ -122,7 +122,11 @@ class CalibrationMixin(MixinHost):
     def set_IF(self, val: int = 0) -> bytearray | None:
         # the IF call, but avoiding reserved keywords
         # sets the IF to automatic or a specific value. 0 means automatic
-        # usage: if ( 0 | 433M..435M )
+        # usage: if ( 0 | 433M..435M )      Basic (ZS304)
+        #        if ( 0 | 975M..979M )      Ultra (ZS405)
+        #        if ( 0 | 1067M..1073M )    Ultra+ (ZS406, ZS407)
+        # Any of the three ranges is accepted here; the device rejects a value
+        # that is outside the range of its own board.
         # example return: ''
 
         #check input
@@ -130,12 +134,13 @@ class CalibrationMixin(MixinHost):
             writebyte = 'if '+str(0)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("setIF() set to auto")
-        elif ((433e6) <=val <=(435e6)):
+        elif isinstance(val, (int, float)) and (
+                (433e6 <= val <= 435e6) or (975e6 <= val <= 979e6) or (1067e6 <= val <= 1073e6)):
             writebyte = 'if '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("setIF() set to "  + str(val))
         else:
-            self.print_message("ERROR: if() takes vals ['auto'|0|433M...435M] in Hz as integers")
+            self.print_message("ERROR: if() takes vals ['auto'|0|433M..435M|975M..979M|1067M..1073M] in Hz")
             msgbytes = self.error_byte_return()
         return msgbytes
 
@@ -179,10 +184,13 @@ class CalibrationMixin(MixinHost):
         # but that error checking isn't done here YET
 
         #explicitly allowed vals
-        accepted_vals =  ["low","switch","receive_switch","out_switch","lna",
-                          "harmonic","shift","shift1","shift2","shift3",
+        # shift4, direct_output and low_output exist from tinySA firmware
+        # v1.4-193 (Jan 2025); "high" is the Basic's second input range
+        accepted_vals =  ["low","high","switch","receive_switch","out_switch","lna",
+                          "harmonic","shift","shift1","shift2","shift3","shift4",
                           "drive1","drive2","drive3","direct","direct_lna",
-                          "ultra","ultra_lna","harmonic_lna","adf"]
+                          "ultra","ultra_lna","harmonic_lna","adf",
+                          "direct_output","low_output"]
         #check input
         if (val in accepted_vals):
             if (-20.0<=offset<=20.0):
@@ -224,18 +232,18 @@ class CalibrationMixin(MixinHost):
 
     def spur(self, val: int | float | str | None = None) -> bytearray | None:
         # enables or disables spur reduction
-        # usage: spur on|off
+        # usage: spur on|off|auto   (auto is Ultra family only)
         # example return:
 
         # explicitly allowed vals
-        accepted_vals =  ["on", "off"]
+        accepted_vals =  ["on", "off", "auto"]
         #check input
         if (str(val) in accepted_vals):
             writebyte = 'spur '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("spur() set to " + str(val))
         else:
-            self.print_message("ERROR: spur() takes vals [on|off]")
+            self.print_message("ERROR: spur() takes vals [on|off|auto]")
             msgbytes = self.error_byte_return()
         return msgbytes
 
@@ -246,6 +254,36 @@ class CalibrationMixin(MixinHost):
     def spur_off(self) -> bytearray | None:
         # alias for spur()
         return self.spur("off")
+
+    def spur_auto(self) -> bytearray | None:
+        # alias for spur(). Ultra family only
+        return self.spur("auto")
+
+    def avoid(self, val: str) -> bytearray | None:
+        # spur avoidance table control. Ultra family only
+        # usage: avoid auto|off|on|dump
+        # Needs tinySA firmware v1.4-194 (Jan 2025) or later; older firmware answers 'avoid?'
+        if str(val) in ("auto", "off", "on", "dump"):
+            writebyte = 'avoid ' + str(val) + '\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
+        else:
+            self.print_message("ERROR: avoid() takes auto|off|on|dump")
+            msgbytes = self.error_byte_return()
+        return msgbytes
+
+    def correction_reset(self, table: str) -> bytearray | None:
+        # zero every value in one level correction table
+        # usage: correction {table} reset
+        accepted = ["low", "lna", "ultra", "ultra_lna", "direct", "direct_lna", "harm",
+                    "harm_lna", "out", "out_direct", "out_adf", "out_ultra", "high"]
+        if table in accepted:
+            writebyte = 'correction ' + table + ' reset\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
+            self.print_message("correction table " + table + " reset")
+        else:
+            self.print_message("ERROR: correction_reset() needs a table name")
+            msgbytes = self.error_byte_return()
+        return msgbytes
 
     def vbat_offset(self, val: int | float | str | None = None) -> bytearray | None:
         # displays or sets the battery offset value

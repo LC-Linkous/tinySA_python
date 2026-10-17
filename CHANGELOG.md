@@ -8,7 +8,86 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 Work on the current development branch. Entries move to a versioned section on
-release.
+release. Planned for 4.0.0 (API changes): device rejections returned as the
+library's error value; a library setting that must be on before the generator
+output can be switched on; per-device profiles; `scan_raw()` restricted to
+`unbuf` 0 or 1; firmware floor v1.4-182. See the README "Change Summary".
+
+## [3.1.0] - 2026-10-17
+
+Non-breaking firmware-compatibility release: every call that worked before
+behaves the same. Read from the tinySA firmware source (v1.4-244). Verified on
+hardware with a tinySA Ultra ZS405 running tinySA4_v1.4-143 (the probe script
+matched its predictions 36 of 36 times); the Basic and Ultra+ boards are from
+firmware source only.
+
+### Added
+- Optional JSON Lines log file: `set_log_file(path, level)`, `close_log_file()`,
+  `get_log_file()`. Records every command, the reply, a status (`ok`, `usage`,
+  `unknown-command`, `device-refused`, `timeout`, `read-failed`, `blocked`) and
+  the reason. Off by default; nothing is kept in memory.
+- `set_serial_timeout(seconds)` / `get_serial_timeout()`. The default stays
+  `None` (wait indefinitely), so long sweeps are unaffected.
+- Signal generator: `modulation()` accepts the current firmware words
+  (`am`, `fm`, `nfm`, `wfm`, `extern`, `off`); new `modulation_freq()`,
+  `modulation_depth()`, `modulation_deviation()`, `set_mod_AM()`, `set_mod_FM()`;
+  `output()` accepts `normal` and `mixer` with aliases
+  `set_output_path_normal()` / `set_output_path_mixer()`.
+- `calc()` accepts `aver`, `quasi`, `log`, `lin`; `spur()` accepts `auto`
+  (`spur_auto()`); `trace_units()` accepts `dBV`; `level_offset()` accepts
+  `high`, `shift4`, `direct_output`, `low_output`; `set_IF()` accepts the Ultra
+  (975M..979M) and Ultra+ (1067M..1073M) ranges.
+- `trace_freeze(ID, val="on"|"off")`, `trace_unfreeze(ID)`, and an optional
+  third argument on `trace_action()`.
+- Getters: `get_rbw()`, `get_attenuation()`, `get_sweep_time()`, `get_IF()`,
+  `get_scanraw_offset()`, `get_noise_figure()`, `get_dac_value()`, `get_calc()`,
+  `get_sweep_range()`; `decode_number()` for the pre-v1.4-230 `:` artifact.
+- New command wrappers: `waitscan()`, `channel()`, `avoid()`, `usbdisk()`,
+  `time()`, `correction_reset()`, `sweep_mode()`, `marker_mode()`,
+  `marker_all_off()`, `marker_read()`, `resume(count)`, `sd_list(pattern)`.
+- SD card: `list_sd_files()`, `save_sd_file()`, `save_firmware_dump()` (copies
+  the device's own firmware dump, made with DUMP FIRMWARE on the device, to the
+  computer).
+- `tests/probe_firmware_returns.py`: manual hardware probe with JSON/markdown
+  reports; seven hardware set-and-read-back tests in `tests/test_hardware.py`.
+- README sections: Logging, Firmware Compatibility, Change Summary,
+  Deprecated Functions, Reading Values Back, Commands added in 3.1.0.
+- Internal helpers `identify_device()` and `classify_reply()` (`_identify.py`).
+
+### Changed
+- `level()`, `level_change()`, `rbw()` and `trigger_level()` accept decimals;
+  `level_change()` accepts -90..90.
+- `scan()` and `scan_raw()` accept `start == stop` (zero span); `scan_raw()`
+  accepts `unbuf=0`.
+- `calc("quasip")` and `set_calc_quasip()` send `calc quasi`. The firmware
+  renamed the keyword in May 2022 and rejects `quasip`.
+- `modulation("AM_1kHz" | "AM_10Hz" | "NFM" | "WFM")` and their aliases send the
+  current firmware equivalent; the firmware has rejected the old keywords since
+  Nov 2020.
+- `capture()` is read by length and returns exactly `width * height * 2` bytes.
+- `sd_read()` reads the 4-byte size prefix and returns exactly the file's bytes.
+- A text reply is complete at the `ch> ` prompt rather than at the first `>`
+  byte, so replies containing `>` are no longer cut short.
+- The serial read loop sleeps 1 ms when no data is waiting, instead of spinning
+  a CPU core.
+- `tsapython.__version__` is read from the installed package metadata.
+
+### Deprecated
+- `set_mod_AM_1khz()`, `set_mod_AM_10Hz()`, `trace_clear()`. Still callable;
+  see the README section "Deprecated Functions".
+
+### Fixed
+- `hop()` raised `UnboundLocalError` for any `outmask` other than 1, 2 or
+  `None`. 3 (the firmware default) is now accepted; other values return the
+  error value.
+- `wait()` with no argument returned the error value; it now sends `wait`.
+- `attenuate(31)` and `color(31, ...)` were refused by an off-by-one.
+- `trace_freeze(ID)` sent `trace {ID} freeze`, which the firmware parses and
+  ignores; it now sends `trace {ID} freeze on`.
+- `capture()` stopped at the first `0x3E` pixel byte and returned one byte too
+  few.
+- `examples/using_command_func.py` and the README sent `scan 150e6 200e6`,
+  which the firmware reads as 150 Hz to 200 Hz.
 
 ## [3.0.1] - 2026-09-19
 
@@ -115,6 +194,7 @@ repository gains the quality gates and health files below.
 See the [GitHub releases](https://github.com/LC-Linkous/tinySA_python/releases)
 for pre-3.0.0 history, when the library shipped as a single-class module.
 
-[Unreleased]: https://github.com/LC-Linkous/tinySA_python/compare/v3.0.1...HEAD
+[Unreleased]: https://github.com/LC-Linkous/tinySA_python/compare/v3.1.0...HEAD
+[3.1.0]: https://github.com/LC-Linkous/tinySA_python/compare/v3.0.1...v3.1.0
 [3.0.1]: https://github.com/LC-Linkous/tinySA_python/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/LC-Linkous/tinySA_python/releases/tag/v3.0.0

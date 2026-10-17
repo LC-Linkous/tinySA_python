@@ -80,6 +80,8 @@ def test_dac_set_invalid(tsa, val):
     ("auto", "rbw auto\r\n"),
     (3, "rbw 3\r\n"),
     (600, "rbw 600\r\n"),
+    (0.3, "rbw 0.3\r\n"),      # decimals are valid: 300 Hz
+    (3.5, "rbw 3.5\r\n"),
 ])
 def test_rbw_valid(tsa, val, expected):
     tsa.rbw(val)
@@ -91,7 +93,7 @@ def test_rbw_auto_alias(tsa):
     assert tsa._recorder.last == "rbw auto\r\n"
 
 
-@pytest.mark.parametrize("val", [3.5, "fast", None])
+@pytest.mark.parametrize("val", ["fast", None, True])
 def test_rbw_invalid(tsa, val):
     tsa.rbw(val)
     assert tsa._recorder.count == 0

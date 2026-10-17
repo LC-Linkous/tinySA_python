@@ -63,6 +63,53 @@ class SystemInfoMixin(MixinHost):
         # alias for info()
         return self.info()
 
+    def channel(self, val: int | None = None) -> bytearray | None:
+        # prints the channel power value(s) from the channel power measurement
+        # usage: channel [1-3]
+        # Needs tinySA firmware v1.4-223 (Mar 2026) or later; older firmware answers 'channel?'
+        # example return: bytearray(b'channel[1] : -90.0\r\nchannel[2] : ...')
+        if val is None:
+            writebyte = 'channel\r\n'
+        elif val in (1, 2, 3):
+            writebyte = 'channel ' + str(val) + '\r\n'
+        else:
+            self.print_message("ERROR: channel() takes None or 1..3")
+            return self.error_byte_return()
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
+        self.print_message("reading channel power")
+        return msgbytes
+
+    def time(self, field: str | None = None, val: int | None = None) -> bytearray | None:
+        # reads or sets the real-time clock. Ultra family only
+        # usage: time                 -> prints the usage line and the current date/time
+        #        time y|m|d|h|min|sec {0-99}
+        # example return: bytearray(b'usage: time ...\r\n2026/10/17 13:40:29\r')
+        accepted = ["y", "m", "d", "h", "min", "sec"]
+        if field is None:
+            writebyte = 'time\r\n'
+        elif (field in accepted) and isinstance(val, int) and (0 <= val <= 99):
+            writebyte = 'time ' + field + ' ' + str(val) + '\r\n'
+        else:
+            self.print_message("ERROR: time() takes (None) or (field in y|m|d|h|min|sec, 0..99)")
+            return self.error_byte_return()
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
+        return msgbytes
+
+    def usbdisk(self, val: str | None = None) -> bytearray | None:
+        # reads or sets USB DISK mode, which presents the SD card as a USB drive.
+        # WHILE IT IS ON, most other serial commands answer 'usb disk mode active'.
+        # usage: usbdisk [off|on]
+        # Needs tinySA firmware v1.4-244 (Sep 2026) or later, Ultra family.
+        if val is None:
+            writebyte = 'usbdisk\r\n'
+        elif str(val) in ("on", "off"):
+            writebyte = 'usbdisk ' + str(val) + '\r\n'
+        else:
+            self.print_message("ERROR: usbdisk() takes None, 'on' or 'off'")
+            return self.error_byte_return()
+        msgbytes = self.tinySA_serial(writebyte, printBool=False)
+        return msgbytes
+
     def nf(self) -> bytearray | None:
         # get the noise floor in dB.
         # This function CAN be used to set nf,
@@ -81,18 +128,20 @@ class SystemInfoMixin(MixinHost):
     def rbw(self, val: int | float | str = "auto") -> bytearray | None:
         # sets the rbw to either automatic or a specific value.
         # the number specifies the target rbw in kHz
-        # usage: rbw auto|3..600
+        # usage: rbw auto|0.2..850 (Ultra family), auto|2..600 (Basic)
+        # decimals allowed, e.g. rbw(0.3) for 300 Hz
+        # NOTE: rbw() with no argument SETS auto. It does not read the value.
         # example return: ''
 
         #check input
         if (val == "auto"):
             writebyte = 'rbw '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
-        elif (isinstance(val, int)):
+        elif (isinstance(val, (int, float))) and (not isinstance(val, bool)):
             writebyte = 'rbw '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
         else:
-            self.print_message("ERROR: rbw() takes vals [auto |0 - 600] in kHz as integers")
+            self.print_message("ERROR: rbw() takes 'auto' or a number in kHz")
             msgbytes = self.error_byte_return()
         return msgbytes
 

@@ -251,15 +251,71 @@ class PresetsConfigMixin(MixinHost):
         self.print_message("deleting file from sd card")
         return msgbytes
 
-    def sd_list(self) -> bytearray | None:
+    def sd_list(self, pattern: str | None = None) -> bytearray | None:
         # displays list of filenames with extension and sizes
-        # usage: sd_list
+        # usage: sd_list [{pattern}]   e.g. sd_list *.bin
         # example return: bytearray(b'-0.bmp 307322\r')
+        # Ultra family only (the Basic has no SD card).
 
-        writebyte = 'sd_list\r\n'
+        if pattern:
+            writebyte = 'sd_list ' + str(pattern) + '\r\n'
+        else:
+            writebyte = 'sd_list\r\n'
         msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("listing files from sd card")
         return msgbytes
+
+    def list_sd_files(self, pattern: str | None = None) -> list[tuple[str, int]]:
+        # sd_list() parsed into [(filename, size_in_bytes), ...], newest-looking
+        # order is NOT guaranteed; the card's directory order is returned.
+        # An empty list means no card, no match, or an error (see verbose/log).
+        reply = self.sd_list(pattern)
+        files: list[tuple[str, int]] = []
+        if not reply:
+            return files
+        for line in bytes(reply).decode("utf-8", errors="replace").splitlines():
+            parts = line.strip().rsplit(" ", 1)
+            if len(parts) == 2 and parts[1].isdigit() and not line.startswith("err"):
+                files.append((parts[0], int(parts[1])))
+        return files
+
+    def save_sd_file(self, filename: str, path: str) -> int:
+        # Copies one file from the SD card to the computer.
+        # filename: name on the card, as sd_list() prints it
+        # path:     where to write it on the computer
+        # Returns the number of bytes written, or -1 if the device reported an
+        # error ('err: (4) no file', no card) or the read timed out.
+        data = self.sd_read(filename)
+        if data is None or data.startswith(b"err"):
+            self.print_message("ERROR: save_sd_file() could not read " + str(filename)
+                               + ": " + (bytes(data).decode("utf-8", errors="replace") if data else "timeout"))
+            return -1
+        with open(path, "wb") as f:
+            f.write(bytes(data))
+        self.print_message("saved " + str(filename) + " (" + str(len(data)) + " bytes) to " + str(path))
+        return len(data)
+
+    def save_firmware_dump(self, path: str, filename: str | None = None) -> int:
+        # Copies a firmware image dumped by the device to the computer.
+        #
+        # The tinySA Ultra family can write its own firmware to the SD card as a
+        # .bin file (CONFIG > MORE > EXPERT CONFIG > DUMP FIRMWARE on the device;
+        # there is no serial command for the dump itself). The image is the whole
+        # flash: 262144 bytes on the Ultra family. This function fetches that
+        # file over USB. With filename=None it takes the largest .bin on the card.
+        # Returns the number of bytes written, or -1.
+        if filename is None:
+            candidates = [f for f in self.list_sd_files("*.bin")]
+            if not candidates:
+                self.print_message("ERROR: save_firmware_dump() found no .bin file on the SD card. "
+                                   "Use DUMP FIRMWARE on the device first.")
+                return -1
+            filename = max(candidates, key=lambda f: f[1])[0]
+        written = self.save_sd_file(filename, path)
+        if written not in (-1, 128 * 1024, 256 * 1024):
+            self.print_message("WARNING: %s is %d bytes; a full flash image is 262144 (Ultra family) "
+                               "or 131072 (Basic) bytes" % (filename, written))
+        return written
 
     def sd_read(self, val: int | float | str) -> bytearray | None:
         # read a specific file on the sd_card
@@ -271,10 +327,28 @@ class PresetsConfigMixin(MixinHost):
         self.print_message("reading file from sd card")
         return msgbytes
 
-    def wait(self, val: int = 0) -> bytearray | None:
+    def waitscan(self, count: int = 1) -> bytearray | None:
+        # pauses, lets the given number of sweeps complete, then returns
+        # usage: waitscan [{scans}]
+        # Needs tinySA firmware v1.4-216 (Nov 2025) or later; older firmware
+        # answers 'waitscan?'.
+        # example return: bytearray(b'')
+        if isinstance(count, int) and not isinstance(count, bool) and count >= 1:
+            writebyte = 'waitscan ' + str(count) + '\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
+            self.print_message("waiting for " + str(count) + " sweep(s)")
+        else:
+            self.print_message("ERROR: waitscan() takes a positive integer number of sweeps")
+            msgbytes = self.error_byte_return()
+        return msgbytes
+
+    def wait(self, val: int | None = None) -> bytearray | None:
         # wait for a single sweep to finish and pauses
         #  sweep or waits for specified number of seconds
         # usage: wait [{seconds}]
+        # wait() with no argument sends the bare 'wait' command. (The default
+        # used to be 0, which was rejected, so the bare form was unreachable
+        # without passing None explicitly.)
         # example return:
 
         if val == None:

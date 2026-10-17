@@ -39,7 +39,9 @@ else: # if port found and connected, then complete task(s) and disconnect
     outmask = 1     # get measured data (y axis)
 
     # scan
-    data_bytes = tsa.command("scan 150e6 200e6 5 2")
+    # NOTE: raw command strings go to the device unchanged. The firmware reads
+    # '150M' or '150000000', but NOT '150e6' (that is read as 150 Hz).
+    data_bytes = tsa.command("scan 150M 200M 5 2")
 
     print(data_bytes)
 

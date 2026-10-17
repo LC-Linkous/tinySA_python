@@ -41,24 +41,23 @@ def test_agc_invalid_with_error_byte_enabled(tsa):
 
 
 # ---------------------------------------------------------------------------
-# attenuate : accepts "auto" or ints 0..30  (np.arange(0, 31) -> 31 EXCLUDED)
-# NOTE: docstring/usage says "0-31" but the code excludes 31. Test documents
-#       ACTUAL behavior; see flagged follow-up in the chat.
+# attenuate : accepts "auto" or ints 0..31, matching the firmware usage string
+#             'attenuate 0..31|auto'. (31 was excluded by an off-by-one before.)
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("val,expected", [
     ("auto", "attenuate auto\r\n"),
     (0, "attenuate 0\r\n"),
     (30, "attenuate 30\r\n"),
+    (31, "attenuate 31\r\n"),
 ])
 def test_attenuate_valid(tsa, val, expected):
     tsa.attenuate(val)
     assert tsa._recorder.last == expected
 
 
-def test_attenuate_31_currently_rejected(tsa):
-    """Documents the off-by-one: 31 is rejected despite the 0-31 usage string."""
-    out = tsa.attenuate(31)
+def test_attenuate_32_rejected(tsa):
+    out = tsa.attenuate(32)
     assert tsa._recorder.count == 0
     assert out == bytearray(b"")
 
@@ -128,7 +127,8 @@ def test_ext_gain_invalid(tsa, val):
 #  coverage below the others.)
 # ===========================================================================
 
-# --- calc: off|minh|maxh|maxd|aver4|aver16|quasip -------------------------
+# --- calc: off|minh|maxh|maxd|aver4|aver16|aver|quasi|log|lin --------------
+# 'quasip' is the pre-2022 firmware keyword; it is accepted and sent as 'quasi'.
 
 @pytest.mark.parametrize("method,val", [
     ("set_calc_off", "off"),
@@ -137,10 +137,18 @@ def test_ext_gain_invalid(tsa, val):
     ("set_calc_maxd", "maxd"),
     ("set_calc_aver4", "aver4"),
     ("set_calc_aver16", "aver16"),
-    ("set_calc_quasip", "quasip"),
+    ("set_calc_aver", "aver"),
+    ("set_calc_quasi", "quasi"),
+    ("set_calc_quasip", "quasi"),
 ])
 def test_calc_aliases(tsa, method, val):
     getattr(tsa, method)()
+    assert tsa._recorder.last == f"calc {val}\r\n"
+
+
+@pytest.mark.parametrize("val", ["log", "lin"])
+def test_calc_averaging_domain(tsa, val):
+    tsa.calc(val)
     assert tsa._recorder.last == f"calc {val}\r\n"
 
 
@@ -161,7 +169,17 @@ def test_level_change_valid(tsa, val, expected):
     assert tsa._recorder.last == expected
 
 
-@pytest.mark.parametrize("val", [-71, 71])
+@pytest.mark.parametrize("val,expected", [
+    (-90, "levelchange -90\r\n"),     # Ultra family range is +-90
+    (90, "levelchange 90\r\n"),
+    (2.5, "levelchange 2.5\r\n"),     # the firmware reads a float
+])
+def test_level_change_wider_range(tsa, val, expected):
+    tsa.level_change(val)
+    assert tsa._recorder.last == expected
+
+
+@pytest.mark.parametrize("val", [-91, 91, "5", True])
 def test_level_change_invalid(tsa, val):
     tsa.level_change(val)
     assert tsa._recorder.count == 0
@@ -212,3 +230,21 @@ def test_set_ext_gain_alias(tsa):
 def test_set_level_alias(tsa):
     tsa.set_level(0)
     assert tsa._recorder.last == "level 0\r\n"
+
+
+# --- level: decimals are valid (the firmware reads a float) ----------------
+
+@pytest.mark.parametrize("val,expected", [
+    (-30.5, "level -30.5\r\n"),
+    (-76, "level -76\r\n"),
+    (13, "level 13\r\n"),
+])
+def test_level_decimal_and_limits(tsa, val, expected):
+    tsa.level(val)
+    assert tsa._recorder.last == expected
+
+
+@pytest.mark.parametrize("val", [-76.5, 13.1, "low", True, None])
+def test_level_out_of_range_or_wrong_type(tsa, val):
+    tsa.level(val)
+    assert tsa._recorder.count == 0

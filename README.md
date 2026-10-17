@@ -37,6 +37,13 @@ Zenodo archive with DOI: [https://doi.org/10.5281/zenodo.20546764](https://doi.o
 * [Structure](#structure)
 * [Running Tests](#running-tests)
 * [Error Handling](#error-handling)
+* [Logging](#logging)
+* [Firmware Compatibility](#firmware-compatibility)
+    * [Supported Devices](#supported-devices)
+    * [Firmware Changes That Affect This Library](#firmware-changes-that-affect-this-library)
+    * [Commands by Device Family](#commands-by-device-family)
+* [Change Summary](#change-summary)
+* [Deprecated Functions](#deprecated-functions)
 * [Example Implementations](#example-implementations)
     * [Finding the Serial Port](#finding-the-serial-port)
         * [Autoconnection with the tinySA_python Library](#autoconnection-with-the-tinysa_python-library)
@@ -186,6 +193,8 @@ tsapython/
 │       ├── __init__.py
 │       ├── core.py
 │       ├── _host.py
+│       ├── _identify.py
+│       ├── _log.py
 │       ├── py.typed
 │       └── _commands/
 │           ├── __init__.py
@@ -211,9 +220,15 @@ tsapython/
     ├── test_presets_config.py
     ├── test_system_info.py
     ├── test_parsing.py
+    ├── test_reader.py
+    ├── test_log.py
+    ├── test_identify.py
+    ├── test_firmware_compat.py
+    ├── test_batch2.py
     ├── test_hardware.py
     ├── test_captured_hardware.py
     ├── collect_samples.py
+    ├── probe_firmware_returns.py
     └── fixtures/
         ├── __init__.py
         ├── device_responses.py
@@ -256,6 +271,8 @@ tinySA_python/
     │       ├── __init__.py
     │       ├── core.py
     │       ├── _host.py
+    │       ├── _identify.py
+    │       ├── _log.py
     │       ├── py.typed
     │       └── _commands/
     │           ├── __init__.py
@@ -281,9 +298,16 @@ tinySA_python/
         ├── test_presets_config.py
         ├── test_system_info.py
         ├── test_parsing.py
+        ├── test_reader.py
+        ├── test_log.py
+        ├── test_identify.py
+        ├── test_firmware_compat.py
+        ├── test_batch2.py
         ├── test_hardware.py
         ├── test_captured_hardware.py
         ├── collect_samples.py
+        ├── probe_firmware_returns.py
+    ├── probe_firmware_returns.py
         └── fixtures/
             ├── __init__.py
             ├── device_responses.py
@@ -339,6 +363,15 @@ uv run ruff check .
 uv run mypy
 ```
 
+### Probing a device's firmware
+
+`tests/probe_firmware_returns.py` is a manual helper that asks a connected tinySA what its firmware accepts: it harvests every command's usage line, sends old and new argument forms, calls the library functions, and writes `probe_results.json` and `probe_results.md`. Nothing in the default run touches the RF output or writes to the device. Use it before and after a firmware update, or to report a board the library has not been verified on:
+```python
+uv run python tests/probe_firmware_returns.py --backup --capture --out probe_results/my_unit
+uv run python tests/probe_firmware_returns.py --help
+```
+`--backup` adds a read-only dump of calibration and configuration values, worth keeping before a firmware update (an update can reset stored configuration). `--generator` adds signal generator probes with the output kept muted.
+
 ### Capturing real device responses
 
 `tests/collect_samples.py` is a manual helper (not a pytest test) that connects to a real
@@ -385,6 +418,209 @@ Some error checking includes:
  * Frequencies can be specified using an integer optionally postfixed with a the letter 'k' for kilo 'M' for Mega or 'G' for Giga. E.g. 0.1M (100kHz), 500k (0.5MHz) or 12000000 (12MHz)
  * Levels are specified in dB(m) and can be specified using a floating point notation. E.g. 10 or 2.5
  * Time is specified in seconds optionally postfixed with the letters 'm' for milli or 'u' for micro. E.g. 1 (1 second), 2.5 (2.5 seconds), 120m (120 milliseconds)
+
+## Logging
+
+The library can write a log file of every command it handles: what was sent, what came back, and why a call was refused. Logging is off by default, and the library keeps nothing in memory. Each record is written and flushed to the file as it happens.
+
+```python
+from tsapython import tinySA
+
+tsa = tinySA()
+tsa.autoconnect()
+
+tsa.set_log_file("session.jsonl")              # level="commands" is the default
+# tsa.set_log_file("session.jsonl", level="data")
+
+tsa.rbw(30)
+tsa.calc("quasip")
+tsa.attenuate(40)                              # refused by the library; logged with the reason
+
+tsa.close_log_file()
+tsa.disconnect()
+```
+
+* `set_log_file(path, level="commands")` opens the file for appending and returns `True` if it could be opened. If a device is connected, it is asked for `version` and `info` so the log can name the board and firmware.
+* `close_log_file()` stops logging. `get_log_file()` returns the path of the open log, or `None`.
+
+**File format:** JSON Lines. One JSON object per line, UTF-8. Times are ISO 8601 in UTC with milliseconds.
+
+| Level | Reply text | Binary replies (`scanraw`, `capture`) |
+| --- | --- | --- |
+| `commands` | First 256 characters, with the full length recorded | Length only |
+| `data` | Complete | Complete, base64 in `reply_b64` |
+
+Every record has `t` (the time) and `type`:
+
+| `type` | When | Fields |
+| --- | --- | --- |
+| `session` | First record after `set_log_file()`, and again after each `connect()` | `log_format`, `library`, `python`, `platform`, `port`, `version_reply`, `info_first_line`, `family`, `board`, `build` |
+| `command` | Every library call that sends a command, or is refused before sending | `seq`, `function`, `sent`, `status`, `elapsed_ms`, `reply`, `reply_len`, `truncated`, `reply_b64` (level `data`, binary replies only), `reason` |
+| `event` | `connect`, `disconnect`, `log-closed` | `event`, `detail` |
+
+`status` is one of:
+
+| Value | Meaning |
+| --- | --- |
+| `ok` | The device replied normally |
+| `usage` | The device printed a usage line: it rejected the argument |
+| `unknown-command` | The device printed `name?`: this firmware does not have the command |
+| `device-refused` | The device printed a refusal, for example `usb disk mode active` |
+| `timeout` | No prompt from the device inside the time set with `set_serial_timeout()` |
+| `read-failed` | The serial read failed |
+| `blocked` | The library refused the call and sent nothing; `reason` says why |
+
+Example (level `commands`):
+
+```json
+{"t":"2026-10-09T19:22:04.118Z","type":"session","log_format":1,"library":"3.0.1","python":"3.12.4","platform":"Windows-11","port":"COM7","version_reply":"tinySA4_v1.4-143-g864bb27\r\nHW Version:V0.4.5.1.1","info_first_line":"tinySA ULTRA","family":"ultra","board":"ZS405","build":[1,4,143]}
+{"t":"2026-10-09T19:22:04.530Z","type":"command","seq":1,"function":"rbw","sent":"rbw 30","status":"ok","elapsed_ms":41,"reply":"","reply_len":0,"truncated":false,"reason":""}
+{"t":"2026-10-09T19:22:04.611Z","type":"command","seq":2,"function":"mode","sent":"mode high input","status":"usage","elapsed_ms":38,"reply":"usage: mode [low] input|output\r","reply_len":31,"truncated":false,"reason":"device rejected the argument"}
+{"t":"2026-10-09T19:22:04.650Z","type":"command","seq":3,"function":"attenuate","sent":"","status":"blocked","elapsed_ms":0,"reply":"","reply_len":0,"truncated":false,"reason":"ERROR: attenuate() takes vals [0 - 31]|\"auto\""}
+```
+
+The log is the way to find out why a call returned `b''` or `b'ERROR'`. In the example, `mode("high", "input")` still returns the device's usage text to the caller, as it always has; the log additionally records that the device rejected it.
+
+A bare command, or one with `?`, is a query. The device answers a query with a usage line that includes the current value, so those are logged as `ok`.
+
+### Serial read timeout
+
+By default the library waits for the device prompt for as long as it takes, because a scan with a narrow RBW or a long sweep time can legitimately run for minutes. To get control back from a device that has stopped answering:
+
+```python
+tsa.set_serial_timeout(30)      # seconds; None (the default) waits indefinitely
+```
+
+On a timeout the call returns `None`, which is the value a failed serial read already returned.
+
+
+## Firmware Compatibility
+
+The tinySA firmware has changed its serial commands over time, and the Basic and the Ultra family do not accept the same words. This section records what the library knows about those differences.
+
+Everything here was read from the [tinySA firmware source](https://github.com/erikkaashoek/tinySA) (v1.4-244, September 2026). It was checked on hardware on 2026-10-17 against one device: a tinySA Ultra ZS405 running `tinySA4_v1.4-143`. Every firmware behaviour the probe script could test matched the source reading (36 of 36). The Basic and the Ultra+ boards are still from the source only.
+
+Firmware versions are a commit count after the `v1.4` tag, so `v1.4-143` is older than `v1.4-244`. The `version` command prints it, and the log file records it as `build`.
+
+### Supported Devices
+
+| Device | Firmware build | `version` reply | Status |
+| --- | --- | --- | --- |
+| tinySA Basic (ZS304) | `tinySA_...` | No `HW Version` line | From firmware source |
+| tinySA Ultra (ZS405) | `tinySA4_...` | `HW Version:V0.4.5.1` or `V0.4.5.1.1` | Verified on hardware, v1.4-143 |
+| tinySA Ultra+ (ZS406) | `tinySA4_...` | `HW Version:V0.4.6` | From firmware source |
+| tinySA Ultra+ (ZS407) | `tinySA4_...` | `HW Version:V0.5.4` (`V0.5.2`, `V0.5.3`, `V0.5.3.2` on older firmware) | From firmware source |
+
+The three Ultra boards run the same firmware and accept the same commands. Only values differ:
+
+| | Ultra (ZS405) | Ultra+ (ZS406) | Ultra+ (ZS407) |
+| --- | --- | --- | --- |
+| `if` range | 975M to 979M | 1067M to 1073M | 1067M to 1073M |
+| Top of the normal range (ultra mode off) | 800 MHz | 900 MHz | 900 MHz |
+| Top of the range with ultra mode on, before harmonic mode | about 5.33 GHz | about 5.42 GHz | about 7.37 GHz |
+
+### Firmware Changes That Affect This Library
+
+**Changes made before the library existed.** The library's command words originally followed the tinySA wiki, which describes older firmware than any Ultra shipped with.
+
+| The library sent | Firmware accepted it until | What replaced it | The library now |
+| --- | --- | --- | --- |
+| `modulation AM_1kHz\|AM_10Hz\|NFM\|WFM` | Nov 2020 | `am\|nfm\|wfm\|extern` (Basic); `am\|fm\|freq\|depth\|deviation` (Ultra family, Aug 2022) | Accepts the current words; translates the old ones |
+| `calc quasip` | May 2022 | `quasi` | Sends `quasi` for either word |
+| `trace ... clear` | Jul 2021 | `copy\|freeze\|subtract\|view\|value` | `trace_clear()` is deprecated |
+| `mode high ...` on the Ultra | Oct 2022 at the latest | `mode [low] input\|output` | Unchanged: still sent, and rejected by an Ultra |
+| `levelchange` limited to ±70, `if` limited to 433M to 435M | Sep 2022 (Ultra) | ±90; a range per board | Accepts ±90 and all three `if` ranges |
+
+**Changes since v1.4-143 (January 2024).**
+
+| Build | Date | Change | Devices | The library |
+| --- | --- | --- | --- | --- |
+| 166 | 2024-05-14 | `abort [off\|on]` added | All | `abort()` |
+| 176 | 2024-08-09 | `restart {seconds}` added | Ultra family | `restart()` |
+| 177 | 2024-08-12 | `scanraw` 4th argument becomes a bit field: 1 unbuffered, 2 repeat until interrupted. Before, any non-zero value meant unbuffered | All | `scan_raw()` reads one frame. Use `unbuf` 0 or 1 |
+| 178 | 2024-08-17 | Ultra+ ZS406 recognised | Ultra family | Identified in the log |
+| 183 | 2024-10-20 | `if` range 1067M to 1073M on the Ultra+ | Ultra+ | Accepted by `set_IF()` |
+| 188 | 2024-12-02 | ZS407 reports `V0.5.4` | Ultra+ | Identified in the log |
+| 190 | 2024-12-20 | Board name added to the first `info` line | Ultra family | Identified in the log |
+| 193 | 2025-01-08 | `leveloffset` names `shift4`, `direct_output`, `low_output` | Ultra family | Accepted by `level_offset()` |
+| 194 | 2025-01-22 | `avoid auto\|off\|on\|dump` added | Ultra family | Not wrapped yet; use `command()` |
+| 216 | 2025-11-05 | `waitscan [{scans}]` added | All | Not wrapped yet; use `command()` |
+| 222 | 2025-12-30 | A stuck command prints `Command timeout` after about 20 seconds | All | Logged as `device-refused` |
+| 223 | 2026-03-23 | `channel [1-3]` added | All | Not wrapped yet; use `command()` |
+| 228 | 2026-07-11 | `scan` refuses fewer than 2 points | All | Logged as `device-refused` |
+| 230 | 2026-07-14 | Number formatting fixed. Before, an exact power of ten printed with `:` as its leading digit (`-100.0` as `-:.000000e+01`) | All | See the note below |
+| 235 | 2026-08-12 | `trace dBV` unit added | All | Accepted by `trace_units()` |
+| 244 | 2026-09-26 | `usbdisk off\|on` added; other commands answer `usb disk mode active` while it is on | Ultra family | Not wrapped yet; logged as `device-refused` |
+
+**The `:` in scan data.** In firmware before v1.4-230, `:` in a number is the digit after `9`: it stands for a leading 10. `-:.000000e+01` is 10.000000e+01 with a minus sign, which is exactly -100.0. The scan examples in this README replace such values with a noise-floor number; the true value can be recovered by reading `:` as 10.
+
+**Finding out what a device accepts.** The device prints its own command list with `help`, and most commands print their accepted arguments when sent with `?`:
+
+```python
+print(tsa.tinySA_help())
+print(tsa.command("modulation ?"))
+```
+
+### Commands by Device Family
+
+| | Basic (ZS304) | Ultra family (ZS405, ZS406, ZS407) |
+| --- | --- | --- |
+| Ultra-only commands | Not present | `hop`, `lna`, `lna2`, `agc`, `if1`, `freq_corr`, `avoid`, `direct`, `ultra`, `nf`, `time`, `restart`, `usbdisk`, `k` (temperature) |
+| SD card commands (`sd_list`, `sd_read`, `sd_delete`) | Not present | Present |
+| `mode` | `low\|high input\|output` | `[low] input\|output` |
+| `modulation` | `off\|am\|nfm\|wfm\|extern\|freq` | `off\|am\|fm\|freq\|depth\|deviation` |
+| `output` | `on\|off` | adds `normal\|mixer` |
+| `level` range | -76 to -6 (low output), -38 to 13 (high output) | -76 to -6 |
+| `spur` | `off\|on` | adds `auto` |
+| `calc` | `off\|minh\|maxh\|maxd\|aver4\|aver16\|aver\|quasi` | adds `log\|lin` |
+| `levelchange` | ±70 | ±90 |
+| `rbw` upper limit | 600 kHz | 850 kHz |
+| `if` range | 433M to 435M | By board (see above) |
+| Points, markers, traces, screen | 290, 4, 3, 320x240 | 450, 8, 4, 480x320 |
+| `scanraw` offset | 128 | 174 |
+
+The library does not yet choose between these for you: it sends what you ask for, and a device that does not know a word answers with a usage line. Turn on a [log file](#logging) to see those rejections.
+
+
+## Change Summary
+
+### 3.1.0 (non-breaking)
+
+Calls that worked before behave the same. These are fixes for calls that failed or were ignored by the device, and additions. Verified on a tinySA Ultra ZS405 (firmware v1.4-143); other boards from firmware source.
+
+* **Fixed:** `hop()` with `outmask=3` raised an exception. `wait()` could not send the bare command. `attenuate(31)` and `color(31, ...)` were refused. `trace_freeze()` sent a command the firmware ignores. `capture()` could return a short image. `tsapython.__version__` reported `2.0.0`.
+* **Signal generator:** `modulation()` takes the words current firmware accepts, with new `modulation_freq()`, `modulation_depth()` and `modulation_deviation()`. `level()` and `level_change()` take decimals, and `level_change()` goes to ±90. `output()` takes `normal` and `mixer`.
+* **Wider arguments:** `rbw()` and `trigger_level()` take decimals; `calc()` takes `aver`, `quasi`, `log`, `lin`; `spur()` takes `auto`; `trace_units()` takes `dBV`; `set_IF()` takes the Ultra and Ultra+ ranges; `scan()` allows a zero span; `scan_raw()` allows `unbuf=0`.
+* **New:** the [log file](#logging), `set_serial_timeout()`, [getters](#reading-values-back-getters) for RBW, attenuation, sweep time, IF, DAC, noise figure, calc mode and sweep range, `decode_number()` for the `:` artifact, and the [Firmware Compatibility](#firmware-compatibility) tables.
+* **New commands:** `waitscan()`, `channel()`, `avoid()`, `usbdisk()`, `time()`, `correction_reset()`, `sweep_mode()`, `marker_mode()`, `marker_all_off()`, `marker_read()`, `resume(count)`, `sd_list(pattern)`.
+* **SD card:** `sd_read()` returns exactly the file's bytes (the 4-byte size prefix is consumed and a `>` byte no longer ends the read); `list_sd_files()`, `save_sd_file()` and `save_firmware_dump()` copy files, including a firmware backup, to the computer.
+* **Reader:** a reply is complete at the `ch> ` prompt, not at the first `>` byte, so text such as `usage: deviceid [<number>]` is no longer cut short.
+* **Tests:** `tests/probe_firmware_returns.py`, a manual probe that asks a connected device what its firmware accepts and writes a JSON/markdown report; seven hardware set-and-read-back tests.
+* **Examples:** raw command strings no longer use e-notation, which the firmware reads incorrectly (`150e6` is read as 150 Hz).
+
+### Planned for 4.0.0 (API changes)
+
+These change what existing code gets back, so they are held for a major version. None of them is in the library yet.
+
+* A command the device rejects returns the library's error value (`b''`, or `b'ERROR'` with `set_error_byte_return(True)`) in place of the device's usage text.
+* The generator output must be enabled with a library setting before `output("on")`, `set_output_on()` or `cal_output()` will send anything.
+* The library selects limits and command words for the connected device, and refuses a command the device does not have.
+* `scan_raw()` accepts `unbuf` 0 or 1 only; continuous scanning becomes its own call.
+* The oldest supported firmware becomes v1.4-182 (October 2024).
+
+
+## Deprecated Functions
+
+These functions name commands that no supported tinySA firmware accepts. They are still in the library and still callable, and their entries in the command list below are kept. They will be removed in a later major version.
+
+| Function | Firmware stopped accepting it | What it does now | Use instead |
+| --- | --- | --- | --- |
+| `set_mod_AM_1khz()` | Nov 2020 (`modulation AM_1kHz`) | Sends `modulation am`, then `modulation freq 1000` | `modulation("am")` and `modulation_freq(1000)` |
+| `set_mod_AM_10Hz()` | Nov 2020 (`modulation AM_10Hz`) | Sends `modulation am`, then `modulation freq 10` | `modulation("am")` and `modulation_freq(10)` |
+| `trace_clear()` | Jul 2021 (`trace ... clear`) | Sends `trace {n} clear`, which current firmware ignores | No replacement in current firmware |
+
+Three related names are not deprecated, because the Basic still has the feature: `set_mod_NFM()`, `set_mod_WFM()` and `set_calc_quasip()` now send the lower-case or renamed word that current firmware expects.
+
 
 ## Example Implementations
 
@@ -674,7 +910,7 @@ else:
  
  The `capture()` function can be used to capture the screen and output it to an image file. Note that the screen size varies by device. The library itself does not have a function for saving to an image (requires an additional library), but examples and the CLI wrapper have this functionality.
 
- This example truncates the last hex value, so a single padding `x00` value has been added. This will eventually be investigated, but it's not hurting the output right now.
+ `capture()` returns exactly `width * height * 2` bytes. Earlier versions of the library returned one byte too few (and could stop early at a pixel byte of `0x3E`), which is why this example checks the size and pads it. The check is harmless and has been left in.
 
 ```python
 
@@ -1811,7 +2047,9 @@ else: # if port found and connected, then complete task(s) and disconnect
     outmask = 1     # get measured data (y axis)
 
     # scan
-    data_bytes = tsa.command("scan 150e6 200e6 5 2")
+    # NOTE: raw command strings go to the device unchanged. The firmware reads
+    # '150M' or '150000000', but NOT '150e6' (that is read as 150 Hz).
+    data_bytes = tsa.command("scan 150M 200M 5 2")
 
     print(data_bytes)
 
@@ -1907,8 +2145,8 @@ Quick Link Table:
 
 ### **calc**
 * **Description:** Sets or cancels one of the measurement modes
-* **Original Usage:** `calc off|minh|maxh|maxd|aver4|aver16|quasip`
-* **Direct Library Function Call:** `calc(val="off"|"minh"|"maxh"|"maxd"|"aver4"|"aver16"|"quasip")`
+* **Original Usage:** `calc off|minh|maxh|maxd|aver4|aver16|aver|quasi` (Basic), plus `log|lin` on the Ultra family
+* **Direct Library Function Call:** `calc(val="off"|"minh"|"maxh"|"maxd"|"aver4"|"aver16"|"aver"|"quasi"|"log"|"lin")`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * `set_calc_off()`
@@ -1917,8 +2155,12 @@ Quick Link Table:
     * `set_calc_maxd()` 
     * `set_calc_aver4()` 
     * `set_calc_aver16()` 
-    * `set_calc_quasip()` 
+    * `set_calc_aver()` 
+    * `set_calc_quasi()` 
+    * `set_calc_quasip()` - older name, sends `calc quasi`
 * **Notes:** 
+  * The quasi peak keyword was `quasip` in tinySA firmware until May 2022 and is `quasi` since. `calc("quasip")` is still accepted and is sent as `quasi`.
+  * `log` and `lin` select logarithmic or linear averaging (Ultra family only).
   * the commands are the same as those listed in the MEASURE menu
   * [tinySA Calc Menu](#https://tinysa.org/wiki/pmwiki.php?n=Main.CALC):
     * OFF disables any calculation 
@@ -1956,6 +2198,8 @@ Quick Link Table:
 * **Alias Functions:**
     * `capture_screen()`
 * **Notes:** tinySA original: 320x240, tinySA Ultra and newer: 480x320  
+    * The image is read by length, and exactly `screenWidth * screenHeight * 2` bytes are returned. Earlier versions read up to the first `>` byte (0x3E), which could cut the image short when a pixel contained that value, and returned one byte too few.
+    * The library is set for a 480x320 screen by default. On a Basic the full 320x240 image is still returned, after a short pause, with a warning when verbose is on.
 
 
 ### **clearconfig**
@@ -2113,21 +2357,21 @@ Quick Link Table:
 ### **hop**
 * **Description:** Measures the input level at each of the indicated frequencies. This is a measurement over a range (ends inclusive), with a specified number of samples.
 * **Original Usage:** `hop {start(Hz)} {stop(Hz)} {step(Hz) | points}  [outmask]`
-* **Direct Library Function Call:** `hop(start=Int, stop=Int, inc=Int, use_pts=Bool)`
+* **Direct Library Function Call:** `hop(start=Int, stop=Int, inc=Int, outmask=None|1|2|3)`
 * **Example Return:** e
 * **Alias Functions:**
-    * `get_sample_pts(start=Int, stop=Int, inc=Int, use_pts=Bool)`
+    * `get_sample_pts(start=Int, stop=Int, pts=Int)`
 * **Notes:**  _Ultra only_. From [tinysa-org](https://tinysa-org.translate.goog/wiki/pmwiki.php?n=Main.USBInterface&_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en-US): if the 3rd parameter is below 450 it is assumed to be points, otherwise as step frequency Outmask selects if the frequency (1) or level (2) is output. 
 
 
 ### **if**
-* **Description:** Sets the intermediate frequency (IF) to automatic or a specific value, 433 Mhz to 435 MHz 
-* **Original Usage:** `if (0|433M..435M )`
-* **Direct Library Function Call:** `set_IF(val=Int|0|433M..435M|'auto')`
+* **Description:** Sets the intermediate frequency (IF) to automatic or a specific value. The range depends on the board.
+* **Original Usage:** `if (0|433M..435M )` (Basic), `if {975M..979M}` (Ultra ZS405), `if {1067M..1073M}` (Ultra+ ZS406, ZS407)
+* **Direct Library Function Call:** `set_IF(val=0|'auto'|Int in one of the three ranges, in Hz)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * None
-* **Notes:**  Val input of 0 is 'auto'. Added explicit 'auto' to match other library funcs.
+* **Notes:**  Val input of 0 is 'auto'. Added explicit 'auto' to match other library funcs. The library accepts a value in any of the three ranges; the device rejects one that is outside the range of its own board.
 
 ### **if1**
 * **Description:** Sets the intermediate frequency (IF) to automatic or a specific value, 975 Mhz to 979 MHz 
@@ -2149,17 +2393,17 @@ Quick Link Table:
 
 ### **level**
 * **Description:** Sets the output level
-* **Original Usage:** `level -76..13`
-* **Direct Library Function Call:** `level(val=Int|-76...13)`
+* **Original Usage:** `level -76..-6` (low output mode), `level -38..13` (high output mode, Basic only)
+* **Direct Library Function Call:** `level(val=Int|Float, -76...13)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * `set_level()`
-* **Notes:** Not all values in the range are available.  Might be device dependent. 
+* **Notes:** Decimals are allowed (`level(-30.5)`). The device clamps a value outside the range of its current output mode to the nearest limit; it does not reject it. After entering output mode the level is at the top of the range, so set the level before switching the output on.
 
 ### **levelchange**
 * **Description:** Sets the output level delta for low output mode level sweep
-* **Original Usage:** `levelchange -70..+70`
-* **Direct Library Function Call:** `level_change(val=Int|-70...70)`
+* **Original Usage:** `levelchange -70..+70` (Basic), `levelchange -90..+90` (Ultra family)
+* **Direct Library Function Call:** `level_change(val=Int|Float, -90...90)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * `set_level_change()`
@@ -2240,15 +2484,14 @@ Quick Link Table:
 ### **marker**
 * **Description:** sets or dumps marker info
 * **Original Usage:**  `marker {id} on|off|peak|{freq}|{index}`
-* **Direct Library Function Call:** `marker(ID=Int|0..4, val="on"|"off"|"peak")`
+* **Direct Library Function Call:** `marker(ID=Int|1..8, val="on"|"off"|"peak"|freq|index)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * `marker_on(ID=Int|1..4)`
-    * `marker_off(ID=Int|1..4)`
-    * `marker_peak(ID=Int|1..4)`
-    * `marker_freq(ID=Int|1..4)`
-    * `marker_index(ID=Int|1..4)`
-* **Notes:**   where id=1..4 index=0..num_points-1
+    * `marker_on(ID)`, `marker_off(ID)`, `marker_peak(ID)`, `marker_freq(ID, Hz)`, `marker_index(ID, index)`
+    * `marker_mode(ID, mode, val)` - `mode` is `"delta"` (val: reference marker number or `"off"`), `"noise"`, `"tracking"`, `"trace_aver"` (val: `"on"`|`"off"`) or `"trace"` (val: trace number)
+    * `marker_all_off()` - sends `marker off`
+    * `marker_read(ID=None)` - dumps `{id} {index} {frequency} {value}` for every enabled marker, or one
+* **Notes:**   where id=1..4 on the Basic, 1..8 on the Ultra family; index=0..num_points-1
 Marker levels will use the selected unit Marker peak will activate the marker (if not done already), position the marker on the strongest signal and display the marker info The frequency must be within the selected sweep range mode. Alias functions need error checking. 
 
 
@@ -2265,40 +2508,48 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 
 ### **mode**
 * **Description:** Sets the mode of the tinySA
-* **Original Usage:** `mode low|high input|output`
+* **Original Usage:** `mode low|high input|output` (Basic), `mode [low] input|output` (Ultra family)
 * **Direct Library Function Call:** `mode(val1="low"|"high", val2="input"|"output")`
 * **Example Return:** empty bytearray
 * **Alias Functions:** Currently no error checking.
     * `set_low_input_mode()`
     * `set_low_output_mode()`
-    * `set_high_input_mode()`
-    * `set_high_output_mode()`
+    * `set_high_input_mode()` - Basic only
+    * `set_high_output_mode()` - Basic only
 * **Notes:**  [tinySA Wiki MODE](https://tinysa.org/wiki/pmwiki.php?n=Main.MODE)
     * LOW INPUT activates the 0.1-350MHz input mode
     * HIGH INPUT activates the 240MHz-960MHz input mode
     * LOW OUTPUT activates the 0.1-350MHz output mode
     * HIGH OUTPUT activates the 240MHz-960MHz output mode 
+    * The Ultra family has no high mode. `mode high ...` is answered there with a usage line and the mode does not change.
+    * The device switches the output off whenever the mode actually changes.
 
 
 ### **modulation**
 * **Description:** Set the modulation in output mode
-* **Original Usage:** `modulation off|AM_1kHz|AM_10Hz|NFM|WFM|extern`
-* **Direct Library Function Call:** `modulation(val=off|AM_1kHz|AM_10Hz|NFM|WFM|extern)`
+* **Original Usage:** `modulation off|am|fm|freq|depth|deviation` (Ultra family), `modulation off|am|nfm|wfm|extern|freq` (Basic)
+* **Direct Library Function Call:** `modulation(val="off"|"am"|"fm"|"nfm"|"wfm"|"extern")`
 * **Example Return:** empty bytearray
+* **Related Functions:**
+    * `modulation_freq(val=1..10000)` - modulation rate in Hz
+    * `modulation_depth(val=0..100)` - AM depth in percent, Ultra family only
+    * `modulation_deviation(val=100..300000)` - FM deviation in Hz, Ultra family only
 * **Alias Functions:**
     * `set_mod_off()`
-    * `set_mod_AM_1khz()`
-    * `set_mod_AM_10Hz()`
-    * `set_mod_NFM()`
-    * `set_mod_WFM()`
-    * `set_mod_extern()`
+    * `set_mod_AM()`
+    * `set_mod_FM()` - Ultra family only
+    * `set_mod_NFM()` - Basic only
+    * `set_mod_WFM()` - Basic only
+    * `set_mod_extern()` - Basic only
+    * `set_mod_AM_1khz()`, `set_mod_AM_10Hz()` - see [Deprecated Functions](#deprecated-functions)
 * **Notes:** 
-    * OFF -  Turns modulation off. NO modulation 
-    * AM_1kHz - Set AM modulation 1 kHz
-    * AM_10Hz - Set AM modulation 10 Hz
-    * NFM - Narrow FM. sets narrow FM modulation. Width is about 3kHz. 
-    * WFM - wide FM modulation. 
-    * extern - disables the internal LO driving the mixer and enables the high input as mixer LO input. Minimum external LO input frequency is 5MHz. 
+    * off - Turns modulation off. NO modulation 
+    * am - AM modulation. Set the rate with `modulation_freq()` and, on the Ultra family, the depth with `modulation_depth()`
+    * fm - FM modulation (Ultra family). Set the rate with `modulation_freq()` and the deviation with `modulation_deviation()`
+    * nfm - Narrow FM (Basic). Width is about 3kHz. 
+    * wfm - wide FM modulation (Basic). 
+    * extern - (Basic) disables the internal LO driving the mixer and enables the high input as mixer LO input. Minimum external LO input frequency is 5MHz. 
+    * The keywords `AM_1kHz`, `AM_10Hz`, `NFM` and `WFM` belong to tinySA firmware up to November 2020. Current firmware matches keywords case-sensitively and rejects them. The library still accepts them and sends the current equivalent: `AM_1kHz` becomes `modulation am` then `modulation freq 1000`; `NFM` becomes `modulation nfm`.
     * [https://tinysa.org/wiki/pmwiki.php?n=Main.MODULATION](https://tinysa.org/wiki/pmwiki.php?n=Main.MODULATION)
 
 
@@ -2317,14 +2568,16 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 
 
 ### **output**
-* **Description:** Sets the output mode on or off
-* **Original Usage:** `output on|off`
-* **Direct Library Function Call:** `output(val="off"|"on")`
+* **Description:** Sets the output on or off. On the Ultra family it also selects the output path.
+* **Original Usage:** `output on|off` (Basic), `output on|off|normal|mixer` (Ultra family)
+* **Direct Library Function Call:** `output(val="off"|"on"|"normal"|"mixer")`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * `set_output_on()`
     * `set_output_off()`
-* **Notes:** 
+    * `set_output_path_normal()` - Ultra family only
+    * `set_output_path_mixer()` - Ultra family only
+* **Notes:** `normal` and `mixer` choose the output path and do not switch the output on or off. The device cannot report whether its output is on.
 
 
 ### **pause**
@@ -2340,7 +2593,7 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 ### **rbw**
 * **Description:** sets the rbw to either automatic or a specific value
 * **Original Usage:** `rbw auto|3..600` or `rbw 0.2..850|auto`
-* **Direct Library Function Call:** `rbw(val="auto"|Int)`
+* **Direct Library Function Call:** `rbw(val="auto"|Int|Float)`
 * **Example Return:**  empty bytearray
 * **Alias Functions:**
     * `set_rbw_auto()`
@@ -2349,6 +2602,8 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * Frequencies listed in tinySA Basic documentation: 3 kHz, 10 kHz, 30 kHz, 100 kHz, 300 kHz, 600 kHz. [https://tinysa.org/wiki/pmwiki.php?n=Main.RBW](https://tinysa.org/wiki/pmwiki.php?n=Main.RBW)
 * Frequencies listed in the tinySA Ultra documentation: auto, 200Hz, 1kHz 3 kHz, 10 kHz, 30 kHz, 100 kHz, 300 kHz, 600 kHz 850 kHz. [https://tinysa.org/wiki/pmwiki.php?n=TinySA4.RBW](https://tinysa.org/wiki/pmwiki.php?n=TinySA4.RBW)
 * If you set a value not in the list, the tinySA (NOT this library) will default to the next highest value. 
+* Decimals are allowed: `rbw(0.3)` asks for 300 Hz.
+* `rbw()` with no argument sets `auto`. It does not read the current value.
 
 
 ### **recall**
@@ -2429,8 +2684,8 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 
 ### **resume**
 * **Description:** Resumes the sweeping in either input or output mode
-* **Original Usage:** `resume`
-* **Direct Library Function Call:** `resume()`
+* **Original Usage:** `resume [{count}]`
+* **Direct Library Function Call:** `resume(count=None|Int)` - with a count the device sweeps that many times, then pauses
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * None
@@ -2474,22 +2729,26 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Notes:**  
     * `[points]` is the number of points in the scan. The MAX points is device dependent. Basic is 290, Ultra is 450 .
     * `[outmask]`  1=frequencies, 2=measured data, 4=stored data. 3 not in documentation, but appears to blend 1 and 2.
-    * Documentation says outmask is "a binary OR of.", but there doesn't appear to be any binary math involved. 
+    * The outmask is a bit field: 1=frequencies, 2=measured data, 4=stored data, 8=temporary data. 3 is 1 and 2 together.
+    * `start` may equal `stop` (a zero-span scan).
+    * The example args above were captured with `2e6` typed as the stop frequency. The firmware does not read e-notation, so the device scanned 0 Hz to 2 Hz, which is why the returned frequencies are 0, 1, 1, 2, 2. Use `2000000` or `2M` in raw command strings.
+    * tinySA firmware before v1.4-230 (July 2026) prints a value that is an exact power of ten with `:` as its leading digit, for example `-:.000000e+01` for exactly -100.0. See [Firmware Compatibility](#firmware-compatibility).
 
 ### **scanraw**
 * **Description:** Performs a scan of unlimited amount of points and sends the data in binary form
 * **Original Usage:** `scanraw {start(Hz)} {stop(Hz)} [points][option]` or `scanraw {start(Hz)} {stop(Hz)} [points] [unbuffered]` depending on the source
-* **Direct Library Function Call:** `scan_raw(start=Int|Float, stop=Int|Float, pts=Int|Float, unbuf=1)`
+* **Direct Library Function Call:** `scan_raw(start=Int|Float, stop=Int|Float, pts=Int|Float, unbuf=0|1)`
 * **Example Return:** 
     * Raw, unprocessed return for 15 pts: `b'scanraw 150000000 200000000 15 2\r\n{x"\nx3\nx4\nx\x15\nx6\nx\x07\nx)\nxj\nx\xfb\txm\nx]\nxO\nxp\nx\xb2\x0bx3\x0c}ch>'`
-    * Example arg: `scanraw 150e6 200e6 5 1`
+    * Example arg: `scanraw 150M 200M 5 1`
     * Results: `bytearray(b'{xS\nxd\nx\x98\nx]\nx\x02\x0c')`
-    * Example arg: `scanraw 150e6 200e6 2`
+    * Example arg: `scanraw 150M 200M 2`
     * Results: `bytearray(b'{xs\nxu\nx\x8a\nx^\nx\xf2\x0b')`
 * **Alias Functions:**
     *  None, but see`plotting_scanraw.py` example
 * **Notes:** 
     * **WARNING: the screen will not match the data output during this function. That is expected.** 
+    * `unbuf`: 0 = buffered, 1 = unbuffered (each point is sent as it is measured). From tinySA firmware v1.4-177 (August 2024) the argument is a bit field, and 2 or 3 make the device repeat the sweep until it is interrupted. `scan_raw()` reads one frame, so use 0 or 1. 2 and 3 are still accepted for now because earlier versions accepted them.
     * "The measured data is the level in dBm and is send as '{' ('x' MSB LSB)*points '}'. To get the dBm level from the 16 bit data, divide by 32 and subtract 128 for the tinySA and 174 for the tinySA Ultra. The option, when present, can be either 0,1,2 or 3 being the sum of 1=unbuffered and 2=continuous." - [https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface](https://tinysa.org/wiki/pmwiki.php?n=Main.USBInterface) 
 
   
@@ -2506,23 +2765,26 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 
 ### **sd_list**
 * **Description:** Displays list of filenames with extension and sizes
-* **Original Usage:** `sd_list`
-* **Direct Library Function Call:** `sd_list()`
+* **Original Usage:** `sd_list [{pattern}]`
+* **Direct Library Function Call:** `sd_list(pattern=None|Str)` e.g. `sd_list("*.bin")`
 * **Example Return:** format example: `-0.bmp 307322`
 * **Alias Functions:**
-    * None
-* **Notes:** 
+    * `list_sd_files(pattern=None)` - the same, parsed into `[(filename, size_bytes), ...]`
+* **Notes:** Ultra family only. A missing card returns `err: (3) no card` (an empty list from `list_sd_files()`).
   
 ### **sd_read**
 * **Description:** Reads a specific file on the sd card
 * **Original Usage:** `sd_read {filename}`
 * **Direct Library Function Call:** `sd_read(val=Str)`
 * **Example Return:**  
-    * `bytearray(b'z\xb0\x04\x00BMz\xb0\x04\x00\x00\x00\x00\x00z\x00\x00\x00l\x00......x10\x84\x10')`
+    * The file's bytes, exactly as stored on the card: `bytearray(b'BMz\xb0\x04\x00\x00\x00......')`
     * If file does not exist on SD card, then `bytearray(b'err: (4) no file\r')` will be returned. 
 * **Alias Functions:**
-    * None
-* **Notes:** The error return message is built into the device, but has not been exhaustively tested with this library. 
+    * `save_sd_file(filename, path)` - copies one file from the card to the computer; returns the byte count, or -1
+    * `save_firmware_dump(path, filename=None)` - see the note below
+* **Notes:** 
+    * The device sends a 4-byte little-endian file size, then the file. `sd_read()` reads exactly that many bytes and returns only the file; in earlier versions the size prefix was returned as part of the data and the read could stop early at a `>` byte.
+    * **Firmware backup.** The Ultra family can write its own firmware to the SD card: on the device, CONFIG > MORE > EXPERT CONFIG > DUMP FIRMWARE writes a `.bin` of the whole flash (262144 bytes). There is no serial command for the dump itself. `save_firmware_dump("backup.bin")` then copies the largest `.bin` on the card to the computer, and warns if the size is not a full flash image. Flashing that image back is done with the normal DFU procedure from the tinySA wiki, not with this library.
 
 ### **selftest**
 * **Description:** performs one or all selftests. 
@@ -2541,12 +2803,13 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 
 ### **spur**
 * **Description:** Enables or disables spur reduction
-* **Original Usage:** `spur on|off`
-* **Direct Library Function Call:** `spur(val="off"|"on")`
+* **Original Usage:** `spur on|off` (Basic), `spur off|on|auto` (Ultra family)
+* **Direct Library Function Call:** `spur(val="off"|"on"|"auto")`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * `spur_on()`
     * `spur_off()`
+    * `spur_auto()` - Ultra family only
 * **Notes:** 
  
 
@@ -2574,6 +2837,8 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
     * `set_sweep_span(val=Int|Float)`
     * `set_sweep_cw(val=Int|Float)`
     * `run_sweep(start=FREQ, stop=FREQ, pts=INT)`
+    * `sweep_mode(val="normal"|"precise"|"fast"|"noise"|"go"|"abort")`
+    * `get_sweep_range()` - `(start_hz, stop_hz, points)` parsed from the bare `sweep` reply
 * **Notes:**  sweep without arguments lists the current sweep settings, the frequencies specified should be within the permissible range. The sweep commands apply both to input and output modes. MAX PTS is device dependent; 290 for tinySA Basic and 450 for tinySA Ultra and newer
 * `sweep start {integer}`: sets the start frequency of the sweep.
 * `sweep stop {integer}`: sets the stop frequency of the sweep.
@@ -2656,12 +2921,15 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Direct Library Function Call:**
     * `trace_toggle(ID=Int|0..2..4, val="on"|"off")`
     * `trace_select(ID=Int|0..2..4)`
-    * `trace_units(ID=Int, val="dBm"|"dBmV"|"dBuV"|"RAW"|"V"|"Vpp"|"W")`
+    * `trace_units(ID=Int, val="dBm"|"dBmV"|"dBuV"|"RAW"|"V"|"Vpp"|"W"|"dBV")` - `dBV` needs tinySA firmware v1.4-235 or later; older firmware ignores it without an error
     * `trace_scale(val="auto"|Int|Float)`
     * `trace_reflevel(val="auto"|Int|Float)`
     * `trace_value(ID=Int)`
     * `trace_subtract(ID1=Int, ID2=Int)`
     * `trace_copy(ID1=Int, ID2=Int)`    
+    * `trace_freeze(ID=Int, val="on"|"off")` and `trace_unfreeze(ID=Int)` - the device needs the `on`/`off` word; `trace 2 freeze` alone is ignored by the firmware
+    * `trace_action(ID=Int, val="copy"|"freeze"|"subtract"|"view"|"value", arg=None|trace#|"on"|"off")`
+    * `trace_clear(val)` - see [Deprecated Functions](#deprecated-functions)
 * **Example Return:** 
      * empty bytearray  `b''`
      * `trace_select(1)`: 
@@ -2679,7 +2947,7 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 ### **trigger**
 * **Description:** sets the trigger type or level
 * **Original Usage:** `trigger auto|normal|single|{level(dBm)}` or `trigger {value}\r\ntrigger {auto|normal|single}\r`
-* **Direct Library Function Call:** `trigger(val="auto"|"normal"|"single"|None, freq=None|Int)`
+* **Direct Library Function Call:** `trigger(val="auto"|"normal"|"single"|None, freq=None|Int|Float)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * `trigger_auto()`
@@ -2749,11 +3017,11 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 ### **wait**
 * **Description:** wait for a single sweep to finish and pauses sweep or waits for specified number of seconds
 * **Original Usage:** `wait [{seconds}]`
-* **Direct Library Function Call:**
+* **Direct Library Function Call:** `wait(val=None|Int)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
     * None
-* **Notes:** Without an argument, this puts device in the WAIT state and it needs to manually RESUME
+* **Notes:** Without an argument, this puts device in the WAIT state and it needs to manually RESUME. `wait()` now sends the bare command; in earlier versions the default argument was rejected and `wait(None)` was needed.
 
 ### **zero**
 * **Description:** get or set the zero offset in dBm
@@ -2761,7 +3029,8 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Direct Library Function Call:** `zero(val=None|Int)`
 * **Example Return:** empty bytearray
 * **Alias Functions:**
-    * `get_zero_offset()`
+    * `get_zero_offset()` - the raw reply
+    * `get_scanraw_offset()` - the value as an integer: 174 on the Ultra family, 128 on the Basic. This is the offset to subtract when decoding `scanraw` data
 * **Notes:** If unfamiliar with device and operation, DO NOT CHANGE THIS VALUE.
 
 
@@ -2772,6 +3041,44 @@ commands: freq time dac nf saveconfig clearconfig zero sweep pause resume wait r
 Other commands: version reset data frequencies scan hop scanraw test touchcal touchtest usart capture refresh touch release vbat help info selftest sd_list sd_read sd_delete threads
 
 ```
+
+
+## Reading Values Back (getters)
+
+The firmware has no dedicated "get" commands, but most setters print their current value when sent with `?`. These helpers send that query and parse the value. They return `None` when the device gave no value (for example an older firmware that lacks the command).
+
+| Function | Returns | Device query |
+| --- | --- | --- |
+| `get_rbw()` | kHz, e.g. `10.0`, `0.3` | `rbw ?` |
+| `get_attenuation()` | dB | `attenuate ?` |
+| `get_sweep_time()` | seconds | `sweeptime ?` |
+| `get_IF()` | Hz | `if ?` |
+| `get_scanraw_offset()` | 174 or 128 | `zero ?` |
+| `get_noise_figure()` | dB | `nf ?` |
+| `get_dac_value()` | 0..4095 | `dac ?` |
+| `get_calc()` | `OFF`, `MINH`, `MAXH`, `MAXD`, `AVER4`, `A16`, `AVER`, `QUASI`... | `calc ?` |
+| `get_sweep_range()` | `(start_hz, stop_hz, points)` | `sweep` |
+
+Note that `rbw()` and `attenuate()` with no argument still **set** `auto`, as they always have.
+
+`tinySA.decode_number(text)` parses one number from a device reply, including the `:` artifact of firmware before v1.4-230 (`-:.000000e+01` is exactly `-100.0`).
+
+### Commands added in 3.1.0
+
+These wrap commands that exist only in newer firmware. On older firmware the device answers `name?`, which comes back as the reply text (and as `unknown-command` in the [log](#logging)).
+
+| Function | Device command | Needs firmware |
+| --- | --- | --- |
+| `waitscan(count=1)` | `waitscan {count}` | v1.4-216 |
+| `channel(val=None\|1..3)` | `channel [1-3]` | v1.4-223 |
+| `avoid(val="auto"\|"off"\|"on"\|"dump")` | `avoid ...` | v1.4-194, Ultra family |
+| `usbdisk(val=None\|"on"\|"off")` | `usbdisk ...` | v1.4-244, Ultra family. While on, most other commands answer `usb disk mode active` |
+| `time(field=None, val=None)` | `time` / `time y\|m\|d\|h\|min\|sec {0-99}` | Ultra family |
+| `correction_reset(table)` | `correction {table} reset` | any |
+| `sweep_mode(val)` | `sweep normal\|precise\|fast\|noise\|go\|abort` | any |
+| `marker_mode(ID, mode, val)`, `marker_all_off()`, `marker_read(ID=None)` | `marker ...` | any |
+| `resume(count)` | `resume {count}` | any |
+| `sd_list(pattern)`, `list_sd_files()`, `save_sd_file()`, `save_firmware_dump()` | `sd_list`, `sd_read` | Ultra family |
 
 
 ## List of Commands Removed from Library
@@ -2797,7 +3104,8 @@ Other commands: version reset data frequencies scan hop scanraw test touchcal to
     * return: `b'tinySA4_v1.4-143-g864bb27\r\nHW Version:V0.4.5.1.1 \r'`
     * example: `command("trace 1")`
     * return: `b'1: dBm 0.000000000 10.000000000 \r'`    
-    * example: `command("scan 150e6 200e6 5 2")`
+    * example: `command("scan 150M 200M 5 2")`
+    * The string is sent unchanged. The firmware accepts `150000000`, `150M`, `0.15G` or `150000k`, but not e-notation: `150e6` is read as 150 Hz.
     * return: `b'5.750000e+00 0.000000000 \r\n6.250000e+00 0.000000000 \r\n6.750000e+00 0.000000000 \r\n6.250000e+00 0.000000000 \r\n6.750000e+00 0.000000000 \r'`        
 * **Example Return:** command dependent
 * **Alias Functions:**

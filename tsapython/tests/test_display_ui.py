@@ -42,10 +42,15 @@ def test_color_set_valid(tsa):
     assert tsa._recorder.last == "color 5 0xFF8800\r\n"
 
 
+def test_color_set_last_palette_entry(tsa):
+    tsa.set_color(31, "0xFF8800")
+    assert tsa._recorder.last == "color 31 0xFF8800\r\n"
+
+
 @pytest.mark.parametrize("ID,rgb", [
     (5, "FF8800"),       # bad rgb (no 0x)
     (5, "0xFF88"),       # bad rgb (too short)
-    (31, "0xFF8800"),    # ID out of range (arange(0,31) excludes 31)
+    (32, "0xFF8800"),    # ID out of range (the firmware palette is 0..31)
     (-1, "0xFF8800"),    # ID out of range
 ])
 def test_color_set_invalid(tsa, ID, rgb):

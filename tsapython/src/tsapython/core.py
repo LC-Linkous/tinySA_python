@@ -18,10 +18,16 @@
 #   Author(s): Lauren Linkous
 ##--------------------------------------------------------------------------------------------------\
 
+import platform
 import serial
 import serial.tools.list_ports # COM search method wants full path
 import re
+import sys
 import time
+
+from ._identify import (
+    classify_reply, identify_device, STATUS_BLOCKED, STATUS_TIMEOUT)
+from ._log import JsonlLog, LOG_FORMAT, LOG_LEVELS
 
 
 from ._commands.acquisition import AcquisitionMixin
@@ -50,6 +56,20 @@ class tinySA(
         # message feedback
         self.verboseEnabled = False
         self.returnErrorByte = False
+
+        # serial read timeout in seconds. None keeps the historic behaviour:
+        # wait for the device prompt for as long as it takes (a slow sweep can
+        # take minutes). See set_serial_timeout().
+        self.serialTimeout: float | None = None
+
+        # optional log file (see set_log_file). None = logging off.
+        self._log: JsonlLog | None = None
+        # Used ONLY while a log file is open: the text of the ERROR message(s) a
+        # function printed just before returning its error value, so the log
+        # record can say why. Cleared as soon as that record is written.
+        self._log_reason = ""
+        self._serial_busy = False      # True while tinySA_serial() is running
+        self._serial_timed_out = False # set by the read helpers, read by tinySA_serial()
 
 
         # VARS BELOW HERE will be largely replaced with device class config calls
@@ -88,6 +108,9 @@ class tinySA(
         return self.verboseEnabled
 
     def print_message(self, msg: object) -> None:
+        if (self._log is not None) and str(msg).startswith("ERROR"):
+            # keep the reason for the log record that follows (logging only)
+            self._log_reason = (self._log_reason + " | " + str(msg)) if self._log_reason else str(msg)
         if self.verboseEnabled == True:
             print(msg)
 
@@ -105,10 +128,123 @@ class tinySA(
         return self.returnErrorByte
 
     def error_byte_return(self) -> bytearray:
+        if (self._log is not None) and (not self._serial_busy):
+            # a library-side check refused the call before anything was sent
+            reason, self._log_reason = self._log_reason, ""
+            self._log.write_command(sys._getframe(1).f_code.co_name, "", STATUS_BLOCKED,
+                                    0, b"", False, reason)
         if self.returnErrorByte == True:
             return bytearray(b'ERROR')
         else:
             return bytearray(b'') # the default
+
+######################################################################
+# Serial read timeout
+# set_serial_timeout()  - seconds to wait for the device prompt, or None
+# get_serial_timeout()  - the current setting
+#
+# DEFAULT IS None: wait indefinitely, exactly as earlier versions did.
+# A scan with a narrow RBW or a long sweep time can legitimately take
+# minutes, so any fixed default would break working scripts. Set a value
+# when you would rather get control back from a device that has stopped
+# answering. On timeout the call returns None (the same value a failed
+# serial read already returned) and, if a log file is open, a record with
+# status 'timeout' is written.
+######################################################################
+
+    def set_serial_timeout(self, seconds: float | None = None) -> None:
+        if (seconds is not None) and (float(seconds) <= 0):
+            self.print_message("ERROR: set_serial_timeout() takes a positive number of seconds, or None")
+            return
+        self.serialTimeout = None if seconds is None else float(seconds)
+
+    def get_serial_timeout(self) -> float | None:
+        return self.serialTimeout
+
+######################################################################
+# Log file (optional, off by default)
+# set_log_file()    - start appending records to a JSON Lines file
+# close_log_file()  - stop logging and close the file
+# get_log_file()    - path of the open log file, or None
+#
+# The library keeps nothing in memory: each record is written and flushed
+# as it happens. See the README section "Logging" for the record format.
+#   level="commands" : every call, reply text limited to 256 characters,
+#                      binary replies recorded by length only
+#   level="data"     : complete replies; binary replies as base64
+######################################################################
+
+    def set_log_file(self, path: str, level: str = "commands") -> bool:
+        # returns True if the log file was opened
+        if level not in LOG_LEVELS:
+            self.print_message("ERROR: set_log_file() level must be one of " + str(LOG_LEVELS))
+            return False
+        self.close_log_file()
+        try:
+            self._log = JsonlLog(path, level)
+        except OSError as err:
+            self.print_message("ERROR: cannot open log file at " + str(path))
+            self.print_message(err)
+            self._log = None
+            return False
+        self._log_reason = ""
+        self._log_session()
+        return True
+
+    def close_log_file(self) -> None:
+        if self._log is not None:
+            self._log.write("event", {"event": "log-closed", "detail": ""})
+            self._log.close()
+            self._log = None
+        self._log_reason = ""
+
+    def get_log_file(self) -> str | None:
+        return self._log.path if self._log is not None else None
+
+    def _log_session(self) -> None:
+        # Writes the 'session' record: what library, what port, what device.
+        # If a port is open, the device is asked for 'version' and 'info' so
+        # the record can name the board and firmware. Those two reads are not
+        # logged as commands, and use a short timeout so a silent or foreign
+        # device cannot hang the call.
+        log = self._log
+        if log is None:
+            return
+        version_reply = ""
+        info_reply = ""
+        port = ""
+        if self.ser is not None:
+            port = str(getattr(self.ser, "port", ""))
+            saved_timeout = self.serialTimeout
+            self._log = None            # do not log the identification reads
+            self.serialTimeout = 3.0 if saved_timeout is None else saved_timeout
+            try:
+                reply = self.tinySA_serial('version\r\n', printBool=False)
+                version_reply = bytes(reply).decode("utf-8", errors="replace").strip() if reply else ""
+                reply = self.tinySA_serial('info\r\n', printBool=False)
+                info_reply = bytes(reply).decode("utf-8", errors="replace").strip() if reply else ""
+            except Exception as err:    # logging must never break the caller
+                self.print_message("WARNING: could not identify the device for the log: " + str(err))
+            finally:
+                self._log = log
+                self.serialTimeout = saved_timeout
+        device = identify_device(version_reply, info_reply)
+        try:
+            from . import __version__ as library_version
+        except Exception:
+            library_version = "unknown"
+        log.write("session", {
+            "log_format": LOG_FORMAT,
+            "library": library_version,
+            "python": platform.python_version(),
+            "platform": platform.platform(),
+            "port": port,
+            "version_reply": version_reply,
+            "info_first_line": info_reply.split("\r\n")[0] if info_reply else "",
+            "family": device["family"],
+            "board": device["board"],
+            "build": device["build"],
+        })
 
 ######################################################################
 # Set Device Params
@@ -241,6 +377,9 @@ class tinySA(
 
         try:
             self.ser = serial.Serial(port=port, timeout=timeout)
+            if self._log is not None:
+                self._log.write("event", {"event": "connect", "detail": str(port)})
+                self._log_session()
             return True
         except Exception as err:
             self.print_message("ERROR: cannot open port at " + str(port))
@@ -259,6 +398,8 @@ class tinySA(
     def disconnect(self) -> None:
         # closes the serial port
         self._require_serial().close()
+        if self._log is not None:
+            self._log.write("event", {"event": "disconnect", "detail": ""})
 
     def tinySA_serial(self, writebyte: str, printBool: bool = False, pts: int | None = None) -> bytearray | None:
         # write out to serial, get message back, clean up, return
@@ -269,21 +410,49 @@ class tinySA(
         # clear OUTPUT buffer
         ser.reset_output_buffer()
 
-
-        ser.write(bytes(writebyte, 'utf-8'))
+        started = time.monotonic()
+        self._serial_busy = True
+        self._serial_timed_out = False
+        binary = False
         msgbytes: bytearray | None
-        if pts is None:
-            # text commands: read to the 'ch>' prompt, then clean
-            raw = self.get_serial_return()
-            # a None here means the serial read itself failed; pass that through
-            # rather than crashing in clean_return
-            msgbytes = self.clean_return(raw) if raw is not None else None
-        else:
-            # binary commands (scanraw): read by EXPECTED LENGTH, not by a
-            # terminator byte. Any byte value (incl. '}' 0x7d and '>' 0x3e) can
-            # occur inside the 16-bit sample data, so terminator scanning
-            # truncates the frame. See get_binary_return().
-            msgbytes = self.get_binary_return(pts)
+        try:
+            ser.write(bytes(writebyte, 'utf-8'))
+            if pts is not None:
+                # binary commands (scanraw): read by EXPECTED LENGTH, not by a
+                # terminator byte. Any byte value (incl. '}' 0x7d and '>' 0x3e) can
+                # occur inside the 16-bit sample data, so terminator scanning
+                # truncates the frame. See get_binary_return().
+                binary = True
+                msgbytes = self.get_binary_return(pts)
+            elif writebyte.strip().startswith('sd_read '):
+                # SD card file: 4-byte little-endian length, then the bytes. Binary.
+                binary = True
+                msgbytes = self.get_sd_read_return()
+            elif writebyte.strip() == 'capture':
+                # the screen dump is binary too: pixel bytes can be 0x3e ('>'),
+                # so it is read by length. See get_capture_return().
+                binary = True
+                msgbytes = self.get_capture_return()
+            else:
+                # text commands: read to the 'ch>' prompt, then clean
+                raw = self.get_serial_return()
+                # a None here means the serial read itself failed; pass that through
+                # rather than crashing in clean_return
+                msgbytes = self.clean_return(raw) if raw is not None else None
+        finally:
+            self._serial_busy = False
+
+        if self._log is not None:
+            if self._serial_timed_out:
+                status, reason = STATUS_TIMEOUT, "no prompt from the device within the timeout"
+            elif binary:
+                status, reason = classify_reply("", msgbytes)   # binary data is never 'usage'
+            else:
+                status, reason = classify_reply(writebyte, msgbytes)
+            self._log_reason = ""
+            self._log.write_command(sys._getframe(1).f_code.co_name, writebyte, status,
+                                    int((time.monotonic() - started) * 1000),
+                                    msgbytes, binary, reason)
 
         if printBool == True:
             print(msgbytes) #overrides verbose for debug
@@ -296,15 +465,23 @@ class tinySA(
 
         ser = self._require_serial()
         buffer = bytes()
+        start_time = time.monotonic()
         while True:
             if ser.in_waiting > 0:
                 buffer += ser.read(ser.in_waiting)
                 try:
-                    # split the stream to take a chunk at a time
-                    # get up to '>' of the prompt
-                    complete = buffer[:buffer.index(b'>')+1]
-                    # leave the rest in buffer
-                    buffer = buffer[buffer.index(b'ch>')+1:]
+                    # The reply ends with the prompt 'ch> '. Earlier versions
+                    # stopped at the FIRST '>' byte, which cut short any reply
+                    # whose text contained one (e.g. 'usage: deviceid [<number>]').
+                    # The trailing space may arrive in a later USB packet, so
+                    # either ending counts as complete; a stray space is
+                    # discarded by reset_input_buffer() before the next command.
+                    if buffer.endswith(b'ch> '):
+                        complete = buffer[:-1]       # keep 'ch>' for clean_return
+                    elif buffer.endswith(b'ch>'):
+                        complete = buffer
+                    else:
+                        raise ValueError
                 except ValueError:
                     # this is an acceptable err, so can skip it and keep looping
                     continue
@@ -314,8 +491,71 @@ class tinySA(
                     self.print_message(err)
                     return None
                 break
+            elif (self.serialTimeout is not None) and ((time.monotonic() - start_time) > self.serialTimeout):
+                # only reachable when the user has set a timeout; the default waits forever
+                self._serial_timed_out = True
+                self.print_message("WARNING: no prompt from the device after %.1f s (have %d bytes)"
+                                   % (self.serialTimeout, len(buffer)))
+                return None
+            else:
+                # nothing waiting: yield instead of spinning a CPU core
+                time.sleep(0.001)
 
         return bytearray(complete)
+
+    def get_capture_return(self, idle_timeout: float = 0.5, timeout: float = 30.0) -> bytearray | None:
+        # Reads the reply to 'capture': the echoed command line, then
+        # screenWidth * screenHeight * 2 bytes of RGB565 pixel data, then the
+        # 'ch> ' prompt with no line break in between.
+        #
+        # WHY THIS EXISTS (separate from get_serial_return):
+        # get_serial_return stops at the first '>' (0x3e). Pixel data can
+        # contain that byte, which cut the image short, and clean_return()
+        # then removed 4 bytes for a 3-byte 'ch>', losing one more pixel byte
+        # (the README example used to pad it back).
+        #
+        # TWO WAYS A FRAME ENDS:
+        #   * Expected size: the pixel data is exactly screenWidth*screenHeight*2
+        #     bytes and is followed by the prompt. Returned immediately.
+        #   * Other size (screenWidth/screenHeight not set for this model, e.g.
+        #     a Basic with the Ultra defaults): the stream ends with the prompt
+        #     and then stays idle. Returned after idle_timeout.
+        #
+        # Returns ONLY the pixel bytes. None if nothing usable arrived.
+
+        ser = self._require_serial()
+        prompt = b'ch> '
+        expected = self.screenWidth * self.screenHeight * 2
+        limit = self.serialTimeout if self.serialTimeout is not None else timeout
+        buffer = bytes()
+        start_time = time.monotonic()
+        last_data_time = start_time
+
+        while True:
+            if ser.in_waiting > 0:
+                buffer += ser.read(ser.in_waiting)
+                last_data_time = time.monotonic()
+                echo_end = buffer.find(b'\r\n')
+                if echo_end != -1:
+                    payload = buffer[echo_end + 2:]
+                    if payload[expected:expected + len(prompt)] == prompt:
+                        return bytearray(payload[:expected])
+            else:
+                now = time.monotonic()
+                echo_end = buffer.find(b'\r\n')
+                if (echo_end != -1) and buffer.endswith(prompt) and ((now - last_data_time) > idle_timeout):
+                    payload = buffer[echo_end + 2:-len(prompt)]
+                    self.print_message(
+                        "WARNING: capture returned %d bytes, expected %d for a %dx%d screen. "
+                        "Check the screen size set for this device."
+                        % (len(payload), expected, self.screenWidth, self.screenHeight))
+                    return bytearray(payload)
+                if (now - start_time) > limit:
+                    self._serial_timed_out = True
+                    self.print_message("WARNING: capture read timed out (have %d bytes, expected %d)"
+                                       % (len(buffer), expected))
+                    return None
+                time.sleep(0.001)
 
     def get_binary_return(self, pts: int | None = None, timeout: float = 10.0, idle_timeout: float = 1.0) -> bytearray:
         # Reads a binary scanraw-style frame from the serial port.
@@ -425,6 +665,39 @@ class tinySA(
                 self.print_message("ERROR: streaming frame start '{' not found")
                 return self.error_byte_return()
             return bytearray(buffer[start:])
+    def get_sd_read_return(self, timeout: float = 60.0) -> bytearray | None:
+        # Reads the reply to 'sd_read {filename}'. The firmware sends the echoed
+        # command line, then a 4-byte little-endian file size, then exactly that
+        # many bytes, then the 'ch> ' prompt. A missing file or missing card is
+        # reported as text instead ('err: (4) no file') and has no length prefix.
+        #
+        # Returns ONLY the file bytes, or the error text as bytes, or None on timeout.
+        ser = self._require_serial()
+        limit = self.serialTimeout if self.serialTimeout is not None else timeout
+        buffer = bytes()
+        start_time = time.monotonic()
+        while True:
+            if ser.in_waiting > 0:
+                buffer += ser.read(ser.in_waiting)
+                echo_end = buffer.find(b'\r\n')
+                if echo_end == -1:
+                    continue
+                payload = buffer[echo_end + 2:]
+                if payload.startswith(b'err:'):
+                    if payload.endswith(b'ch> '):
+                        return bytearray(payload[:-4].rstrip(b'\r\n'))
+                    continue
+                if len(payload) >= 4:
+                    size = int.from_bytes(payload[:4], 'little')
+                    if len(payload) >= 4 + size:
+                        return bytearray(payload[4:4 + size])
+            elif (time.monotonic() - start_time) > limit:
+                self._serial_timed_out = True
+                self.print_message("WARNING: sd_read timed out (have %d bytes)" % len(buffer))
+                return None
+            else:
+                time.sleep(0.001)
+
     def clean_return(self, data: bytearray) -> bytearray:
         # takes in a bytearray and removes 1) the text up to the first '\r\n' (includes the command), an 2) the ending 'ch>'
         # Find the first occurrence of \r\n (carriage return + newline)
@@ -460,6 +733,122 @@ class tinySA(
 
 
         pass
+
+######################################################################
+# Readback (getters)
+#   The firmware has no dedicated "get" commands, but most setters print
+#   their current value when sent with no argument or with '?', e.g.
+#       rbw ?        ->  usage: rbw 0.2..850|auto\r\n10kHz
+#       attenuate ?  ->  usage: attenuate 0..31|auto\r\n   0
+#   These helpers send that query form and parse the value line. They
+#   return None when the device gave no value (unknown command, no reply).
+######################################################################
+
+    def _query_value(self, command: str) -> str | None:
+        # send a query and return the LAST non-usage line of the reply as text
+        reply = self.tinySA_serial(command + '\r\n', printBool=False)
+        if not reply:
+            return None
+        lines = [ln.strip() for ln in bytes(reply).decode("utf-8", errors="replace").splitlines()]
+        lines = [ln for ln in lines if ln and not ln.startswith("usage:") and not ln.endswith("?")]
+        return lines[-1] if lines else None
+
+    def get_rbw(self) -> float | None:
+        # current resolution bandwidth in kHz, e.g. 10.0 for '10kHz', 0.3 for '300Hz'
+        text = self._query_value('rbw ?')
+        if text is None:
+            return None
+        value = text.replace('Hz', '').strip()
+        if value.endswith('k'):
+            return float(value[:-1])
+        if value.endswith('M'):
+            return float(value[:-1]) * 1000.0
+        return float(value) / 1000.0
+
+    def get_attenuation(self) -> float | None:
+        # current internal attenuation in dB
+        text = self._query_value('attenuate ?')
+        return None if text is None else float(text)
+
+    def get_sweep_time(self) -> float | None:
+        # current sweep time in seconds, e.g. 0.462 for '462ms'
+        text = self._query_value('sweeptime ?')
+        if text is None:
+            return None
+        value = text.strip()
+        if value.endswith('ms'):
+            return float(value[:-2]) / 1000.0
+        if value.endswith('us'):
+            return float(value[:-2]) / 1e6
+        return float(value.rstrip('s'))
+
+    def get_IF(self) -> float | None:
+        # current intermediate frequency in Hz, e.g. 977400000.0 for '977.400000MHz'
+        text = self._query_value('if ?')
+        if text is None:
+            return None
+        value = text.strip()
+        if value.endswith('MHz'):
+            return float(value[:-3]) * 1e6
+        if value.endswith('kHz'):
+            return float(value[:-3]) * 1e3
+        return float(value.replace('Hz', ''))
+
+    def get_scanraw_offset(self) -> int | None:
+        # the scanraw level offset as a number: 174 on the Ultra family, 128 on the Basic
+        # (get_zero_offset() is the older alias that returns the raw reply)
+        text = self._query_value('zero ?')
+        return None if text is None else int(text.replace('dBm', '').strip())
+
+    def get_noise_figure(self) -> float | None:
+        # configured noise figure in dB (Ultra family)
+        text = self._query_value('nf ?')
+        return None if text is None else float(text)
+
+    def get_dac_value(self) -> int | None:
+        # current DAC value, 0..4095
+        text = self._query_value('dac ?')
+        if text is None:
+            return None
+        return int(text.split(':')[-1].strip())
+
+    def get_calc(self) -> str | None:
+        # current calc mode as the device prints it: OFF, MINH, MAXH, MAXD, AVER4, A16, AVER, QUASI...
+        return self._query_value('calc ?')
+
+    def get_sweep_range(self) -> tuple[int, int, int] | None:
+        # (start_hz, stop_hz, points) from the bare 'sweep' command
+        reply = self.tinySA_serial('sweep\r\n', printBool=False)
+        if not reply:
+            return None
+        parts = bytes(reply).decode("utf-8", errors="replace").split()
+        if len(parts) < 3:
+            return None
+        return int(parts[0]), int(parts[1]), int(parts[2])
+
+    @staticmethod
+    def decode_number(text: str | bytes) -> float:
+        # Parse one number from a device reply, including the ':' artifact.
+        #
+        # tinySA firmware before v1.4-230 (July 2026) printed an exact power of
+        # ten in scientific notation with ':' as the leading digit, because ':'
+        # is the character after '9' and the mantissa was not normalised below
+        # 10. So '-:.000000e+01' means -10.000000e+01, which is exactly -100.0.
+        # The value is recoverable, and this does that; the examples in the
+        # README used to replace it with a noise-floor number instead.
+        if isinstance(text, (bytes, bytearray)):
+            text = bytes(text).decode("utf-8", errors="replace")
+        text = text.strip()
+        if ':' in text:
+            mantissa, _, exponent = text.partition('e')
+            sign = -1.0 if mantissa.startswith('-') else 1.0
+            digits = mantissa.lstrip('+-')
+            if digits.startswith(':'):
+                digits = '10' + digits[1:]
+            else:
+                digits = digits.replace(':', '')
+            return sign * float(digits) * (10.0 ** int(exponent)) if exponent else sign * float(digits)
+        return float(text)
 
     def is_rgb24(self, hexStr: str) -> bool:
         # check if the string matches the pattern 0xRRGGBB

@@ -86,20 +86,67 @@ def test_mode_aliases(tsa, method, expected):
     assert tsa._recorder.last == expected
 
 
-# --- modulation: builds an 'output ...' command (bug) but is reachable ----
+# --- modulation ------------------------------------------------------------
+# Current firmware keywords: off|am|fm (Ultra family), off|am|nfm|wfm|extern
+# (Basic). The pre-2020 keywords AM_1kHz, AM_10Hz, NFM, WFM are still accepted
+# by the library and translated, because current firmware rejects them.
+
+@pytest.mark.parametrize("method,expected", [
+    ("set_mod_off", ["modulation off\r\n"]),
+    ("set_mod_AM", ["modulation am\r\n"]),
+    ("set_mod_FM", ["modulation fm\r\n"]),
+    ("set_mod_AM_1khz", ["modulation am\r\n", "modulation freq 1000\r\n"]),   # deprecated alias
+    ("set_mod_AM_10Hz", ["modulation am\r\n", "modulation freq 10\r\n"]),     # deprecated alias
+    ("set_mod_NFM", ["modulation nfm\r\n"]),
+    ("set_mod_WFM", ["modulation wfm\r\n"]),
+    ("set_mod_extern", ["modulation extern\r\n"]),
+])
+def test_modulation_aliases(tsa, method, expected):
+    getattr(tsa, method)()
+    assert tsa._recorder.calls == expected
+
+
+@pytest.mark.parametrize("val", ["am", "fm", "nfm", "wfm", "extern", "off"])
+def test_modulation_current_keywords(tsa, val):
+    tsa.modulation(val)
+    assert tsa._recorder.calls == [f"modulation {val}\r\n"]
+
+
+@pytest.mark.parametrize("method,val,expected", [
+    ("modulation_freq", 1000, "modulation freq 1000\r\n"),
+    ("modulation_freq", 400.0, "modulation freq 400\r\n"),
+    ("modulation_depth", 50, "modulation depth 50\r\n"),
+    ("modulation_deviation", 3000, "modulation deviation 3000\r\n"),
+])
+def test_modulation_parameters(tsa, method, val, expected):
+    getattr(tsa, method)(val)
+    assert tsa._recorder.last == expected
+
 
 @pytest.mark.parametrize("method,val", [
-    ("set_mod_off", "off"),
-    ("set_mod_AM_1khz", "AM_1kHz"),
-    ("set_mod_AM_10Hz", "AM_10Hz"),
-    ("set_mod_NFM", "NFM"),
-    ("set_mod_WFM", "WFM"),
-    ("set_mod_extern", "extern"),
+    ("modulation_freq", 0),
+    ("modulation_freq", 10001),
+    ("modulation_freq", "1k"),
+    ("modulation_depth", 101),
+    ("modulation_depth", -1),
+    ("modulation_deviation", 50),
+    ("modulation_deviation", 300001),
+    ("modulation_deviation", True),
 ])
-def test_modulation_aliases(tsa, method, val):
-    # FIXED: modulation() now sends the 'modulation ...' command.
+def test_modulation_parameters_invalid(tsa, method, val):
+    getattr(tsa, method)(val)
+    assert tsa._recorder.count == 0
+
+
+# --- output path (Ultra family): normal|mixer ------------------------------
+
+@pytest.mark.parametrize("method,expected", [
+    ("set_output_path_normal", "output normal\r\n"),
+    ("set_output_path_mixer", "output mixer\r\n"),
+])
+def test_output_path(tsa, method, expected):
     getattr(tsa, method)()
-    assert tsa._recorder.last == f"modulation {val}\r\n"
+    assert tsa._recorder.last == expected
 
 
 def test_modulation_invalid(tsa):

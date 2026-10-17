@@ -68,15 +68,21 @@ class AcquisitionMixin(MixinHost):
     def hop(self, start: int, stop: int, inc: int, outmask: int | None = None) -> bytearray | None:
         # this is a measurement, maybe a sample measurement. format looks like hop freqval integer
         # usage: hop {start(Hz)} {stop(Hz)} {step(Hz) | points} [outmask]
-        # outmask: 1 is frequency, 2 is level
+        # outmask: 1 is frequency, 2 is level, 3 is both (3 is the firmware default)
+        # Ultra family only: the Basic firmware has no hop command.
         # example return: ''
 
         if (isinstance(start, (int, float))) and (isinstance(stop, (int, float))) and (isinstance(inc, (int, float))):
-            if (isinstance(outmask, int)) and (0<outmask<3):
+            if (isinstance(outmask, int)) and (not isinstance(outmask, bool)) and (1 <= outmask <= 3):
                 writebyte = 'hop ' + str(start) + ' ' + str(stop)  + ' ' + str(inc) + ' ' + str(outmask) + '\r\n'
 
             elif outmask ==None:
                 writebyte = 'hop ' + str(start) + ' ' + str(stop) + ' ' + str(inc) + '\r\n'
+
+            else:
+                # any other outmask used to raise UnboundLocalError here
+                self.print_message("ERROR: hop() takes outmask=None|1|2|3")
+                return self.error_byte_return()
 
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("sampling over frequency range")
@@ -101,12 +107,18 @@ class AcquisitionMixin(MixinHost):
         self.print_message("pausing tinySA device")
         return msgbytes
 
-    def resume(self) -> bytearray | None:
+    def resume(self, count: int | None = None) -> bytearray | None:
         # resumes the sweeping in either input or output mode
-        # usage: resume
+        # usage: resume [{count}]   with a count, sweeps that many times then pauses
         # example return: ''
 
-        writebyte = 'resume\r\n'
+        if count is None:
+            writebyte = 'resume\r\n'
+        elif isinstance(count, int) and not isinstance(count, bool) and count >= 1:
+            writebyte = 'resume ' + str(count) + '\r\n'
+        else:
+            self.print_message("ERROR: resume() takes None or a positive integer count")
+            return self.error_byte_return()
         msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("resuming sweep")
         return msgbytes
@@ -117,8 +129,9 @@ class AcquisitionMixin(MixinHost):
             # where the outmask is a binary OR of:
             # 1=frequencies, 2=measured data,
             # 4=stored data and max points is device dependent
+            # start == stop is allowed: the firmware treats it as a zero-span scan
 
-        if (0<=start) and (start < stop) and (pts <= self.maxPoints):
+        if (0<=start) and (start <= stop) and (pts <= self.maxPoints):
             if outmask == None:
                 writebyte = 'scan '+str(start)+' '+str(stop)+' '+str(pts)+'\r\n'
             else:
@@ -138,9 +151,16 @@ class AcquisitionMixin(MixinHost):
             #  '{' ('x' MSB LSB)*points '}'
             #  where the 16 bit data is scaled by 32 & shifted based on device.
             # the README has examples for processing
+            #
+            # unbuf: 0 = buffered, 1 = unbuffered (sent point by point).
+            # FIRMWARE NOTE: from tinySA firmware v1.4-177 (Aug 2024) this argument
+            # is a bit field, and 2 or 3 mean "repeat the sweep until interrupted".
+            # This function reads ONE frame, so on that firmware 2 and 3 leave the
+            # device still sending. They are still accepted here because they
+            # were before; prefer 0 or 1.
 
-        if (0<=start) and (start < stop) and (pts <= self.maxPoints):
-            if (unbuf == 1) or (unbuf==2) or (unbuf==3):
+        if (0<=start) and (start <= stop) and (pts <= self.maxPoints):
+            if unbuf in (0, 1, 2, 3):
                 writebyte = 'scanraw '+str(start)+' '+str(stop)+' '+str(pts)+ ' '+str(unbuf)+'\r\n'
 
                 # write out to serial, get message back, clean up, return
@@ -183,7 +203,7 @@ class AcquisitionMixin(MixinHost):
         if not ((0 <= start) and (start < stop) and (pts <= self.maxPoints)):
             self.print_message("ERROR: continuous_scanraw takes START STOP PTS UNBUF; check limits")
             return
-        if unbuf not in (1, 2, 3):
+        if unbuf not in (0, 1, 2, 3):
             self.print_message("ERROR: unrecognized UNBUF for continuous_scanraw")
             return
 
@@ -235,6 +255,18 @@ class AcquisitionMixin(MixinHost):
             self.print_message("ERROR: " + str(argName) + " invalid argument for sweep")
             msgbytes = self.error_byte_return()
 
+        return msgbytes
+
+    def sweep_mode(self, val: str) -> bytearray | None:
+        # sweep speed/precision and manual sweep control
+        # usage: sweep normal|precise|fast|noise|go|abort
+        accepted = ["normal", "precise", "fast", "noise", "go", "abort"]
+        if str(val) in accepted:
+            writebyte = 'sweep ' + str(val) + '\r\n'
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
+        else:
+            self.print_message("ERROR: sweep_mode() takes normal|precise|fast|noise|go|abort")
+            msgbytes = self.error_byte_return()
         return msgbytes
 
     def get_sweep_params(self) -> bytearray | None:
@@ -313,7 +345,8 @@ class AcquisitionMixin(MixinHost):
             writebyte = 'trigger ' + str(val) +'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("setting trigger to " + str(val))
-        elif val==None and isinstance(freq,int):
+        elif val==None and isinstance(freq, (int, float)) and not isinstance(freq, bool):
+            # the level is a float in the firmware (e.g. -52.5)
             writebyte = 'trigger ' + str(freq) +'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("setting trigger level (dBm) to " + str(freq))

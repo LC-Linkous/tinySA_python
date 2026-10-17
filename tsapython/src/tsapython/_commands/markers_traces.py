@@ -72,6 +72,39 @@ class MarkersTracesMixin(MixinHost):
             msgbytes = self.error_byte_return()
         return msgbytes
 
+    def marker_mode(self, ID: int, mode: str, val: int | str | None = None) -> bytearray | None:
+        # marker options beyond on|off|peak:
+        #   marker {id} delta {ref_id}|off   marker {id} noise on|off
+        #   marker {id} tracking on|off      marker {id} trace {trace#}
+        #   marker {id} trace_aver on|off
+        accepted = {"delta": None, "noise": ("on", "off"), "tracking": ("on", "off"),
+                    "trace": None, "trace_aver": ("on", "off")}
+        if mode not in accepted or not isinstance(ID, int) or ID < 1:
+            self.print_message("ERROR: marker_mode() takes ID >= 1 and mode delta|noise|tracking|trace|trace_aver")
+            return self.error_byte_return()
+        words = accepted[mode]
+        if words is not None and str(val) not in words:
+            self.print_message("ERROR: marker_mode(" + mode + ") takes 'on' or 'off'")
+            return self.error_byte_return()
+        if mode in ("delta", "trace") and not (isinstance(val, int) or str(val) == "off"):
+            self.print_message("ERROR: marker_mode(" + mode + ") takes a number" + (" or 'off'" if mode == "delta" else ""))
+            return self.error_byte_return()
+        writebyte = 'marker ' + str(ID) + ' ' + mode + ' ' + str(val) + '\r\n'
+        return self.tinySA_serial(writebyte, printBool=False)
+
+    def marker_all_off(self) -> bytearray | None:
+        # usage: marker off   (disables every marker)
+        return self.tinySA_serial('marker off\r\n', printBool=False)
+
+    def marker_read(self, ID: int | None = None) -> bytearray | None:
+        # usage: marker [{id}]  -> '{id} {index} {frequency} {value}' per enabled marker
+        if ID is None:
+            return self.tinySA_serial('marker\r\n', printBool=False)
+        if isinstance(ID, int) and ID >= 1:
+            return self.tinySA_serial('marker ' + str(ID) + '\r\n', printBool=False)
+        self.print_message("ERROR: marker_read() takes None or ID >= 1")
+        return self.error_byte_return()
+
     def marker_on(self, ID: int) -> bytearray | None:
         # alias for marker()
         return self.marker(ID, "on")
@@ -106,15 +139,17 @@ class MarkersTracesMixin(MixinHost):
 
     def trace_units(self, ID: int, val: int | float | str) -> bytearray | None:
         # split call for TRACE. set the units for a trace.
-        # device form: trace {trace#} {dBm|dBmV|dBuV|RAW|V|Vpp|W}  (1-indexed)
-        accepted_vals =  ["dBm", "dBmV", "dBuV", "V", "W", "Vpp", "RAW"]
+        # device form: trace {trace#} {dBm|dBmV|dBuV|RAW|V|Vpp|W|dBV}  (1-indexed)
+        # dBV exists from tinySA firmware v1.4-235 (Aug 2026); older firmware
+        # ignores it without an error.
+        accepted_vals =  ["dBm", "dBmV", "dBuV", "V", "W", "Vpp", "RAW", "dBV"]
 
         if (isinstance(ID, int)) and (ID >= 1) and (str(val) in accepted_vals):
             writebyte = 'trace '+ str(ID) + ' ' + str(val) +'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("setting trace " + str(ID) + " units to " + str(val))
         else:
-            self.print_message("ERROR: trace_units() takes ID >= 1 and units 'dBm'|'dBmV'|'dBuV'|'RAW'|'V'|'Vpp'|'W'")
+            self.print_message("ERROR: trace_units() takes ID >= 1 and units 'dBm'|'dBmV'|'dBuV'|'RAW'|'V'|'Vpp'|'W'|'dBV'")
             msgbytes = self.error_byte_return()
         return msgbytes
 
@@ -196,26 +231,31 @@ class MarkersTracesMixin(MixinHost):
 
         return msgbytes
 
-    def trace_freeze(self, ID: int) -> bytearray | None:
-        # split call for TRACE. sets the reference level of a trace
-        # full description: displays all or one trace information
-        # or sets trace related information
-        # usage:
-        # trace [ {0..2} |
-        # dBm|dBmV|dBuV|V|W |store|clear|subtract | (scale|
-        # reflevel) auto|{level}
+    def trace_freeze(self, ID: int, val: str = "on") -> bytearray | None:
+        # split call for TRACE. freezes (val="on", the default) or releases
+        # (val="off") a trace.
+        # device form: trace {trace#} freeze on|off  (1-indexed)
+        # The firmware needs the on|off word: 'trace 2 freeze' alone is parsed
+        # and then ignored, which is what this function used to send.
         # example return:
-        if (isinstance(ID,int)) and (ID >= 1):
-            # device form: trace {trace#} freeze  (1-indexed)
-            writebyte = 'trace ' + str(ID) + ' freeze\r\n'
+        if (isinstance(ID,int)) and (ID >= 1) and (str(val) in ["on", "off"]):
+            writebyte = 'trace ' + str(ID) + ' freeze ' + str(val) + '\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
-            self.print_message("freezing trace")
+            self.print_message("trace " + str(ID) + " freeze " + str(val))
         else:
-            self.print_message("ERROR: trace_freeze() takes ID >= 1")
+            self.print_message("ERROR: trace_freeze() takes ID >= 1 and val='on'|'off'")
             msgbytes = self.error_byte_return()
         return msgbytes
 
+    def trace_unfreeze(self, ID: int) -> bytearray | None:
+        # alias for trace_freeze()
+        return self.trace_freeze(ID, "off")
+
     def trace_clear(self, val: int | float | str) -> bytearray | None:
+        # DEPRECATED: the 'clear' keyword left the tinySA firmware in Jul 2021
+        # ('store|clear|subtract' became 'copy|freeze|subtract|view|value').
+        # Current firmware parses this command and ignores it. Still callable;
+        # there is no replacement in current firmware.
         # split call for TRACE. clears a trace/traces. doesnt seem to take inputs
         # full description: displays all or one trace information
         # or sets trace related information
@@ -230,7 +270,7 @@ class MarkersTracesMixin(MixinHost):
         self.print_message("clearing trace(s)")
         return msgbytes
 
-    def trace_action(self, ID: int, val: int | float | str) -> bytearray | None:
+    def trace_action(self, ID: int, val: int | float | str, arg: int | float | str | None = None) -> bytearray | None:
         # split call for TRACE. toggle trace ON or OFF
         # full description: displays all or one trace information
         # or sets trace related information
@@ -241,10 +281,17 @@ class MarkersTracesMixin(MixinHost):
         # example return:
 
         accepted_vals = ["copy","freeze","subtract","view","value"]
+        # arg: the word that follows the action on the device:
+        #   copy {trace#} | subtract {trace#} | freeze on|off | view on|off
+        # Only 'value' works without it; the firmware ignores the other four
+        # when the word is missing. arg=None keeps the older two-word form.
 
         if (isinstance(ID,int)) and (ID >= 1) and (str(val) in accepted_vals):
             # device form: trace {trace#} {action} ...  (1-indexed)
-            writebyte = 'trace ' + str(ID) + ' ' +str(val)+ '\r\n'
+            if arg is None:
+                writebyte = 'trace ' + str(ID) + ' ' +str(val)+ '\r\n'
+            else:
+                writebyte = 'trace ' + str(ID) + ' ' +str(val)+ ' ' + str(arg) + '\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("setting trace action")
         else:

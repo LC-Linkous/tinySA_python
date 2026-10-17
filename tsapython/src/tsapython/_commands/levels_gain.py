@@ -43,7 +43,7 @@ class LevelsGainMixin(MixinHost):
         # example return: bytearray(b'')
 
         #explicitly allowed vals
-        accepted_vals =  np.arange(0, 31, 1) # max exclusive
+        accepted_vals =  np.arange(0, 32, 1) # max exclusive, so 0..31
         #check input
         if (str(val) == "auto") or (val in accepted_vals):
             writebyte = 'attenuate '+str(val)+'\r\n'
@@ -62,14 +62,21 @@ class LevelsGainMixin(MixinHost):
         # sets or cancels one of the measurement modes
         # the commands are the same as those listed
         # in the MEASURE menu
-        # usage: calc off|minh|maxh|maxd|aver4|aver16|quasip
+        # usage: calc off|minh|maxh|maxd|aver4|aver16|aver|quasi|log|lin
+        #   log|lin (logarithmic or linear averaging) are Ultra family only
+        # FIRMWARE NOTE: the quasi peak keyword was 'quasip' until tinySA
+        # firmware of May 2022 and is 'quasi' since. 'quasip' is still accepted
+        # here and is sent as 'quasi'.
         # example return:
 
         #explicitly allowed vals
         accepted_vals =  ["off", "minh", "maxh", "maxd",
-                          "aver4", "aver16", "quasip"]
+                          "aver4", "aver16", "aver", "quasi", "quasip",
+                          "log", "lin"]
         #check input
         if (str(val) in accepted_vals):
+            if str(val) == "quasip":
+                val = "quasi"
             writebyte = 'calc '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("calc() set with " + str(val))
@@ -96,7 +103,14 @@ class LevelsGainMixin(MixinHost):
     def set_calc_aver16(self) -> bytearray | None:
         return self.calc("aver16")
 
+    def set_calc_aver(self) -> bytearray | None:
+        return self.calc("aver")
+
+    def set_calc_quasi(self) -> bytearray | None:
+        return self.calc("quasi")
+
     def set_calc_quasip(self) -> bytearray | None:
+        # older name for set_calc_quasi(); sends 'calc quasi'
         return self.calc("quasip")
 
     def ext_gain(self, val: int | float | str) -> bytearray | None:
@@ -121,13 +135,15 @@ class LevelsGainMixin(MixinHost):
 
     def level(self, val: int | float | str) -> bytearray | None:
         # sets the output level. Not all values in the range are available
-        # usage: level -76..13
+        # usage: level -76..13   (decimals allowed, e.g. -30.5)
+        # The range the DEVICE uses depends on the model and output mode:
+        #   low output mode: -76..-6     high output mode (Basic only): -38..13
+        # A value outside the range of the current mode is CLAMPED by the
+        # device to the nearest limit; it is not rejected.
         # example return: b''
 
-        # explicitly allowed vals
-        accepted_vals =  np.arange(-76, 14, 1) # max exclusive
         #check input
-        if val in accepted_vals:
+        if isinstance(val, (int, float)) and (not isinstance(val, bool)) and (-76 <= val <= 13):
             writebyte = 'level '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("level() set to " + str(val))
@@ -143,18 +159,17 @@ class LevelsGainMixin(MixinHost):
 
     def level_change(self, val: int | float | str) -> bytearray | None:
         # sets the output level delta for low output mode level sweep
-        # usage: levelchange -70..+70
+        # usage: levelchange -90..+90 (Ultra family), -70..+70 (Basic)
+        # decimals allowed
         # example return: ''
 
-        #explicitly allowed vals
-        accepted_vals =  np.arange(-70, 71, 1) # max exclusive
         #check input
-        if (val in accepted_vals):
+        if isinstance(val, (int, float)) and (not isinstance(val, bool)) and (-90 <= val <= 90):
             writebyte = 'levelchange '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("levelchange() set to " + str(val))
         else:
-            self.print_message("ERROR: levelchange() takes vals [-70 - 70]")
+            self.print_message("ERROR: levelchange() takes vals [-90 - 90]")
             self.print_message("ERROR: value set to" + str(val))
             msgbytes =  self.error_byte_return()
         return msgbytes
