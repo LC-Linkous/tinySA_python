@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+  schedule:
+    # Weekly, so a dependency or interpreter change that breaks the suite is
+    # noticed between releases rather than at the next one.
+    - cron: "41 6 * * 1"
 
 # Cancel superseded runs on the same ref (saves CI minutes on rapid pushes).
 concurrency:
@@ -93,3 +97,36 @@ jobs:
         # Catches packaging breakage on every push instead of at release time.
         # release.yml does the same build when publishing.
         run: uv build
+
+      - name: Install the wheel into a clean environment and import it
+        # A file missing from the wheel (a new module not picked up, a renamed
+        # package) passes the editable-install test suite and only fails for a
+        # user who pip-installs. This catches it on every push.
+        run: |
+          uv venv /tmp/wheelcheck
+          uv pip install --python /tmp/wheelcheck/bin/python dist/*.whl
+          /tmp/wheelcheck/bin/python -c "import tsapython; from tsapython import tinySA; from tsapython._profiles import BASIC; print('tsapython', tsapython.__version__)"
+
+  metadata:
+    name: version metadata agrees
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: pyproject.toml, CITATION.cff and zenodo.json carry the same version
+        # build-release.yml checks the tag against pyproject.toml at release
+        # time; this catches a half-done bump on the PR instead.
+        run: |
+          py="$(python3 -c 'import tomllib; print(tomllib.load(open("tsapython/pyproject.toml","rb"))["project"]["version"])')"
+          cff="$(sed -n 's/^version: *"\(.*\)"/\1/p' CITATION.cff)"
+          zen="$(python3 -c 'import json; print(json.load(open("zenodo.json"))["version"])')"
+          echo "pyproject=$py CITATION.cff=$cff zenodo.json=$zen"
+          [ "$py" = "$cff" ] && [ "$py" = "$zen" ] || { echo "::error::version mismatch"; exit 1; }
+
+      - name: CHANGELOG has a section for this version
+        run: |
+          py="$(python3 -c 'import tomllib; print(tomllib.load(open("tsapython/pyproject.toml","rb"))["project"]["version"])')"
+          grep -q "^## \[$py\]" CHANGELOG.md || { echo "::error::CHANGELOG.md has no '## [$py]' section"; exit 1; }

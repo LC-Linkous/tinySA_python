@@ -1,0 +1,21 @@
+# Keeps the GitHub Actions and the Python dev dependencies current.
+# Runtime dependencies (pyserial, numpy) are deliberately left loose in
+# pyproject.toml; Dependabot updates uv.lock, which only affects development
+# and CI, and the Actions pins (checkout@v4, setup-uv@v5, ...).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: uv
+    directory: /tsapython
+    schedule:
+      interval: monthly
+    groups:
+      dev-dependencies:
+        patterns: ["*"]
