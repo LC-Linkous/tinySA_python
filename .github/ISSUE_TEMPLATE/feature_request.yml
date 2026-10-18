@@ -9,7 +9,13 @@ body:
         out of scope. New device commands are in scope — note that the
         `command()` function already provides raw access to any serial command,
         so a request for a wrapped method is a request for validation, parsing,
-        and documentation around it.
+        documentation and a device-profile gate around it (see "Adding a
+        command" in CONTRIBUTING.md).
+
+        If a **firmware update** added, removed or changed a command, say which
+        firmware build (`version()`), and attach the output of
+        `uv run python tests/probe_firmware_returns.py` if you can run it: it
+        records what your device's firmware accepts, command by command.
   - type: textarea
     id: problem
     attributes:
@@ -37,6 +43,9 @@ body:
         - Display / UI commands
         - Presets / config
         - System info / connection / autodetect
+        - Firmware compatibility (a firmware build added, removed or changed a command)
+        - Device profiles (a new board, or a wrong range / word list for one)
+        - Logging / error reporting
         - Docs / examples
         - Other
     validations:
@@ -47,9 +56,9 @@ body:
       label: Which device(s) does this apply to?
       options:
         - All tinySA models
-        - tinySA (Basic)
-        - tinySA Ultra
-        - tinySA Ultra+
+        - tinySA (Basic, ZS304)
+        - tinySA Ultra (ZS405)
+        - tinySA Ultra+ (ZS406 / ZS407)
         - Not sure
     validations:
       required: false

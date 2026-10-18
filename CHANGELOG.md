@@ -53,6 +53,20 @@ API changes. See the README section "Upgrading to 4.0.0". Developed on top of
   UI link (https://lc-linkous.github.io/tinysa-web/).
 - Hardware tests for identification, the gates and the output setting.
 
+### Fixed
+- Output mode: a between-sweeps command (`pause`, `level`, `sweep`, `resume`,
+  `mode`, ...) sent within a few ms of `output`, `modulation`, `caloutput` or
+  `leveloffset` was dropped by the firmware and answered with `Command timeout`
+  20 s later (ZS405, v1.4-252). The library now waits
+  `SETTLE_AFTER_IMMEDIATE_SETTER_S` (0.4 s) after those four commands and
+  resends a command once when the device replies `Command timeout`.
+- `Command timeout` (firmware v1.4-222+) is recognised as the end of a reply,
+  so a dropped command costs about 20 s instead of the full read timeout.
+- A log record for a read that timed out now keeps the bytes that did arrive.
+- `tests/test_hardware_output.py`: the fixture releases the port and restores
+  the device when setup fails, so later tests no longer skip with
+  "no tinySA device connected"; `TSAPYTHON_LOG=<path>` turns logging on.
+
 ## [3.1.0] - 2026-10-17
 
 Non-breaking firmware-compatibility release: every call that worked before

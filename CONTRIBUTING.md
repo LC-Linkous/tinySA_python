@@ -87,11 +87,11 @@ the test fixtures exploit. To add a command:
 2. Route the device write through `tinySA_serial()` — don't touch `self.ser`
    directly from a command method.
 3. Add a **command-construction test** in the matching `tests/test_*.py` file:
-   use the `recorder` fixture to assert the exact command string the method
-   builds (e.g. `"rbw 100\r\n"`) on the happy path, and assert that **nothing
+   use the `tsa` fixture (a `tinySA` wired to the recorder) to assert the exact
+   command string the method builds (e.g. `"rbw 100\r\n"`) on the happy path, and assert that **nothing
    is sent** on the validation-error path.
 4. If the command's *response* needs parsing, add a parsing test using the
-   `fake_port` fixture against canned bytes — ideally frozen from real
+   `parsing_tsa` fixture against canned bytes — ideally frozen from real
    hardware via `tests/collect_samples.py` rather than hand-written.
 5. Follow the existing input-validation pattern (accepted-values checks with
    `verbose` / `error_byte` behavior) so error handling stays consistent.
@@ -159,7 +159,7 @@ Two manual helpers complete the set:
   a hand-written one where possible, and note which device model and firmware
   produced it.
 
-The fake ports in `tests/conftest.py` (`recorder`, `parsing_tsa`) and the
+The fake ports in `tests/conftest.py` (`tsa` / `recorder`, `parsing_tsa`) and the
 `ScriptedPort` classes in `tests/test_log.py`, `tests/test_v4_profiles.py` and
 `tests/test_core_paths.py` cover everything else without a device; CI runs only
 those.

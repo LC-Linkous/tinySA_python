@@ -26,7 +26,7 @@ import sys
 import time
 
 from ._identify import (
-    classify_reply, identify_device, STATUS_BLOCKED, STATUS_REFUSED, STATUS_TIMEOUT,
+    classify_reply, identify_device, STATUS_BLOCKED, STATUS_OK, STATUS_REFUSED, STATUS_TIMEOUT,
     STATUS_UNKNOWN, STATUS_USAGE)
 from ._log import JsonlLog, LOG_FORMAT, LOG_LEVELS
 from ._profiles import (
@@ -58,6 +58,21 @@ class tinySA(
     # instance here, for one instance with tinySA(serial_timeout=...), or at any
     # time with set_serial_timeout(). None waits indefinitely, as 3.x did.
     DEFAULT_SERIAL_TIMEOUT: float | None = 120.0
+
+    # Firmware race (seen on v1.4-252, see README "RF Output Setting"): a setter
+    # that runs in the shell thread ('output', 'modulation', 'caloutput',
+    # 'leveloffset') leaves a redraw flag that the sweep thread clears a few ms
+    # later. A between-sweeps command ('pause', 'level', 'sweep', 'resume', ...)
+    # queued inside that window loses its wake-up bit; in output mode the sweep
+    # loop then never looks at it, and the device answers 'Command timeout'
+    # 20 s later. Measured on a ZS405: a command 150-160 ms after the setter is
+    # dropped, 230 ms after it is served; the window closes when the sweep
+    # thread has left the generator loop and re-armed. The settle keeps the next
+    # command out of that window with margin; a single retry covers the case
+    # where it still lands in it (the firmware drops the first attempt
+    # unexecuted, so a retry is safe).
+    SETTLE_AFTER_IMMEDIATE_SETTER_S = 0.4
+    _IMMEDIATE_SETTERS = ("output", "modulation", "caloutput", "leveloffset")
 
     def __init__(self, parent: object | None = None,
                  serial_timeout: float | None = DEFAULT_SERIAL_TIMEOUT) -> None:
@@ -506,7 +521,8 @@ class tinySA(
             self._log.write("event", {"event": "disconnect", "detail": ""})
 
     def tinySA_serial(self, writebyte: str, printBool: bool = False, pts: int | None = None,
-                      _raw: bool = False) -> bytearray | None:
+                      _raw: bool = False, _retry: bool = True,
+                      _function: str | None = None) -> bytearray | None:
         # write out to serial, get message back, clean up, return
         #
         # 4.0.0: if the DEVICE rejects the command (a 'usage:' line for a setter,
@@ -567,12 +583,24 @@ class tinySA(
 
         if self._log is not None:
             self._log_reason = ""
-            self._log.write_command(sys._getframe(1).f_code.co_name, writebyte, status,
+            self._log.write_command(_function or sys._getframe(1).f_code.co_name, writebyte, status,
                                     int((time.monotonic() - started) * 1000),
                                     msgbytes, binary, reason)
 
         if printBool == True:
             print(msgbytes) #overrides verbose for debug
+
+        if status == STATUS_REFUSED and msgbytes is not None and b"Command timeout" in bytes(msgbytes):
+            if _retry:
+                # the sweep thread never ran it (see SETTLE_AFTER_IMMEDIATE_SETTER_S);
+                # queue it once more, which also re-arms the wake-up bit
+                self.print_message("device said 'Command timeout' for '%s'; sending it once more" % writebyte.strip())
+                return self.tinySA_serial(writebyte, printBool=printBool, pts=pts, _raw=_raw, _retry=False,
+                                          _function=_function or sys._getframe(1).f_code.co_name)
+
+        words = writebyte.split()
+        if words and words[0] in self._IMMEDIATE_SETTERS and status == STATUS_OK:
+            time.sleep(self.SETTLE_AFTER_IMMEDIATE_SETTER_S)
 
         if (not _raw) and status in (STATUS_USAGE, STATUS_UNKNOWN, STATUS_REFUSED):
             self.print_message("ERROR: device rejected '%s': %s" % (writebyte.strip(), reason))

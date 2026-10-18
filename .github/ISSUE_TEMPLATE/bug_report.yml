@@ -6,8 +6,25 @@ body:
     attributes:
       value: |
         Thanks for the report. This library talks to real hardware over serial,
-        so please include device and OS details — many issues are
+        so please include device and firmware details — many issues are
         firmware- or environment-specific.
+
+        **Two things that answer most reports before anyone asks:**
+
+        1. A log file. Turn it on before reproducing, then attach it:
+           ```python
+           tsa = tinySA()
+           tsa.set_log_file("issue.jsonl")      # UTC-stamped JSON Lines; no screen or scan data at the default level
+           tsa.autoconnect()
+           ... your code ...
+           ```
+           Its first line records your board, firmware build and library version;
+           each command line records what was sent, what the device answered,
+           and why the library returned an error (`"reason"`).
+        2. The README section **Firmware Compatibility**. If the device replied
+           with a `usage:` line, `name?`, or `Command timeout`, the firmware on the
+           device may not have (or may have changed) that command. The library
+           supports firmware v1.4-182 and later; `version()` shows yours.
 
         For questions about **device behavior** (not this library), the
         [official tinySA wiki](https://tinysa.org/wiki/) and the tinySA
@@ -24,10 +41,51 @@ body:
     id: repro
     attributes:
       label: Steps to reproduce
-      description: The exact minimal code. Include the command string the library sent if you have it (set_verbose(True) output helps).
+      description: The exact minimal code. Include the command string the library sent if you have it (the log file or set_verbose(True) output shows it).
       render: python
     validations:
       required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log file / traceback
+      description: Attach `issue.jsonl` (drag it into this box) or paste the relevant lines, plus the full traceback if there was one. `set_error_byte_return(True)` makes refused commands return `ERROR` instead of an empty reply.
+      render: shell
+    validations:
+      required: false
+  - type: dropdown
+    id: device
+    attributes:
+      label: Device model
+      description: The board is in `info()` and in the log's first line (ZS304 = Basic, ZS405 = Ultra, ZS406 / ZS407 = Ultra+).
+      options:
+        - tinySA (Basic, ZS304)
+        - tinySA Ultra (ZS405)
+        - tinySA Ultra+ (ZS406 / ZS407)
+        - "No device connected (reproduces without hardware)"
+        - Other / not sure
+    validations:
+      required: true
+  - type: input
+    id: firmware
+    attributes:
+      label: Firmware build
+      description: Output of `tsa.version()`, or `version_reply` from the log's first line.
+      placeholder: "e.g. tinySA4_v1.4-252-g2b4aa51"
+    validations:
+      required: false
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Device mode when it happened
+      description: Several commands behave differently while the device is in output (signal generator) mode.
+      options:
+        - Input mode (spectrum analyzer, the default)
+        - Output mode (signal generator)
+        - Switching between the two
+        - Not sure / not applicable
+    validations:
+      required: false
   - type: input
     id: os
     attributes:
@@ -46,32 +104,14 @@ body:
     id: tsapython
     attributes:
       label: tsapython version
-      placeholder: "output of: pip show tsapython | grep Version (or 'local build from <commit>')"
+      placeholder: "output of: python -c \"import tsapython; print(tsapython.__version__)\" (or 'local build from <commit>')"
     validations:
       required: true
-  - type: dropdown
-    id: device
+  - type: checkboxes
+    id: other-software
     attributes:
-      label: Device model
+      label: Anything else holding the serial port?
+      description: The tinySA has one serial port and one program can own it at a time. `autoconnect()` reports no device when another program has the port open.
       options:
-        - tinySA (Basic)
-        - tinySA Ultra
-        - tinySA Ultra+
-        - "No device connected (reproduces without hardware)"
-        - Other / not sure
-    validations:
-      required: true
-  - type: textarea
-    id: firmware
-    attributes:
-      label: Device firmware / info
-      description: Paste the output of `tsa.info()` if a device is involved (redact the serial if you wish).
-      render: shell
-    validations:
-      required: false
-  - type: textarea
-    id: logs
-    attributes:
-      label: Logs / traceback
-      description: Full traceback or output. Run with `set_verbose(True)` and `set_error_byte_return(True)` if possible.
-      render: shell
+        - label: The tinySA web UI, tinySA-App, a terminal program or another script was open at the same time
+        - label: Nothing else was connected to the device

@@ -137,6 +137,17 @@ def test_echo_split_across_reads_still_works(parsing_tsa):
     assert parsing_tsa.command("deviceid") == bytearray(b"deviceid 7\r")
 
 
+def _answers(port, replies):
+    # the device answers each WRITE with the next canned reply (one reply per
+    # command, like a real port, instead of everything at once)
+    replies = list(replies)
+    def write(data):
+        port.written.append(data)
+        port._buf = replies.pop(0) if replies else b""
+        return len(data)
+    port.write = write
+
+
 # --- the firmware's own 'Command timeout' (v1.4-222+) ends a reply --------------------
 
 def test_command_timeout_line_ends_the_reply(parsing_tsa):
@@ -147,11 +158,24 @@ def test_command_timeout_line_ends_the_reply(parsing_tsa):
     parsing_tsa.set_error_byte_return(True)
     port = parsing_tsa.ser
     port.reset_input_buffer = lambda: None
-    port._buf = b"level -76\r\nCommand timeout\r\n"
+    # first attempt is dropped by the firmware; the library's single retry gets the prompt
+    _answers(port, [b"level -76\r\nCommand timeout\r\n", b"level -76\r\nch> "])
     started = time.monotonic()
     out = parsing_tsa.level(-76)
     assert (time.monotonic() - started) < 1.0
-    assert out == bytearray(b"ERROR")               # classified as device-refused
+    assert out == bytearray(b"")                    # the retry succeeded
+    assert port.written == [b"level -76\r\n", b"level -76\r\n"]
+
+
+def test_command_timeout_twice_is_an_error(parsing_tsa):
+    parsing_tsa.set_serial_timeout(5)
+    parsing_tsa.set_error_byte_return(True)
+    port = parsing_tsa.ser
+    port.reset_input_buffer = lambda: None
+    _answers(port, [b"level -76\r\nCommand timeout\r\n"] * 2)
+    out = parsing_tsa.level(-76)
+    assert out == bytearray(b"ERROR")               # retried exactly once, then gave up
+    assert len(port.written) == 2
 
 
 def test_command_timeout_is_logged_as_refused(parsing_tsa, tmp_path):
@@ -163,13 +187,15 @@ def test_command_timeout_is_logged_as_refused(parsing_tsa, tmp_path):
     parsing_tsa.set_error_byte_return(True)
     port = parsing_tsa.ser
     port.reset_input_buffer = lambda: None
-    port._buf = b"sweep cw 10000000\r\nCommand timeout\r\n"
+    _answers(port, [b"sweep cw 10000000\r\nCommand timeout\r\n"] * 2)
     assert parsing_tsa.set_sweep_cw(10_000_000) == bytearray(b"ERROR")
     parsing_tsa.close_log_file()
     records = [json.loads(line) for line in log.read_text().splitlines()]
-    cmd = [r for r in records if r["type"] == "command" and r["sent"].startswith("sweep cw")][0]
-    assert cmd["status"] == "device-refused"
-    assert "Command timeout" in cmd["reason"]
+    cmds = [r for r in records if r["type"] == "command" and r["sent"].startswith("sweep cw")]
+    assert len(cmds) == 2                           # both attempts are in the log
+    assert all(c["status"] == "device-refused" for c in cmds)
+    assert all(c["function"] == "config_sweep" for c in cmds)   # the retry is logged under the caller, too
+    assert "Command timeout" in cmds[0]["reason"]
 
 
 def test_timeout_log_keeps_what_arrived(parsing_tsa, tmp_path):
@@ -189,3 +215,22 @@ def test_timeout_log_keeps_what_arrived(parsing_tsa, tmp_path):
     cmd = [r for r in records if r["type"] == "command" and r["sent"] == "level -76"][0]
     assert cmd["status"] == "timeout"
     assert "level -76" in cmd["reason"]
+
+
+# --- settle after the shell-thread setters ------------------------------------------
+
+def test_settle_after_output_and_modulation(parsing_tsa, monkeypatch):
+    from tsapython import tinySA
+    slept = []
+    monkeypatch.setattr("tsapython.core.time.sleep", lambda s: slept.append(s))
+    port = parsing_tsa.ser
+    port.reset_input_buffer = lambda: None
+    parsing_tsa.set_output_allowed(True)
+    port._buf = b"output off\r\nch> "
+    parsing_tsa.output("off")
+    port._buf = b"modulation off\r\nch> "
+    parsing_tsa.modulation("off")
+    port._buf = b"level -76\r\nch> "
+    parsing_tsa.level(-76)                          # a between-sweeps command: no settle
+    settles = [x for x in slept if x == tinySA.SETTLE_AFTER_IMMEDIATE_SETTER_S]
+    assert len(settles) == 2

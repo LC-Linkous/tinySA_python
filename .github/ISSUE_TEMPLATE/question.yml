@@ -10,6 +10,11 @@ body:
         [official wiki](https://tinysa.org/wiki/) and the
         [tinySA community](https://groups.io/g/tinysa) — they know the hardware
         far better, but do not support this library.
+
+        Two things worth checking first: the README's command reference (every
+        wrapped command, with the firmware build it needs where that matters),
+        and the [tinySA web UI](https://lc-linkous.github.io/tinysa-web/) if you
+        want to try a command by hand before scripting it.
   - type: textarea
     id: question
     attributes:
@@ -21,6 +26,6 @@ body:
     id: setup
     attributes:
       label: Setup
-      placeholder: "e.g. tinySA Ultra, Windows 11, Python 3.12, tsapython 3.0.0"
+      placeholder: "e.g. tinySA Ultra (ZS405), firmware v1.4-252, Windows 11, Python 3.12, tsapython 4.0.0"
     validations:
       required: false
