@@ -48,6 +48,7 @@ class MixinHost:
         deviceCommands: "frozenset[str] | None"
         firmwareBuild: "tuple[int, int, int] | None"
         outputAllowed: bool
+        _last_status: str
 
         # device parameter boundaries (library-side error checking)
         maxPoints: int
@@ -70,6 +71,8 @@ class MixinHost:
         def print_message(self, msg: object) -> None: ...
 
         def error_byte_return(self) -> bytearray: ...
+
+        def get_last_status(self) -> str: ...
 
         def is_rgb24(self, hexStr: str) -> bool: ...
 

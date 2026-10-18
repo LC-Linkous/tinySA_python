@@ -12,5 +12,6 @@ except PackageNotFoundError:  # running from a source tree that was never instal
 
 # In __init__.py
 from .core import tinySA
+from ._profiles import DeviceProfile, PROFILES
 
-__all__ = ["tinySA"]
+__all__ = ["tinySA", "DeviceProfile", "PROFILES"]

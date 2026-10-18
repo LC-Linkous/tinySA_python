@@ -11,6 +11,8 @@
 #   Author(s): Lauren Linkous
 ##--------------------------------------------------------------------------------------------------\
 
+import warnings
+
 from .._host import MixinHost
 
 class MarkersTracesMixin(MixinHost):
@@ -272,6 +274,8 @@ class MarkersTracesMixin(MixinHost):
         # reflevel) auto|{level}
         # example return:
 
+        warnings.warn("trace_clear() is deprecated: current firmware ignores 'trace ... clear'",
+                      DeprecationWarning, stacklevel=2)
         writebyte = 'trace ' + str(val) + ' clear\r\n'
         msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("clearing trace(s)")

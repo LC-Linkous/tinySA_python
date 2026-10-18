@@ -191,6 +191,9 @@ class PresetsConfigMixin(MixinHost):
         # restarts the  tinySA after the specified number of seconds
         # usage: restart {seconds}
         # example return: ''
+
+        if not self._check_command("restart"):
+            return self.error_byte_return()
         val = int(val)
         if val == 0:
             writebyte = 'restart ' + str(val) + '\r\n'
@@ -245,6 +248,9 @@ class PresetsConfigMixin(MixinHost):
         # delete a specific file on the sd card
         # usage: sd_delete {filename}
         # example return:
+
+        if not self._check_command("sd_delete"):
+            return self.error_byte_return()
 
         writebyte = 'sd_delete ' + str(val)+ '\r\n'
         msgbytes = self.tinySA_serial(writebyte, printBool=False)
@@ -323,6 +329,9 @@ class PresetsConfigMixin(MixinHost):
         # read a specific file on the sd_card
         # usage: sd_read {filename}
         # example return:
+
+        if not self._check_command("sd_read"):
+            return self.error_byte_return()
 
         writebyte = 'sd_read ' + str(val)+ '\r\n'
         msgbytes = self.tinySA_serial(writebyte, printBool=False)

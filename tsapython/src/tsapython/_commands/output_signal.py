@@ -11,7 +11,11 @@
 #   Author(s): Lauren Linkous
 ##--------------------------------------------------------------------------------------------------\
 
+import typing
+import warnings
+
 from .._host import MixinHost
+from .._identify import STATUS_OK
 
 class OutputSignalMixin(MixinHost):
     def cal_output(self, val: int | float | str = "off") -> bytearray | None:
@@ -69,6 +73,9 @@ class OutputSignalMixin(MixinHost):
         # Output mode for generating a square wave signal between 830MHz and 1130MHz
         # usage: direct {start|stop|on|off} {freq(Hz)}
         # example return: ''
+
+        if not self._check_command("direct"):
+            return self.error_byte_return()
 
         #check input
         if (str(val)=="on") or (str(val) =="off"):
@@ -249,12 +256,16 @@ class OutputSignalMixin(MixinHost):
         # DEPRECATED: the 'AM_1kHz' keyword left the tinySA firmware in Nov 2020.
         # Still callable: sends 'modulation am' then 'modulation freq 1000'.
         # Use modulation("am") and modulation_freq(1000) instead.
+        warnings.warn("set_mod_AM_1khz() is deprecated; use modulation('am') and modulation_freq(1000)",
+                      DeprecationWarning, stacklevel=2)
         return self.modulation("AM_1kHz")
 
     def set_mod_AM_10Hz(self) -> bytearray | None:
         # DEPRECATED: the 'AM_10Hz' keyword left the tinySA firmware in Nov 2020.
         # Still callable: sends 'modulation am' then 'modulation freq 10'.
         # Use modulation("am") and modulation_freq(10) instead.
+        warnings.warn("set_mod_AM_10Hz() is deprecated; use modulation('am') and modulation_freq(10)",
+                      DeprecationWarning, stacklevel=2)
         return self.modulation("AM_10Hz")
 
     def set_mod_NFM(self) -> bytearray | None:
@@ -327,21 +338,33 @@ class OutputSignalMixin(MixinHost):
         # the sweep is paused the firmware runs them immediately. 'output' and
         # 'modulation' do not go through the sweep thread and return at once.
         # Use the same pattern in your own scripts: pause(), settings, resume().
-        steps = [self.output("off"),
-                 self.mode("high" if high else "low", "output"),
-                 self.output("off"),               # the mode change already muted; be explicit
-                 self.pause(),
-                 self.level(level_dbm),
-                 self.set_sweep_cw(int(freq_hz)),
-                 self.modulation(modulation_type)]
+        steps: list[typing.Callable[[], object]] = [
+            lambda: self.output("off"),
+            lambda: self.mode("high" if high else "low", "output"),
+            lambda: self.output("off"),           # the mode change already muted; be explicit
+            lambda: self.pause(),
+            lambda: self.level(level_dbm),
+            lambda: self.set_sweep_cw(int(freq_hz)),
+            lambda: self.modulation(modulation_type)]
         if modulation_rate_hz is not None and str(modulation_type) != "off":
-            steps.append(self.modulation_freq(modulation_rate_hz))
-        steps.append(self.resume())
-        error_value = bytearray(b'ERROR') if self.returnErrorByte else None
-        ok = all((step is not None) and (step != error_value) for step in steps)
-        if not ok:
-            self.print_message("ERROR: setup_generator() stopped at a refused step; output is off")
-        return ok
+            steps.append(lambda: self.modulation_freq(modulation_rate_hz))
+        steps.append(lambda: self.resume())
+        return self._run_steps(steps, "setup_generator()")
+
+    def _run_steps(self, steps: "list[typing.Callable[[], object]]", name: str) -> bool:
+        # Runs each step and checks HOW it ended (get_last_status), not what it
+        # returned: in the default error mode an accepted setter and a rejected
+        # one both return b''. Stops at the first step that was not accepted
+        # and resumes the sweep so the device is not left paused.
+        for step in steps:
+            step()
+            status = self.get_last_status()
+            if status != STATUS_OK:
+                self.print_message("ERROR: %s stopped at a refused step (%s); output is off" % (name, status))
+                self.resume()
+                self._last_status = status      # report the failure, not the resume
+                return False
+        return True
 
     def set_generator(self, level_dbm: int | float | None = None, freq_hz: int | float | None = None,
                       modulation_type: str | None = None, modulation_rate_hz: int | float | None = None,
@@ -351,30 +374,29 @@ class OutputSignalMixin(MixinHost):
         # 'level' and 'sweep cw' return at once in output mode (see
         # setup_generator); the resume lets the next generator sweep apply them.
         # Only the arguments given are sent. Returns True if every step was accepted.
-        steps = [self.pause()]
+        steps: list[typing.Callable[[], object]] = [lambda: self.pause()]
         if level_dbm is not None:
-            steps.append(self.level(level_dbm))
+            steps.append(lambda: self.level(level_dbm))
         if freq_hz is not None:
-            steps.append(self.set_sweep_cw(int(freq_hz)))
+            steps.append(lambda: self.set_sweep_cw(int(freq_hz)))
         if modulation_type is not None:
-            steps.append(self.modulation(modulation_type))
+            steps.append(lambda: self.modulation(modulation_type))
         if modulation_rate_hz is not None:
-            steps.append(self.modulation_freq(modulation_rate_hz))
+            steps.append(lambda: self.modulation_freq(modulation_rate_hz))
         if depth_percent is not None:
-            steps.append(self.modulation_depth(depth_percent))
+            steps.append(lambda: self.modulation_depth(depth_percent))
         if deviation_hz is not None:
-            steps.append(self.modulation_deviation(deviation_hz))
-        steps.append(self.resume())
-        error_value = bytearray(b'ERROR') if self.returnErrorByte else None
-        ok = all((step is not None) and (step != error_value) for step in steps)
-        if not ok:
-            self.print_message("ERROR: set_generator() had a refused step")
-        return ok
+            steps.append(lambda: self.modulation_deviation(deviation_hz))
+        steps.append(lambda: self.resume())
+        return self._run_steps(steps, "set_generator()")
 
     def ultra(self, val: int | float | str = "off", freq: int | float | str | None = None) -> bytearray | None:
         # turn on/config tiny SA ultra mode
         # usage: ultra off|on|auto|start|harm {freq}
         # example return: bytearray(b'')
+
+        if not self._check_command("ultra"):
+            return self.error_byte_return()
 
         if str(val) in ["off", "on", "auto"]:
             writebyte = 'ultra ' + str(val) +'\r\n'

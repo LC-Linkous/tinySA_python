@@ -112,6 +112,9 @@ class CalibrationMixin(MixinHost):
         # usage: freq_corr
         # example return: bytearray(b'0 ppb\r')
 
+        if not self._check_command("freq_corr"):
+            return self.error_byte_return()
+
         writebyte = 'freq_corr\r\n'
         msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("getting frequency correction")

@@ -42,6 +42,11 @@ from ._commands.presets_config import PresetsConfigMixin
 from ._commands.display_ui import DisplayUIMixin
 from ._commands.system_info import SystemInfoMixin
 
+def _is_text(data: bytes) -> bool:
+    # printable ASCII plus CR/LF/TAB only: a device text reply, not file bytes
+    return all(32 <= b < 127 or b in (9, 10, 13) for b in data)
+
+
 class tinySA(
     AcquisitionMixin,
     MarkersTracesMixin,
@@ -72,7 +77,24 @@ class tinySA(
     # where it still lands in it (the firmware drops the first attempt
     # unexecuted, so a retry is safe).
     SETTLE_AFTER_IMMEDIATE_SETTER_S = 0.4
+
+    # The firmware's command line buffer is VNA_SHELL_MAX_LENGTH = 48 bytes
+    # (main.c); characters past the 47th are neither stored nor echoed. The
+    # device would run a truncated command, and the reader, which waits for the
+    # echo, would wait out the timeout. Longer commands are refused before
+    # sending. Affects text(), remark(), long SD-card file names and command().
+    MAX_COMMAND_LENGTH = 47
     _IMMEDIATE_SETTERS = ("output", "modulation", "caloutput", "leveloffset")
+
+    # Commands resent once after 'Command timeout'. Only setters whose second
+    # application is harmless: in the small firmware window where a command both
+    # ran and was reported timed out, a retry applies it twice. Anything not
+    # listed ('menu', 'touchcal', 'restart', 'save', 'scan', ...) is reported as
+    # refused instead and left to the caller.
+    _RETRY_AFTER_COMMAND_TIMEOUT = frozenset("""
+    pause resume level sweep mode rbw attenuate calc spur sweeptime ext_gain levelchange
+    trigger marker trace if if1 lna lna2 agc ultra direct correction zero avoid
+    """.split())
 
     def __init__(self, parent: object | None = None,
                  serial_timeout: float | None = DEFAULT_SERIAL_TIMEOUT) -> None:
@@ -96,6 +118,8 @@ class tinySA(
         self._serial_busy = False      # True while tinySA_serial() is running
         self._serial_timed_out = False # set by the read helpers, read by tinySA_serial()
         self._timed_out_partial = bytes() # what HAD arrived when a text read timed out (for the log)
+        self._last_status = STATUS_OK     # classification of the last command, see get_last_status()
+        self._binary_text_reply = False   # a binary reader got a TEXT reply (e.g. 'sd_read?'); classify it as text
 
 
         # VARS BELOW HERE will be largely replaced with device class config calls
@@ -163,7 +187,23 @@ class tinySA(
     def get_error_byte_return(self) -> bool:
         return self.returnErrorByte
 
+    def get_last_status(self) -> str:
+        # How the LAST command ended, whatever the return value was:
+        #   "ok"              the device accepted it (or answered a query)
+        #   "blocked"         a library-side check refused it; nothing was sent
+        #   "usage"           the device rejected the argument (printed a usage line)
+        #   "unknown-command" this firmware does not have the command
+        #   "device-refused"  the device refused it ('usb disk mode active', 'Command timeout')
+        #   "timeout"         no prompt within the serial timeout
+        #   "read-failed"     the serial read itself failed
+        # With the default error mode an accepted setter and a rejected one both
+        # return b'', so this is the way to tell them apart without turning
+        # set_error_byte_return(True) on. The same word is in the log record.
+        return self._last_status
+
     def error_byte_return(self) -> bytearray:
+        if not self._serial_busy:
+            self._last_status = STATUS_BLOCKED
         if (self._log is not None) and (not self._serial_busy):
             # a library-side check refused the call before anything was sent
             reason, self._log_reason = self._log_reason, ""
@@ -494,6 +534,12 @@ class tinySA(
 
         try:
             self.ser = serial.Serial(port=port, timeout=timeout)
+        except Exception as err:
+            self.print_message("ERROR: cannot open port at " + str(port))
+            self.print_message(err)
+            self.ser = None
+            return False
+        try:
             if self._log is not None:
                 self._log.write("event", {"event": "connect", "detail": str(port)})
                 self._log_session()
@@ -501,8 +547,16 @@ class tinySA(
                 self.identify()
             return True
         except Exception as err:
-            self.print_message("ERROR: cannot open port at " + str(port))
+            # the port opened but the device could not be read (a SerialException
+            # from a dropped device is the usual case): release the handle so the
+            # next connect() can open it, and do not leave self.ser pointing at it
+            self.print_message("ERROR: opened " + str(port) + " but could not identify the device")
             self.print_message(err)
+            try:
+                self.ser.close()
+            except Exception:
+                pass
+            self.ser = None
             return False
 
     def _require_serial(self) -> "serial.Serial":
@@ -515,8 +569,10 @@ class tinySA(
         return self.ser
 
     def disconnect(self) -> None:
-        # closes the serial port
+        # closes the serial port; afterwards the library is "not connected"
+        # (a command raises RuntimeError) rather than holding a closed handle
         self._require_serial().close()
+        self.ser = None
         if self._log is not None:
             self._log.write("event", {"event": "disconnect", "detail": ""})
 
@@ -532,6 +588,11 @@ class tinySA(
         # returns the device's text unchanged, as 3.x did for everything.
 
         ser = self._require_serial()
+        command = writebyte.strip()
+        if len(command.encode("utf-8")) > self.MAX_COMMAND_LENGTH:
+            self.print_message("ERROR: command is %d bytes; the firmware's command line holds %d: %r"
+                               % (len(command.encode("utf-8")), self.MAX_COMMAND_LENGTH, command))
+            return self.error_byte_return()
         # clear INPUT buffer
         ser.reset_input_buffer()
         # clear OUTPUT buffer
@@ -541,6 +602,7 @@ class tinySA(
         self._serial_busy = True
         self._serial_timed_out = False
         self._timed_out_partial = bytes()
+        self._binary_text_reply = False
         binary = False
         msgbytes: bytearray | None
         try:
@@ -576,11 +638,12 @@ class tinySA(
                 # keep what did arrive: it says whether the device echoed the
                 # command, printed 'usage:', or said nothing at all
                 reason += "; received: " + repr(self._timed_out_partial[-120:])
-        elif binary:
+        elif binary and not self._binary_text_reply:
             status, reason = classify_reply("", msgbytes)   # binary data is never 'usage'
         else:
             status, reason = classify_reply(writebyte, msgbytes)
 
+        self._last_status = status
         if self._log is not None:
             self._log_reason = ""
             self._log.write_command(_function or sys._getframe(1).f_code.co_name, writebyte, status,
@@ -591,7 +654,7 @@ class tinySA(
             print(msgbytes) #overrides verbose for debug
 
         if status == STATUS_REFUSED and msgbytes is not None and b"Command timeout" in bytes(msgbytes):
-            if _retry:
+            if _retry and writebyte.split()[0] in self._RETRY_AFTER_COMMAND_TIMEOUT:
                 # the sweep thread never ran it (see SETTLE_AFTER_IMMEDIATE_SETTER_S);
                 # queue it once more, which also re-arms the wake-up bit
                 self.print_message("device said 'Command timeout' for '%s'; sending it once more" % writebyte.strip())
@@ -737,7 +800,7 @@ class tinySA(
                     return None
                 time.sleep(0.001)
 
-    def get_binary_return(self, pts: int | None = None, timeout: float = 10.0, idle_timeout: float = 1.0) -> bytearray:
+    def get_binary_return(self, pts: int | None = None, timeout: float | None = None, idle_timeout: float = 1.0) -> bytearray | None:
         # Reads a binary scanraw-style frame from the serial port.
         #
         # WHY THIS EXISTS (separate from get_serial_return):
@@ -770,10 +833,14 @@ class tinySA(
         buffer = bytes()
         start_time = time.time()
         last_data_time = None
+        # 4.0.0: the overall limit follows the serial read timeout (120 s by
+        # default, set_serial_timeout()) instead of a fixed 10 s, so a scanraw
+        # over a slow sweep is not cut short; an explicit timeout= still wins.
+        limit = timeout if timeout is not None else (self.serialTimeout if self.serialTimeout is not None else 10.0)
 
         # ---- accumulate raw bytes from the port ----
         def overall_timed_out() -> bool:
-            return (time.time() - start_time) > timeout
+            return (time.time() - start_time) > limit
 
         if pts is not None:
             # KNOWN-LENGTH MODE
@@ -800,12 +867,15 @@ class tinySA(
                     break
                 else:
                     time.sleep(0.01)
-            # timed out: return what we have from '{' (caller will detect short)
-            start = buffer.find(b'{')
-            if start == -1:
-                self.print_message("ERROR: scanraw frame start '{' not found")
-                return self.error_byte_return()
-            return bytearray(buffer[start:])
+            # Timed out. 4.0.0: a short frame is a FAILURE, not data. It used to
+            # be returned as-is (and logged 'ok'); callers that unpack 3*pts
+            # bytes then crashed on it. None is what every other reader returns
+            # on a timeout, and the log record says 'timeout' with the byte count.
+            self._serial_timed_out = True
+            self._timed_out_partial = buffer[-120:]
+            self.print_message("ERROR: scanraw returned %d bytes of a %d-byte frame; discarded"
+                               % (max(0, len(buffer) - max(0, buffer.find(b'{'))), frame_len))
+            return None
 
         else:
             # UNKNOWN-COUNT / STREAMING MODE (for future continuous callers)
@@ -840,11 +910,11 @@ class tinySA(
                     break
                 else:
                     time.sleep(0.01)
-            start = buffer.find(b'{')
-            if start == -1:
-                self.print_message("ERROR: streaming frame start '{' not found")
-                return self.error_byte_return()
-            return bytearray(buffer[start:])
+            self._serial_timed_out = True
+            self._timed_out_partial = buffer[-120:]
+            self.print_message("ERROR: streaming frame incomplete (%d bytes); discarded" % len(buffer))
+            return None
+
     def get_sd_read_return(self, timeout: float = 60.0) -> bytearray | None:
         # Reads the reply to 'sd_read {filename}'. The firmware sends the echoed
         # command line, then a 4-byte little-endian file size, then exactly that
@@ -865,12 +935,21 @@ class tinySA(
                 payload = buffer[echo_end + 2:]
                 if payload.startswith(b'err:'):
                     if payload.endswith(b'ch> '):
+                        self._binary_text_reply = True
                         return bytearray(payload[:-4].rstrip(b'\r\n'))
                     continue
                 if len(payload) >= 4:
                     size = int.from_bytes(payload[:4], 'little')
                     if len(payload) >= 4 + size:
                         return bytearray(payload[4:4 + size])
+                # Not a length-prefixed file. A firmware without the command
+                # answers 'sd_read?', an argument problem answers a usage line:
+                # short, printable, and ending with the prompt. Reading those
+                # first 4 bytes as a size would wait for gigabytes that never
+                # come (the whole serial timeout), so return the text instead.
+                if payload.endswith(b'ch> ') and len(payload) < 256 and _is_text(payload):
+                    self._binary_text_reply = True
+                    return bytearray(payload[:-4].rstrip(b'\r\n'))
             elif (time.monotonic() - start_time) > limit:
                 self._serial_timed_out = True
                 self.print_message("WARNING: sd_read timed out (have %d bytes)" % len(buffer))
