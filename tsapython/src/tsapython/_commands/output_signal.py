@@ -307,6 +307,70 @@ class OutputSignalMixin(MixinHost):
         #alias for output(). Ultra family only
         return self.output("mixer")
 
+    def setup_generator(self, freq_hz: int | float, level_dbm: int | float,
+                        modulation_type: str = "off", modulation_rate_hz: int | float | None = None,
+                        high: bool = False) -> bool:
+        # Puts the device into signal generator mode in the order the firmware
+        # needs, and leaves the output OFF:
+        #   output off -> mode low|high output -> pause -> level -> sweep cw
+        #   -> modulation -> resume
+        # The level is set after the mode because the firmware resets the level
+        # to maximum whenever the mode changes. Switching the output on is a
+        # separate, explicit call: set_output_allowed(True) then output("on").
+        # high=True selects the Basic's high output mode (refused on the Ultra family).
+        # Returns True if every step was accepted.
+        #
+        # WHY THE PAUSE (seen on hardware, ZS405 v1.4-252): in output mode,
+        # 'level', 'sweep', 'rbw', 'attenuate', 'mode' and other settings run in
+        # the firmware's sweep thread BETWEEN sweeps, and a generator sweep is
+        # seconds long, so each of them waited about 20 s for its prompt. While
+        # the sweep is paused the firmware runs them immediately. 'output' and
+        # 'modulation' do not go through the sweep thread and return at once.
+        # Use the same pattern in your own scripts: pause(), settings, resume().
+        steps = [self.output("off"),
+                 self.mode("high" if high else "low", "output"),
+                 self.output("off"),               # the mode change already muted; be explicit
+                 self.pause(),
+                 self.level(level_dbm),
+                 self.set_sweep_cw(int(freq_hz)),
+                 self.modulation(modulation_type)]
+        if modulation_rate_hz is not None and str(modulation_type) != "off":
+            steps.append(self.modulation_freq(modulation_rate_hz))
+        steps.append(self.resume())
+        error_value = bytearray(b'ERROR') if self.returnErrorByte else None
+        ok = all((step is not None) and (step != error_value) for step in steps)
+        if not ok:
+            self.print_message("ERROR: setup_generator() stopped at a refused step; output is off")
+        return ok
+
+    def set_generator(self, level_dbm: int | float | None = None, freq_hz: int | float | None = None,
+                      modulation_type: str | None = None, modulation_rate_hz: int | float | None = None,
+                      depth_percent: int | float | None = None, deviation_hz: int | float | None = None) -> bool:
+        # Changes generator settings while already in output mode (output on or
+        # off): pause -> the given settings -> resume. The pause is what makes
+        # 'level' and 'sweep cw' return at once in output mode (see
+        # setup_generator); the resume lets the next generator sweep apply them.
+        # Only the arguments given are sent. Returns True if every step was accepted.
+        steps = [self.pause()]
+        if level_dbm is not None:
+            steps.append(self.level(level_dbm))
+        if freq_hz is not None:
+            steps.append(self.set_sweep_cw(int(freq_hz)))
+        if modulation_type is not None:
+            steps.append(self.modulation(modulation_type))
+        if modulation_rate_hz is not None:
+            steps.append(self.modulation_freq(modulation_rate_hz))
+        if depth_percent is not None:
+            steps.append(self.modulation_depth(depth_percent))
+        if deviation_hz is not None:
+            steps.append(self.modulation_deviation(deviation_hz))
+        steps.append(self.resume())
+        error_value = bytearray(b'ERROR') if self.returnErrorByte else None
+        ok = all((step is not None) and (step != error_value) for step in steps)
+        if not ok:
+            self.print_message("ERROR: set_generator() had a refused step")
+        return ok
+
     def ultra(self, val: int | float | str = "off", freq: int | float | str | None = None) -> bytearray | None:
         # turn on/config tiny SA ultra mode
         # usage: ultra off|on|auto|start|harm {freq}

@@ -1,10 +1,11 @@
 #! /usr/bin/python3
 
 ##------------------------------------------------------------------------------------------------\
-#   probe_firmware_returns.py
+#   tests/probe_firmware_returns.py  --  hardware probe, run by hand
 #
-#   DRAFT. Written from reading the tinySA firmware source (commit 650f538, v1.4-244) and
-#   tsapython 3.0.1. It has been run against a fake device only, never against real hardware.
+#   Written from reading the tinySA firmware source (commit 650f538, v1.4-244) and tsapython
+#   3.0.1. First run on hardware 2026-10-17 (tinySA Ultra ZS405, tinySA4_v1.4-143): every
+#   firmware prediction it could test came out as predicted.
 #
 #   Devices: tinySA Basic (ZS304), Ultra (ZS405), Ultra+ (ZS406, ZS407). Predictions exist
 #   for the Basic and for the Ultra family; the three Ultra boards share one command set.
@@ -68,6 +69,11 @@ try:
     LIBRARY_VERSION = package_version("tsapython")   # __version__ is stale in 3.0.1
 except PackageNotFoundError:
     LIBRARY_VERSION = "unknown"
+# An editable install of a development branch may still report an older version, so
+# also detect by features the later versions added.
+if LIBRARY_VERSION == PREDICTED_FOR and hasattr(tinySA, "set_log_file"):
+    LIBRARY_VERSION = PREDICTED_FOR + "+dev"
+LIBRARY_V4 = hasattr(tinySA, "set_output_allowed")
 
 SECTIONS = ["identity", "backup", "usage", "accept", "library", "capture", "generator"]
 
@@ -83,7 +89,7 @@ RAISED = "python-exception"    # library raised before or while sending
 REFUSED = "device-refused"     # 'usb disk mode active', 'Command timeout', range errors
 
 # the same outcomes in the words the tsapython log file uses
-LOG_STATUS = {EMPTY: "ok", DATA: "ok", USAGE: "usage", UNKNOWN: "unknown-command",
+LOG_STATUS = {"device-rejected": "usage", EMPTY: "ok", DATA: "ok", USAGE: "usage", UNKNOWN: "unknown-command",
               REFUSED: "device-refused", TIMEOUT: "timeout", READ_FAILED: "read-failed",
               BLOCKED: "blocked", RAISED: "python-exception"}
 
@@ -200,6 +206,11 @@ class Prober:
             observed = RAISED
         elif not sent:
             observed = BLOCKED
+        elif LIBRARY_V4 and reply is not None and bytes(reply) in (b"ERROR", b""):
+            # 4.0.0 returns the error value for a device rejection; the raw reply is
+            # in the library log, not here. Report what the device did from the
+            # command classification of a bare 'empty' as accepted.
+            observed = "device-rejected" if bytes(reply) == b"ERROR" else EMPTY
         else:
             observed = classify(sent[-1], reply)
         record = self._record(section, pid, "library", label, wire, expect, observed,

@@ -545,7 +545,7 @@ class tinySA(
                 msgbytes = self.get_capture_return()
             else:
                 # text commands: read to the 'ch>' prompt, then clean
-                raw = self.get_serial_return()
+                raw = self.get_serial_return(echo=writebyte.strip())
                 # a None here means the serial read itself failed; pass that through
                 # rather than crashing in clean_return
                 msgbytes = self.clean_return(raw) if raw is not None else None
@@ -577,16 +577,35 @@ class tinySA(
 
         return msgbytes
 
-    def get_serial_return(self) -> bytearray | None:
+    def get_serial_return(self, echo: str | None = None) -> bytearray | None:
         # while there's a buffer, read in the returned message
         # original buffer reading from: https://groups.io/g/tinysa/topic/tinysa_screen_capture_using/82218670
+        #
+        # echo: the command that was just written. The device echoes it as the
+        # first line of its reply. When given, a prompt is only accepted AFTER
+        # that echo has been seen; anything before it is a late reply to an
+        # EARLIER command (one that timed out) and is discarded. Without this a
+        # stale 'sweep cw ...\r\nch> ' left over from a timeout was returned as
+        # the answer to the next command.
 
         ser = self._require_serial()
         buffer = bytes()
         start_time = time.monotonic()
+        echo_bytes = bytes(echo, 'utf-8') if echo else None
         while True:
             if ser.in_waiting > 0:
                 buffer += ser.read(ser.in_waiting)
+                if echo_bytes is not None:
+                    at = buffer.find(echo_bytes)
+                    if at == -1:
+                        # no echo yet: everything so far is stale output
+                        if buffer.endswith((b'ch> ', b'ch>')):
+                            self.print_message("discarding %d stale bytes from an earlier command" % len(buffer))
+                            buffer = bytes()
+                        continue
+                    if at > 0:
+                        buffer = buffer[at:]
+                        echo_bytes = None          # found; stop checking
                 try:
                     # The reply ends with the prompt 'ch> '. Earlier versions
                     # stopped at the FIRST '>' byte, which cut short any reply

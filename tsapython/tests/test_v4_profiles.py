@@ -261,3 +261,43 @@ def test_scan_raw_stream_reads_frames_and_interrupts():
     frames = list(d.scan_raw_stream(100, 200, 4, count=2))
     assert len(frames) == 2 and all(len(f) == 13 for f in frames)
     assert port.sent == ["scanraw 100 200 4 3", "pause"]
+
+
+# --- generator setup helper ---------------------------------------------------------
+
+def test_setup_generator_order(tsa):
+    assert tsa.setup_generator(10e6, -30, "am", 1000) is True
+    assert tsa._recorder.calls == [
+        "output off\r\n", "mode low output\r\n", "output off\r\n", "pause\r\n",
+        "level -30\r\n", "sweep cw 10000000\r\n", "modulation am\r\n", "modulation freq 1000\r\n",
+        "resume\r\n",
+    ]
+    assert "output on\r\n" not in tsa._recorder.calls
+
+
+def test_setup_generator_refuses_high_on_ultra(tsa):
+    tsa.set_error_byte_return(True)
+    assert tsa.setup_generator(300e6, -30, high=True) is False
+    assert "mode high output\r\n" not in tsa._recorder.calls
+
+
+def test_setup_generator_high_on_basic(tsa):
+    tsa.select_existing_device("BASIC")
+    assert tsa.setup_generator(300e6, 0, high=True) is True
+    assert "mode high output\r\n" in tsa._recorder.calls
+
+
+def test_set_generator_pauses_and_resumes(tsa):
+    assert tsa.set_generator(level_dbm=-40, freq_hz=20e6) is True
+    assert tsa._recorder.calls == ["pause\r\n", "level -40\r\n", "sweep cw 20000000\r\n", "resume\r\n"]
+
+
+def test_set_generator_only_sends_what_is_given(tsa):
+    assert tsa.set_generator(modulation_type="am", modulation_rate_hz=400) is True
+    assert tsa._recorder.calls == ["pause\r\n", "modulation am\r\n", "modulation freq 400\r\n", "resume\r\n"]
+
+
+def test_set_generator_reports_refusal(tsa):
+    tsa.set_error_byte_return(True)
+    assert tsa.set_generator(level_dbm=50) is False       # out of range -> blocked
+    assert tsa._recorder.calls == ["pause\r\n", "resume\r\n"]

@@ -94,3 +94,44 @@ def test_capture_through_command_uses_the_same_reader(parsing_tsa):
     pixels = bytes([0x3e] * 64)
     _load(parsing_tsa, pixels)
     assert parsing_tsa.command("capture") == bytearray(pixels)
+
+
+# --- stale output from a timed-out command is discarded ----------------------------
+
+def test_stale_reply_before_echo_is_discarded(parsing_tsa):
+    port = parsing_tsa.ser
+    port.reset_input_buffer = lambda: None
+    # a late reply to an earlier 'sweep cw' arrives first, then the real reply
+    port._buf = b"sweep cw 10000000\r\nch> " + b"modulation off\r\nch> "
+    assert parsing_tsa.command("modulation off") == bytearray(b"")
+
+
+def test_stale_reply_then_real_data(parsing_tsa):
+    port = parsing_tsa.ser
+    port.reset_input_buffer = lambda: None
+    port._buf = b"level -76\r\nch> " + b"deviceid\r\ndeviceid 7\r\nch> "
+    assert parsing_tsa.command("deviceid") == bytearray(b"deviceid 7\r")
+
+
+def test_echo_split_across_reads_still_works(parsing_tsa):
+    # the echo can be split across USB packets: 'devi' + 'ceid\r\n...'
+    class Chunked:
+        def __init__(self, chunks):
+            self.chunks = list(chunks)
+            self._buf = b""
+        @property
+        def in_waiting(self):
+            if not self._buf and self.chunks:
+                self._buf = self.chunks.pop(0)
+            return len(self._buf)
+        def read(self, n):
+            c, self._buf = self._buf[:n], self._buf[n:]
+            return c
+        def write(self, d):
+            return len(d)
+        def reset_input_buffer(self):
+            pass
+        def reset_output_buffer(self):
+            pass
+    parsing_tsa.ser = Chunked([b"devi", b"ceid\r\ndevi", b"ceid 7\r\nch> "])
+    assert parsing_tsa.command("deviceid") == bytearray(b"deviceid 7\r")
