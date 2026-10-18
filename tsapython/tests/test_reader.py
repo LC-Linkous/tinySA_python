@@ -234,3 +234,13 @@ def test_settle_after_output_and_modulation(parsing_tsa, monkeypatch):
     parsing_tsa.level(-76)                          # a between-sweeps command: no settle
     settles = [x for x in slept if x == tinySA.SETTLE_AFTER_IMMEDIATE_SETTER_S]
     assert len(settles) == 2
+
+
+def test_command_timeout_is_not_retried_for_a_non_idempotent_command(parsing_tsa):
+    parsing_tsa.set_serial_timeout(5)
+    parsing_tsa.set_error_byte_return(True)
+    port = parsing_tsa.ser
+    port.reset_input_buffer = lambda: None
+    _answers(port, [b"menu 6 2\r\nCommand timeout\r\n", b"menu 6 2\r\nch> "])
+    assert parsing_tsa.tinySA_serial("menu 6 2\r\n") == bytearray(b"ERROR")
+    assert len(port.written) == 1                   # 'menu' presses a button: never resent

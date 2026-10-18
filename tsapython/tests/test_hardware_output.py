@@ -2,9 +2,9 @@
 """
 Hardware tests that switch the tinySA's RF OUTPUT ON.
 
-Never run by default (pyproject deselects the marker). Two guards must both be
-satisfied: run with `pytest -m hardware_output`, and set the environment
-variable TSAPYTHON_OUTPUT_OK=1 to confirm a load or attenuator is on the RF port.
+Never run by default: pyproject deselects the marker, `-m "not hardware"` also
+deselects it, and the fixture skips unless the environment variable
+TSAPYTHON_OUTPUT_OK=1 confirms a load or attenuator is on the RF port.
 
     TSAPYTHON_OUTPUT_OK=1 uv run pytest -m hardware_output -s
 
@@ -18,7 +18,10 @@ import time
 
 import pytest
 
-pytestmark = pytest.mark.hardware_output
+# Both markers: `-m "not hardware"` (CI, README) must deselect these too. A
+# command-line -m REPLACES the one in pyproject's addopts rather than adding to
+# it, so the hardware_output marker alone did not keep them out of those runs.
+pytestmark = [pytest.mark.hardware, pytest.mark.hardware_output]
 
 LEVEL_MIN = -76          # bottom of every model's low output range
 

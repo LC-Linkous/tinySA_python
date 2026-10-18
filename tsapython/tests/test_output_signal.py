@@ -116,9 +116,14 @@ def test_mode_aliases_basic(tsa, method, expected):
     ("BASIC", "set_mod_AM_1khz", ["modulation am\r\n", "modulation freq 1000\r\n"]),
 ])
 def test_modulation_aliases(tsa, board, method, expected):
+    import warnings
     tsa.select_existing_device(board)
-    getattr(tsa, method)()
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        getattr(tsa, method)()
     assert tsa._recorder.calls == expected
+    deprecated = method in ("set_mod_AM_1khz", "set_mod_AM_10Hz")
+    assert any(issubclass(w.category, DeprecationWarning) for w in caught) is deprecated
 
 
 @pytest.mark.parametrize("board,val", [

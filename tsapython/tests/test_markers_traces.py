@@ -163,9 +163,10 @@ def test_trace_action_with_argument(tsa, action, arg, expected):
     assert tsa._recorder.last == expected
 
 
-def test_trace_clear_still_callable(tsa):
+def test_trace_clear_still_callable_but_warns(tsa):
     # deprecated (keyword left the firmware in 2021) but not removed
-    tsa.trace_clear(2)
+    with pytest.warns(DeprecationWarning):
+        tsa.trace_clear(2)
     assert tsa._recorder.last == "trace 2 clear\r\n"
 
 

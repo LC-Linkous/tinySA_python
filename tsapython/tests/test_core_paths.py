@@ -223,16 +223,30 @@ def test_get_profile_and_select_logs(tmp_path):
 
 # --- binary reads: timeout and streaming branches ---------------------------------------------
 
-def test_scan_raw_short_frame_times_out(parsing_tsa):
+def test_scan_raw_short_frame_is_a_failure(parsing_tsa):
+    # 4.0.0: a partial frame is not returned as data (callers unpack 3*pts bytes)
     parsing_tsa.ser._buf = b"scanraw 1 2 4 1\r\n{x\x01\x02x\x03"   # 2 of 4 points
-    out = parsing_tsa.get_binary_return(4, timeout=0.2)
-    assert out.startswith(b"{") and len(out) < 13
+    assert parsing_tsa.get_binary_return(4, timeout=0.2) is None
+    assert parsing_tsa._serial_timed_out is True
 
 
-def test_scan_raw_no_frame_start_returns_error_value(parsing_tsa):
+def test_scan_raw_short_frame_through_scan_raw_is_logged_as_timeout(parsing_tsa, tmp_path):
+    import json
+    parsing_tsa.set_serial_timeout(0.1)
+    log = tmp_path / "t.jsonl"
+    parsing_tsa.set_log_file(str(log))
+    parsing_tsa.ser.reset_input_buffer = lambda: None
+    parsing_tsa.ser._buf = b"scanraw 1000000 2000000 4 1\r\n{x\x01\x02"
+    assert parsing_tsa.scan_raw(1_000_000, 2_000_000, 4) is None
+    assert parsing_tsa.get_last_status() == "timeout"
+    rec = [json.loads(l) for l in log.read_text().splitlines() if '"scanraw' in l][-1]
+    assert rec["status"] == "timeout"
+
+
+def test_scan_raw_no_frame_start_is_a_failure(parsing_tsa):
     parsing_tsa.set_error_byte_return(True)
     parsing_tsa.ser._buf = b"scanraw 1 2 4 1\r\n"
-    assert parsing_tsa.get_binary_return(4, timeout=0.2) == bytearray(b"ERROR")
+    assert parsing_tsa.get_binary_return(4, timeout=0.2) is None
 
 
 def test_binary_streaming_mode_finds_boundary(parsing_tsa):
@@ -241,16 +255,15 @@ def test_binary_streaming_mode_finds_boundary(parsing_tsa):
     assert parsing_tsa.get_binary_return(None) == bytearray(frame[:-1])
 
 
-def test_binary_streaming_mode_idle_returns_partial(parsing_tsa):
+def test_binary_streaming_mode_idle_is_a_failure(parsing_tsa):
     parsing_tsa.ser._buf = b"scanraw\r\n{x\x01\x02"
-    out = parsing_tsa.get_binary_return(None, timeout=5, idle_timeout=0.1)
-    assert out.startswith(b"{")
+    assert parsing_tsa.get_binary_return(None, timeout=5, idle_timeout=0.1) is None
 
 
 def test_binary_streaming_mode_no_brace(parsing_tsa):
     parsing_tsa.set_error_byte_return(True)
     parsing_tsa.ser._buf = b"junk"
-    assert parsing_tsa.get_binary_return(None, timeout=0.2, idle_timeout=0.1) == bytearray(b"ERROR")
+    assert parsing_tsa.get_binary_return(None, timeout=0.2, idle_timeout=0.1) is None
 
 
 # --- sd_read paths ---------------------------------------------------------------------------
@@ -428,3 +441,55 @@ def test_abort_modes(tsa):
     tsa.abort_action()
     assert tsa._recorder.calls == ["abort on\r\n", "abort\r\n"]
     assert tsa.abort("maybe") == bytearray(b"")
+
+
+# --- 4.0.0 review fixes: command length, connect/disconnect lifecycle ---------------------------
+
+def test_command_longer_than_the_firmware_line_is_refused_before_sending(parsing_tsa):
+    # the check lives in tinySA_serial, so this goes through the FakePort, not the recorder
+    parsing_tsa.set_error_byte_return(True)
+    parsing_tsa.set_serial_timeout(0.2)
+    port = parsing_tsa.ser
+    assert parsing_tsa.text("A" * 48) == bytearray(b"ERROR")     # 'text ' + 48 = 53 bytes
+    assert port.written == []
+    assert parsing_tsa.get_last_status() == "blocked"
+    port._buf = b"text " + b"A" * 42 + b"\r\nch> "
+    assert parsing_tsa.text("A" * 42) == bytearray(b"")          # 'text ' + 42 = 47: the limit itself
+    assert port.written == [b"text " + b"A" * 42 + b"\r\n"]
+
+
+def test_connect_closes_the_port_when_identification_raises(monkeypatch):
+    import serial as pyserial
+    from tsapython import tinySA
+
+    class Dropped:
+        closed = False
+        port = "COMX"
+        def __init__(self, **kw):
+            pass
+        @property
+        def in_waiting(self):
+            raise pyserial.SerialException("device dropped")
+        def write(self, d):
+            return len(d)
+        def reset_input_buffer(self):
+            pass
+        def reset_output_buffer(self):
+            pass
+        def close(self):
+            Dropped.closed = True
+
+    monkeypatch.setattr(core.serial, "Serial", Dropped)
+    d = tinySA()
+    assert d.connect("COMX") is False
+    assert Dropped.closed is True
+    assert d.ser is None                    # not left pointing at a dead handle
+    with pytest.raises(RuntimeError):
+        d.version()
+
+
+def test_disconnect_leaves_the_library_not_connected(parsing_tsa):
+    parsing_tsa.disconnect()
+    assert parsing_tsa.ser is None
+    with pytest.raises(RuntimeError):
+        parsing_tsa.version()
