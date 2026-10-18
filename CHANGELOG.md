@@ -8,10 +8,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 Work on the current development branch. Entries move to a versioned section on
-release. Planned for 4.0.0 (API changes): device rejections returned as the
-library's error value; a library setting that must be on before the generator
-output can be switched on; per-device profiles; `scan_raw()` restricted to
-`unbuf` 0 or 1; firmware floor v1.4-182. See the README "Change Summary".
+release.
+
+## [4.0.0] - unreleased
+
+API changes. See the README section "Upgrading to 4.0.0". Developed on top of
+3.1.0; to be verified on current tinySA firmware before release.
+
+### Changed (breaking)
+- A command the device rejects (`usage:` line, `name?`, or a refusal such as
+  `usb disk mode active`) returns the library's error value (`b''`, or
+  `b'ERROR'` with `set_error_byte_return(True)`) instead of the device's text.
+  `command()` still returns the raw text.
+- The generator output is gated: `output("on")`, `set_output_on()` and
+  `cal_output()` with any value other than `"off"` return the error value and
+  send nothing until `set_output_allowed(True)` has been called.
+- The library identifies the device at `connect()`/`autoconnect()` (sends
+  `version`, `info`, `help`) and applies a per-model profile. Commands the
+  device lacks, words its model lacks, out-of-range `if`/`level`/`levelchange`
+  values and marker/trace numbers above the model's count are refused before
+  sending. `identifyOnConnect = False` skips identification.
+- `scan_raw()` accepts `unbuf` 0 or 1 only.
+- The serial read timeout defaults to 120 s instead of waiting indefinitely.
+  `tinySA.DEFAULT_SERIAL_TIMEOUT`, `tinySA(serial_timeout=...)` and
+  `set_serial_timeout(None)` adjust or disable it.
+- Oldest supported firmware is v1.4-182 (October 2024). Older firmware connects
+  with a warning and a `firmware-below-floor` log event.
+
+### Added
+- `_profiles.py`: `DeviceProfile` dataclass and the `BASIC`, `ZS405`, `ZS406`,
+  `ZS407` profiles; `identify()`, `get_profile()`, `profile`, `profileDetected`,
+  `deviceCommands`, `firmwareBuild`; `select_existing_device()` now selects a
+  profile by name.
+- `set_output_allowed()`, `get_output_allowed()`, `setup_generator()`,
+  `set_generator()`. Both helpers pause the sweep around settings changes:
+  in output mode the firmware services `level`/`sweep`/`mode` only between
+  generator sweeps (about 20 s on hardware), immediately while paused.
+- The text reader requires the command's own echo before accepting a prompt,
+  so a late reply from a timed-out command is discarded instead of being
+  returned as the answer to the next command.
+- `scan_raw_stream()`: the device-side continuous scanraw (firmware v1.4-177 or
+  later), experimental until run on hardware.
+- README sections: Upgrading to 4.0.0, Device Profiles, RF Output Setting; web
+  UI link (https://lc-linkous.github.io/tinysa-web/).
+- Hardware tests for identification, the gates and the output setting.
 
 ## [3.1.0] - 2026-10-17
 
@@ -194,7 +234,8 @@ repository gains the quality gates and health files below.
 See the [GitHub releases](https://github.com/LC-Linkous/tinySA_python/releases)
 for pre-3.0.0 history, when the library shipped as a single-class module.
 
-[Unreleased]: https://github.com/LC-Linkous/tinySA_python/compare/v3.1.0...HEAD
+[Unreleased]: https://github.com/LC-Linkous/tinySA_python/compare/v4.0.0...HEAD
+[4.0.0]: https://github.com/LC-Linkous/tinySA_python/compare/v3.1.0...v4.0.0
 [3.1.0]: https://github.com/LC-Linkous/tinySA_python/compare/v3.0.1...v3.1.0
 [3.0.1]: https://github.com/LC-Linkous/tinySA_python/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/LC-Linkous/tinySA_python/releases/tag/v3.0.0
