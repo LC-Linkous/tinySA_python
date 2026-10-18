@@ -40,6 +40,7 @@ test = [
 "Repository" = "https://github.com/LC-Linkous/tinySA_python"
 "Issues" = "https://github.com/LC-Linkous/tinySA_python/issues"
 "Changelog" = "https://github.com/LC-Linkous/tinySA_python/blob/main/CHANGELOG.md"
+"Web UI" = "https://lc-linkous.github.io/tinysa-web/"
 
 [build-system]
 requires = ["uv_build>=0.8.11,<0.9.0"]

@@ -28,7 +28,7 @@ The PyPI page: [https://pypi.org/project/tsapython/](https://pypi.org/project/ts
 
 Zenodo archive with DOI: [https://doi.org/10.5281/zenodo.20546764](https://doi.org/10.5281/zenodo.20546764)
 
-Web UI built on this library: [https://lc-linkous.github.io/tinysa-web/](https://lc-linkous.github.io/tinysa-web/). The web UI tracks the latest stable library release; it will be updated for 4.0.0 once 4.0.0 is stable.
+Web UI built on this library: [https://lc-linkous.github.io/tinysa-web/](https://lc-linkous.github.io/tinysa-web/) (source: [LC-Linkous/tinysa-web](https://github.com/LC-Linkous/tinysa-web)). The web UI tracks the latest stable library release; its 4.0.0 update follows this release.
 
 ## Table of Contents
 * [The tinySA Series of Devices](#the-tinysa-series-of-devices)
