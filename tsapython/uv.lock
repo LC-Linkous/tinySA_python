@@ -1797,9 +1797,6 @@ name = "tsapython"
 version = "4.0.0"
 source = { editable = "." }
 dependencies = [
-    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
-    { name = "numpy", version = "2.5.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "pyserial" },
 ]
 
@@ -1807,6 +1804,9 @@ dependencies = [
 plotting = [
     { name = "matplotlib", version = "3.10.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "matplotlib", version = "3.11.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
+    { name = "numpy", version = "2.5.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
     { name = "pyqt5", marker = "sys_platform == 'linux'" },
 ]
 test = [
@@ -1825,7 +1825,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "matplotlib", marker = "extra == 'plotting'", specifier = ">=3.10.5" },
-    { name = "numpy", specifier = ">=2.2.6" },
+    { name = "numpy", marker = "extra == 'plotting'", specifier = ">=2.2.6" },
     { name = "pyqt5", marker = "sys_platform == 'linux' and extra == 'plotting'" },
     { name = "pyserial", specifier = ">=3.5" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" },
