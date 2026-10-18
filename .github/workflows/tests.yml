@@ -99,8 +99,12 @@ jobs:
 
       - name: Build sdist + wheel
         # Catches packaging breakage on every push instead of at release time.
-        # release.yml does the same build when publishing.
+        # build-release.yml does the same build for a tag; release.yml publishes
+        # those files.
         run: uv build
+
+      - name: Metadata check (twine)
+        run: uvx twine check dist/*
 
       - name: Install the wheel into a clean environment and import it
         # A file missing from the wheel (a new module not picked up, a renamed
@@ -110,6 +114,27 @@ jobs:
           uv venv /tmp/wheelcheck
           uv pip install --python /tmp/wheelcheck/bin/python dist/*.whl
           /tmp/wheelcheck/bin/python -c "import tsapython; from tsapython import tinySA; from tsapython import DeviceProfile, PROFILES; print('tsapython', tsapython.__version__)"
+
+      - name: Install the sdist into a clean environment and import it
+        # The sdist is what a source-only install (and some distro packagers)
+        # build from; a file the wheel has but the sdist lacks fails only here.
+        run: |
+          uv venv /tmp/sdistcheck
+          uv pip install --python /tmp/sdistcheck/bin/python dist/*.tar.gz
+          /tmp/sdistcheck/bin/python -c "import tsapython; print('sdist ok', tsapython.__version__)"
+
+      - name: pip path the README documents (pip install -e ".[test]") still works
+        run: |
+          uv venv /tmp/pipcheck
+          uv pip install --python /tmp/pipcheck/bin/python -e ".[test]"
+          /tmp/pipcheck/bin/python -m pytest -q -m "not hardware" -p no:cacheprovider
+
+      - name: Examples and helper scripts at least compile
+        # They need a device to run; this catches a syntax error or a renamed
+        # import the test suite would never touch.
+        run: |
+          uv run python -m compileall -q examples tests/bench_generator.py tests/probe_firmware_returns.py tests/collect_samples.py
+          uv run python -c "import ast,glob,sys; [ast.parse(open(f).read(), f) for f in glob.glob('examples/*.py')]; print('examples parse')"
 
   metadata:
     name: version metadata agrees
