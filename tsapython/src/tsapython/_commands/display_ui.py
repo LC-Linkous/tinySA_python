@@ -11,7 +11,6 @@
 #   Author(s): Lauren Linkous
 ##--------------------------------------------------------------------------------------------------\
 
-import numpy as np
 import re
 
 from .._host import MixinHost
@@ -55,7 +54,7 @@ class DisplayUIMixin(MixinHost):
         # example return:
 
         # explicitly allowed vals
-        accepted_ID = np.arange(0, 32, 1) # max exclusive, so 0..31 (the firmware palette has 32 entries)
+        accepted_ID = range(0, 32) # max exclusive, so 0..31 (the firmware palette has 32 entries)
 
         if ID == None:
             # get the color

@@ -214,8 +214,9 @@ class OutputSignalMixin(MixinHost):
         # usage: modulation depth {percent}
         # example return: ''
 
-        if not self._check_word("modulation", "fm", self.profile.modulation_words):
-            return self.error_byte_return()   # depth exists only where fm does (Ultra family)
+        if "fm" not in self.profile.modulation_words:     # depth exists only where fm does (Ultra family)
+            self.print_message("ERROR: 'modulation depth' is not available on the %s" % self.profile.name)
+            return self.error_byte_return()
         if isinstance(val, (int, float)) and (not isinstance(val, bool)) and (0 <= val <= 100):
             writebyte = 'modulation depth '+str(int(val))+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
@@ -230,7 +231,8 @@ class OutputSignalMixin(MixinHost):
         # The device stores the deviation in steps of 100 Hz.
         # example return: ''
 
-        if not self._check_word("modulation", "fm", self.profile.modulation_words):
+        if "fm" not in self.profile.modulation_words:     # deviation exists only where fm does (Ultra family)
+            self.print_message("ERROR: 'modulation deviation' is not available on the %s" % self.profile.name)
             return self.error_byte_return()
         if isinstance(val, (int, float)) and (not isinstance(val, bool)) and (100 <= val <= 300000):
             writebyte = 'modulation deviation '+str(int(val))+'\r\n'

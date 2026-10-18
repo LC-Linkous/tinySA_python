@@ -11,7 +11,6 @@
 #   Author(s): Lauren Linkous
 ##--------------------------------------------------------------------------------------------------\
 
-import numpy as np
 
 from .._host import MixinHost
 
@@ -22,7 +21,7 @@ class LevelsGainMixin(MixinHost):
         # example return: bytearray(b'')
 
         #explicitly allowed vals
-        accepted_vals =  np.arange(0, 8, 1) # max exclusive
+        accepted_vals = range(0, 8) # max exclusive
         #check input
         if not self._check_command("agc"):
             return self.error_byte_return()
@@ -45,7 +44,7 @@ class LevelsGainMixin(MixinHost):
         # example return: bytearray(b'')
 
         #explicitly allowed vals
-        accepted_vals =  np.arange(0, 32, 1) # max exclusive, so 0..31
+        accepted_vals = range(0, 32) # max exclusive, so 0..31
         #check input
         if (str(val) == "auto") or (val in accepted_vals):
             writebyte = 'attenuate '+str(val)+'\r\n'

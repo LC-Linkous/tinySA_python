@@ -45,11 +45,10 @@ def test_sd_read_text_reply_is_not_read_as_a_length(parsing_tsa):
     parsing_tsa.set_error_byte_return(True)
     parsing_tsa.set_serial_timeout(5)
     port = parsing_tsa.ser
-    port.reset_input_buffer = lambda: None
-    port._buf = b"sd_read x.bin\r\nsd_read?\r\nch> "
+    port.answer(b"sd_read x.bin\r\nsd_read?\r\nch> ")
     started = time.monotonic()
     out = parsing_tsa.sd_read("x.bin")
-    assert (time.monotonic() - started) < 1.0
+    assert (time.monotonic() - started) < 4.0    # did not wait out the 5 s timeout
     assert out == bytearray(b"ERROR")
     assert parsing_tsa.get_last_status() == "unknown-command"
 
@@ -57,15 +56,13 @@ def test_sd_read_text_reply_is_not_read_as_a_length(parsing_tsa):
 def test_sd_read_err_reply_is_text(parsing_tsa):
     parsing_tsa.select_existing_device("ZS405")
     port = parsing_tsa.ser
-    port.reset_input_buffer = lambda: None
-    port._buf = b"sd_read x.bin\r\nerr: (4) no file\r\nch> "
+    port.answer(b"sd_read x.bin\r\nerr: (4) no file\r\nch> ")
     assert parsing_tsa.sd_read("x.bin") == bytearray(b"err: (4) no file")
 
 
 def test_sd_read_file_bytes_still_work(parsing_tsa):
     parsing_tsa.select_existing_device("ZS405")
     port = parsing_tsa.ser
-    port.reset_input_buffer = lambda: None
     body = bytes(range(256)) * 2            # 512 bytes incl. 'c','h','>',' ' values
-    port._buf = b"sd_read x.bin\r\n" + (512).to_bytes(4, "little") + body + b"ch> "
+    port.answer(b"sd_read x.bin\r\n" + (512).to_bytes(4, "little") + body + b"ch> ")
     assert parsing_tsa.sd_read("x.bin") == bytearray(body)

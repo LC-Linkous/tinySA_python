@@ -2,16 +2,9 @@
 """
 Command-construction tests for the OutputSignalMixin.
 
-Mocked-serial `tsa` fixture; no hardware.
-
-This module has several KNOWN BUGS that are pinned below with the actual
-(broken) behavior, so a fix will surface as a failing assertion:
-  * the set_cal_output_* aliases call self.caloutput(...) which doesn't exist
-    (the method is cal_output) -> AttributeError
-  * set_direct_on/off call direct() with one arg, but direct() requires freq
-    -> TypeError
-  * mode() has a stray '+ +' producing a unary-plus on a str -> TypeError
-  * modulation() builds an 'output ...' command instead of 'modulation ...'
+Mocked-serial `tsa` fixture; no hardware. The aliases, mode(), modulation()
+and the RF output gate are covered here; the generator helpers' step logic is
+in test_v4_profiles.py and test_status.py.
 """
 
 import pytest

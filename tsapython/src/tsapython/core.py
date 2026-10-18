@@ -662,7 +662,10 @@ class tinySA(
                                           _function=_function or sys._getframe(1).f_code.co_name)
 
         words = writebyte.split()
-        if words and words[0] in self._IMMEDIATE_SETTERS and status == STATUS_OK:
+        if (len(words) >= 2 and words[0] in self._IMMEDIATE_SETTERS and not words[1].startswith("?")
+                and status == STATUS_OK):
+            # only the SETTER form changes a setting and triggers the redraw;
+            # the bare or '?' query form answers from the shell thread with nothing to settle
             time.sleep(self.SETTLE_AFTER_IMMEDIATE_SETTER_S)
 
         if (not _raw) and status in (STATUS_USAGE, STATUS_UNKNOWN, STATUS_REFUSED):
@@ -711,28 +714,19 @@ class tinySA(
                 if buffer.rstrip().endswith(b'Command timeout'):
                     complete = buffer.rstrip()
                     break
-                try:
-                    # The reply ends with the prompt 'ch> '. Earlier versions
-                    # stopped at the FIRST '>' byte, which cut short any reply
-                    # whose text contained one (e.g. 'usage: deviceid [<number>]').
-                    # The trailing space may arrive in a later USB packet, so
-                    # either ending counts as complete; a stray space is
-                    # discarded by reset_input_buffer() before the next command.
-                    if buffer.endswith(b'ch> '):
-                        complete = buffer[:-1]       # keep 'ch>' for clean_return
-                    elif buffer.endswith(b'ch>'):
-                        complete = buffer
-                    else:
-                        raise ValueError
-                except ValueError:
-                    # this is an acceptable err, so can skip it and keep looping
-                    continue
-                except Exception as err:
-                    # otherwise, something else is wrong
-                    self.print_message("ERROR: exception thrown while reading serial")
-                    self.print_message(err)
-                    return None
-                break
+                # The reply ends with the prompt 'ch> '. Earlier versions
+                # stopped at the FIRST '>' byte, which cut short any reply
+                # whose text contained one (e.g. 'usage: deviceid [<number>]').
+                # The trailing space may arrive in a later USB packet, so
+                # either ending counts as complete; a stray space is
+                # discarded by reset_input_buffer() before the next command.
+                if buffer.endswith(b'ch> '):
+                    complete = buffer[:-1]           # keep 'ch>' for clean_return
+                    break
+                if buffer.endswith(b'ch>'):
+                    complete = buffer
+                    break
+                continue
             elif (self.serialTimeout is not None) and ((time.monotonic() - start_time) > self.serialTimeout):
                 # only reachable when the user has set a timeout; the default waits forever
                 self._serial_timed_out = True

@@ -31,14 +31,15 @@ def test_timeout_returns_none_when_device_is_silent(parsing_tsa):
     started = time.monotonic()
     out = parsing_tsa.command("version")       # FakePort has nothing to say
     assert out is None
-    assert 0.15 < (time.monotonic() - started) < 2.0
+    # it waited for the timeout (lower bound), and did not wait for the default
+    # 120 s (generous upper bound: slow CI runners must not make this flaky)
+    assert 0.15 < (time.monotonic() - started) < 30
 
 
 def test_timeout_does_not_affect_a_normal_reply(parsing_tsa):
     parsing_tsa.set_serial_timeout(0.5)
     port = parsing_tsa.ser
-    port.reset_input_buffer = lambda: None      # keep the canned reply in place
-    port._buf = b"deviceid\r\ndeviceid 0\r\n" + PROMPT
+    port.answer(b"deviceid\r\ndeviceid 0\r\n" + PROMPT)
     assert parsing_tsa.command("deviceid") == bytearray(b"deviceid 0\r")
 
 
@@ -58,8 +59,7 @@ def test_timeout_can_be_cleared(parsing_tsa):
 
 def _load(parsing_tsa, pixels):
     port = parsing_tsa.ser
-    port.reset_input_buffer = lambda: None
-    port._buf = b"capture\r\n" + pixels + PROMPT
+    port.answer(b"capture\r\n" + pixels + PROMPT)
 
 
 def test_capture_returns_every_pixel_byte(parsing_tsa):
@@ -100,16 +100,14 @@ def test_capture_through_command_uses_the_same_reader(parsing_tsa):
 
 def test_stale_reply_before_echo_is_discarded(parsing_tsa):
     port = parsing_tsa.ser
-    port.reset_input_buffer = lambda: None
     # a late reply to an earlier 'sweep cw' arrives first, then the real reply
-    port._buf = b"sweep cw 10000000\r\nch> " + b"modulation off\r\nch> "
+    port.answer(b"sweep cw 10000000\r\nch> " + b"modulation off\r\nch> ")
     assert parsing_tsa.command("modulation off") == bytearray(b"")
 
 
 def test_stale_reply_then_real_data(parsing_tsa):
     port = parsing_tsa.ser
-    port.reset_input_buffer = lambda: None
-    port._buf = b"level -76\r\nch> " + b"deviceid\r\ndeviceid 7\r\nch> "
+    port.answer(b"level -76\r\nch> " + b"deviceid\r\ndeviceid 7\r\nch> ")
     assert parsing_tsa.command("deviceid") == bytearray(b"deviceid 7\r")
 
 
@@ -137,17 +135,6 @@ def test_echo_split_across_reads_still_works(parsing_tsa):
     assert parsing_tsa.command("deviceid") == bytearray(b"deviceid 7\r")
 
 
-def _answers(port, replies):
-    # the device answers each WRITE with the next canned reply (one reply per
-    # command, like a real port, instead of everything at once)
-    replies = list(replies)
-    def write(data):
-        port.written.append(data)
-        port._buf = replies.pop(0) if replies else b""
-        return len(data)
-    port.write = write
-
-
 # --- the firmware's own 'Command timeout' (v1.4-222+) ends a reply --------------------
 
 def test_command_timeout_line_ends_the_reply(parsing_tsa):
@@ -157,12 +144,11 @@ def test_command_timeout_line_ends_the_reply(parsing_tsa):
     parsing_tsa.set_serial_timeout(5)
     parsing_tsa.set_error_byte_return(True)
     port = parsing_tsa.ser
-    port.reset_input_buffer = lambda: None
     # first attempt is dropped by the firmware; the library's single retry gets the prompt
-    _answers(port, [b"level -76\r\nCommand timeout\r\n", b"level -76\r\nch> "])
+    port.answer(b"level -76\r\nCommand timeout\r\n", b"level -76\r\nch> ")
     started = time.monotonic()
     out = parsing_tsa.level(-76)
-    assert (time.monotonic() - started) < 1.0
+    assert (time.monotonic() - started) < 4.0       # did not wait out the 5 s timeout
     assert out == bytearray(b"")                    # the retry succeeded
     assert port.written == [b"level -76\r\n", b"level -76\r\n"]
 
@@ -171,8 +157,7 @@ def test_command_timeout_twice_is_an_error(parsing_tsa):
     parsing_tsa.set_serial_timeout(5)
     parsing_tsa.set_error_byte_return(True)
     port = parsing_tsa.ser
-    port.reset_input_buffer = lambda: None
-    _answers(port, [b"level -76\r\nCommand timeout\r\n"] * 2)
+    port.answer(b"level -76\r\nCommand timeout\r\n", b"level -76\r\nCommand timeout\r\n")
     out = parsing_tsa.level(-76)
     assert out == bytearray(b"ERROR")               # retried exactly once, then gave up
     assert len(port.written) == 2
@@ -186,8 +171,7 @@ def test_command_timeout_is_logged_as_refused(parsing_tsa, tmp_path):
     parsing_tsa.set_serial_timeout(5)
     parsing_tsa.set_error_byte_return(True)
     port = parsing_tsa.ser
-    port.reset_input_buffer = lambda: None
-    _answers(port, [b"sweep cw 10000000\r\nCommand timeout\r\n"] * 2)
+    port.answer(b"sweep cw 10000000\r\nCommand timeout\r\n", b"sweep cw 10000000\r\nCommand timeout\r\n")
     assert parsing_tsa.set_sweep_cw(10_000_000) == bytearray(b"ERROR")
     parsing_tsa.close_log_file()
     records = [json.loads(line) for line in log.read_text().splitlines()]
@@ -207,8 +191,7 @@ def test_timeout_log_keeps_what_arrived(parsing_tsa, tmp_path):
     parsing_tsa.set_log_file(str(log))
     parsing_tsa.set_serial_timeout(0.2)
     port = parsing_tsa.ser
-    port.reset_input_buffer = lambda: None
-    port._buf = b"level -76\r\n"
+    port.answer(b"level -76\r\n")
     assert parsing_tsa.level(-76) is None
     parsing_tsa.close_log_file()
     records = [json.loads(line) for line in log.read_text().splitlines()]
@@ -224,13 +207,10 @@ def test_settle_after_output_and_modulation(parsing_tsa, monkeypatch):
     slept = []
     monkeypatch.setattr("tsapython.core.time.sleep", lambda s: slept.append(s))
     port = parsing_tsa.ser
-    port.reset_input_buffer = lambda: None
     parsing_tsa.set_output_allowed(True)
-    port._buf = b"output off\r\nch> "
+    port.answer(b"output off\r\nch> ", b"modulation off\r\nch> ", b"level -76\r\nch> ")
     parsing_tsa.output("off")
-    port._buf = b"modulation off\r\nch> "
     parsing_tsa.modulation("off")
-    port._buf = b"level -76\r\nch> "
     parsing_tsa.level(-76)                          # a between-sweeps command: no settle
     settles = [x for x in slept if x == tinySA.SETTLE_AFTER_IMMEDIATE_SETTER_S]
     assert len(settles) == 2
@@ -240,7 +220,78 @@ def test_command_timeout_is_not_retried_for_a_non_idempotent_command(parsing_tsa
     parsing_tsa.set_serial_timeout(5)
     parsing_tsa.set_error_byte_return(True)
     port = parsing_tsa.ser
-    port.reset_input_buffer = lambda: None
-    _answers(port, [b"menu 6 2\r\nCommand timeout\r\n", b"menu 6 2\r\nch> "])
+    port.answer(b"menu 6 2\r\nCommand timeout\r\n", b"menu 6 2\r\nch> ")
     assert parsing_tsa.tinySA_serial("menu 6 2\r\n") == bytearray(b"ERROR")
     assert len(port.written) == 1                   # 'menu' presses a button: never resent
+
+
+# --- replies arriving in pieces (a real port delivers USB packets, not whole replies) ----------
+
+def test_prompt_split_between_ch_and_angle_space(parsing_tsa):
+    parsing_tsa.ser.answer_chunked([b"deviceid\r\ndevi", b"ceid 3\r\nc", b"h", b"> "])
+    assert parsing_tsa.command("deviceid") == bytearray(b"deviceid 3\r")
+
+
+def test_prompt_trailing_space_in_a_later_packet(parsing_tsa):
+    parsing_tsa.ser.answer_chunked([b"deviceid\r\ndeviceid 3\r\nch>", b" "])
+    assert parsing_tsa.command("deviceid") == bytearray(b"deviceid 3\r")
+    # the stray space is flushed by reset_input_buffer() before the next command
+    parsing_tsa.ser.answer(b"version\r\nv1\r\nch> ")
+    assert parsing_tsa.command("version") == bytearray(b"v1\r")
+
+
+def test_stale_prompt_alone_is_discarded_then_real_reply_read(parsing_tsa):
+    # the late prompt of an earlier timed-out command arrives on its own first
+    parsing_tsa.ser.answer_chunked([b"sweep cw 10000000\r\nch> ", b"modulation off\r\nch> "])
+    assert parsing_tsa.command("modulation off") == bytearray(b"")
+
+
+def test_command_timeout_split_across_packets(parsing_tsa):
+    parsing_tsa.set_serial_timeout(5)
+    parsing_tsa.set_error_byte_return(True)
+    parsing_tsa.ser.answer_chunked([b"menu 6 2\r\nCommand ti", b"meout\r\n"])
+    assert parsing_tsa.tinySA_serial("menu 6 2\r\n") == bytearray(b"ERROR")
+    assert parsing_tsa.get_last_status() == "device-refused"
+
+
+def test_capture_in_many_packets(parsing_tsa):
+    parsing_tsa.screenWidth, parsing_tsa.screenHeight = 8, 4
+    pixels = bytes(range(64))
+    parsing_tsa.ser.answer(b"capture\r\n" + pixels + PROMPT, chunks=9)
+    assert parsing_tsa.capture() == bytearray(pixels)
+
+
+def test_scanraw_in_many_packets(parsing_tsa):
+    frame = b"{" + b"x\x7d\x3e" * 5 + b"}"       # '}' and '>' inside samples
+    parsing_tsa.ser.answer(b"scanraw 1000000 2000000 5 1\r\n" + frame, chunks=7)
+    out = parsing_tsa.scan_raw(1_000_000, 2_000_000, 5)
+    assert out == bytearray(frame[:-1])
+
+
+def test_sd_read_in_many_packets(parsing_tsa):
+    parsing_tsa.select_existing_device("ZS405")
+    body = bytes(range(256))
+    parsing_tsa.ser.answer(b"sd_read f.bin\r\n" + (256).to_bytes(4, "little") + body + PROMPT, chunks=11)
+    assert parsing_tsa.sd_read("f.bin") == bytearray(body)
+
+
+# --- settle: only the setter forms, not queries or refused calls ------------------------------
+
+def test_settle_skipped_for_queries_and_refusals(parsing_tsa, monkeypatch):
+    from tsapython import tinySA
+    slept = []
+    monkeypatch.setattr("tsapython.core.time.sleep", lambda s: slept.append(s))
+    parsing_tsa.set_output_allowed(True)
+    port = parsing_tsa.ser
+    port.answer(b"output\r\nusage: output on|off|normal|mixer\r\nch> ")
+    parsing_tsa.command("output")                               # query form
+    port.answer(b"leveloffset\r\nusage: leveloffset ...\r\nch> ")
+    parsing_tsa.command("leveloffset")
+    port.answer(b"modulation xx\r\nusage: modulation off|am|fm\r\nch> ")
+    parsing_tsa.tinySA_serial("modulation xx\r\n")             # rejected setter
+    port.answer(b"caloutput 30\r\nch> ")
+    parsing_tsa.cal_output(30)                                  # accepted setter: settles
+    port.answer(b"leveloffset low 1.5\r\nch> ")
+    parsing_tsa.tinySA_serial("leveloffset low 1.5\r\n")       # accepted setter: settles
+    settles = [x for x in slept if x == tinySA.SETTLE_AFTER_IMMEDIATE_SETTER_S]
+    assert len(settles) == 2

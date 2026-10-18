@@ -14,7 +14,7 @@ import pytest
 
 
 # ---------------------------------------------------------------------------
-# agc : accepts "auto" or ints 0..7  (np.arange(0, 8))
+# agc : accepts "auto" or ints 0..7
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("val,expected", [

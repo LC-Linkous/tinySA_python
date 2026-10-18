@@ -11,6 +11,8 @@
 #   Author(s): Lauren Linkous
 ##--------------------------------------------------------------------------------------------------\
 
+import serial
+
 from .._host import MixinHost
 
 class PresetsConfigMixin(MixinHost):
@@ -180,7 +182,13 @@ class PresetsConfigMixin(MixinHost):
 
         writebyte = 'reset\r\n'
         self.print_message("sending reset signal. Serial will disconnect...")
-        msgbytes = self.tinySA_serial(writebyte, printBool=False)
+        try:
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
+        except serial.SerialException as err:
+            # expected: the device reboots and the USB port goes away mid-reply.
+            # The reply is never read. Reconnect with connect()/autoconnect().
+            self.print_message("device reset; the serial port dropped as expected (" + str(err) + ")")
+            msgbytes = None
         return msgbytes
 
     def reset_device(self) -> bytearray | None:
@@ -355,7 +363,7 @@ class PresetsConfigMixin(MixinHost):
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def wait(self, val: int | None = None) -> bytearray | None:
+    def wait(self, val: int | str | None = None) -> bytearray | None:
         # wait for a single sweep to finish and pauses
         #  sweep or waits for specified number of seconds
         # usage: wait [{seconds}]
@@ -368,11 +376,16 @@ class PresetsConfigMixin(MixinHost):
             writebyte = 'wait\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("device in wait() state. manually resume")
-        elif val>0:
-            writebyte = 'wait ' + str(val) + '\r\n'
+            return msgbytes
+        try:
+            seconds = int(str(val))
+        except ValueError:
+            seconds = 0                      # not a whole number: refused below
+        if seconds > 0:
+            writebyte = 'wait ' + str(seconds) + '\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
-            self.print_message("device wait() trigged for " + str(val) + " seconds.")
+            self.print_message("device wait() trigged for " + str(seconds) + " seconds.")
         else:
-            self.print_message("ERROR: wait() takes None or positive ints")
+            self.print_message("ERROR: wait() takes None or a positive whole number of seconds")
             msgbytes = self.error_byte_return()
         return msgbytes

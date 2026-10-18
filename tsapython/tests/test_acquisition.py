@@ -67,10 +67,12 @@ def test_get_sample_pts_alias(tsa):
     assert tsa._recorder.last == "hop 100000000.0 500000000.0 50 1\r\n"
 
 
-def test_hop_non_numeric_returns_none(tsa):
+def test_hop_non_numeric_is_refused(tsa):
+    tsa.set_error_byte_return(True)
     out = tsa.hop("a", 500e6, 101)
     assert tsa._recorder.count == 0
-    assert out is None
+    assert out == bytearray(b"ERROR")           # 4.0.0: the error value, not None (None means a timeout)
+    assert tsa.get_last_status() == "blocked"
 
 
 # --- scan: 0<=start<stop, pts<=maxPoints ----------------------------------
@@ -221,3 +223,18 @@ def test_continuous_scanraw_indefinite(tsa):
     # no count -> runs forever; islice proves it keeps going
     some = list(itertools.islice(tsa.continuous_scanraw(150_000_000, 200_000_000, 5, 1), 4))
     assert len(some) == 4
+
+
+# --- 4.0.0 review fixes --------------------------------------------------------------------
+
+def test_trigger_level_accepts_a_numeric_string(tsa):
+    tsa.trigger_level("-52.5")
+    assert tsa._recorder.last == "trigger -52.5\r\n"
+    tsa.trigger_level(-40)
+    assert tsa._recorder.last == "trigger -40\r\n"
+
+
+def test_trigger_level_refuses_a_word(tsa):
+    tsa.set_error_byte_return(True)
+    assert tsa.trigger_level("loud") == bytearray(b"ERROR")
+    assert tsa._recorder.count == 0                 # nothing sent

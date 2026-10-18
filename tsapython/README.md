@@ -28,7 +28,7 @@ This repository uses official resources and documentation but is **NOT** endorse
 pip install tsapython
 ```
 
-The library itself depends only on `numpy` and `pyserial`. The plotting examples need an optional extra:
+The library itself depends only on `pyserial`. The plotting examples need `numpy` and `matplotlib`, installed with an optional extra:
 
 ```bash
 pip install "tsapython[plotting]"

@@ -11,7 +11,6 @@
 #   Author(s): Lauren Linkous
 ##--------------------------------------------------------------------------------------------------\
 
-import numpy as np
 
 from .._host import MixinHost
 
@@ -55,7 +54,7 @@ class CalibrationMixin(MixinHost):
                                "harm_lna", "out", "out_direct",
                                "out_adf", "out_ultra", "off", "on"]
 
-        accepted_slots = np.arange(0, 20, 1) # max exclusive.
+        accepted_slots = range(0, 20) # max exclusive.
 
         if argName in accepted_table_args and not self._check_word("correction", argName, self.profile.correction_words):
             return self.error_byte_return()

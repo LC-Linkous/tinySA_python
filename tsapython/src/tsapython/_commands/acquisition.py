@@ -15,6 +15,19 @@ from collections.abc import Iterator
 
 from .._host import MixinHost
 
+def _is_number(value: object) -> bool:
+    # an int/float (not a bool) or a string that parses as one, e.g. "-52.5"
+    if isinstance(value, bool):
+        return False
+    if isinstance(value, (int, float)):
+        return True
+    try:
+        float(str(value))
+        return True
+    except ValueError:
+        return False
+
+
 class AcquisitionMixin(MixinHost):
     def data(self, val: int = 0) -> bytearray | None:
         # dumps the trace data.
@@ -91,9 +104,8 @@ class AcquisitionMixin(MixinHost):
             return msgbytes
 
         else:
-            self.print_message("hop() takes arguments start=Int, stop=Int, inc=Int, outmask=None|Int")
-
-        return None
+            self.print_message("ERROR: hop() takes arguments start=Int, stop=Int, inc=Int, outmask=None|Int")
+            return self.error_byte_return()
 
     def get_sample_pts(self, start: int, stop: int, pts: int) -> bytearray | None:
         # alias for hop()
@@ -397,8 +409,8 @@ class AcquisitionMixin(MixinHost):
             writebyte = 'trigger ' + str(val) +'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("setting trigger to " + str(val))
-        elif val==None and isinstance(freq, (int, float)) and not isinstance(freq, bool):
-            # the level is a float in the firmware (e.g. -52.5)
+        elif val==None and _is_number(freq):
+            # the level is a float in the firmware (e.g. -52.5); a numeric string is fine too
             writebyte = 'trigger ' + str(freq) +'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("setting trigger level (dBm) to " + str(freq))
