@@ -102,6 +102,35 @@ Ultra+ boards are from the firmware source.
 - `tests/test_hardware_output.py` also carries the `hardware` marker, so
   `-m "not hardware"` (CI, README) deselects it; a command-line `-m` replaces
   the one in `addopts`.
+- `hop()` with bad arguments returns the error value (it returned `None`, the
+  timeout value, with a message the log did not record).
+- `trigger_level()` / `trigger(None, level)` accept a numeric string such as
+  `"-52.5"`; `wait("5")` is accepted and `wait("five")` returns the error value
+  instead of raising `TypeError`.
+- `reset()` returns `None` when the port drops, as it does on every reset,
+  instead of raising `SerialException`.
+- `modulation_depth()` / `modulation_deviation()` on a Basic say the setting is
+  not available on that model (the message named `fm` instead).
+- The settle after `output` / `modulation` / `caloutput` / `leveloffset` applies
+  to the setter form only; the bare or `?` query forms no longer wait 0.4 s.
+
+### Changed
+- numpy is no longer a dependency of the library (it was used for four range
+  checks, now `range()`); it moved to the `plotting` extra with matplotlib for
+  the `examples/` scripts: `pip install "tsapython[plotting]"`.
+
+### Tests and CI (no library change)
+- `FakePort` behaves like a real port: `reset_input_buffer()` flushes, replies
+  are queued per write with `answer()`, and `answer(..., chunks=n)` /
+  `answer_chunked([...])` deliver a reply in several reads. New tests cover a
+  prompt split as `ch` + `> `, the trailing prompt space in a later packet, a
+  stale prompt arriving alone, `Command timeout` split across packets, and the
+  capture, scanraw and sd_read readers fed in many packets.
+- Timing asserts loosened to bounds a slow CI runner cannot miss; smoke tests
+  assert the setting round-trips; dead fixture seeding and a stale module
+  docstring removed.
+- CI: `twine check`, an sdist install, the documented `pip install -e ".[test]"`
+  path, and a compile check of `examples/` and the helper scripts.
 - `Command timeout` (firmware v1.4-222+) is recognised as the end of a reply,
   so a dropped command costs about 20 s instead of the full read timeout.
 - A log record for a read that timed out now keeps the bytes that did arrive.

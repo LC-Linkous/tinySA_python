@@ -164,6 +164,22 @@ The fake ports in `tests/conftest.py` (`tsa` / `recorder`, `parsing_tsa`) and th
 `tests/test_core_paths.py` cover everything else without a device; CI runs only
 those.
 
+`parsing_tsa`'s `FakePort` behaves like pyserial where the readers care:
+`reset_input_buffer()` flushes (so a reply loaded before the command is thrown
+away, as a stale reply would be on hardware), and replies are queued per write:
+
+```python
+port = parsing_tsa.ser
+port.answer(b"deviceid\r\ndeviceid 3\r\nch> ")            # the next write gets this reply
+port.answer(reply, chunks=5)                               # ...delivered over five reads
+port.answer_chunked([b"deviceid\r\ndevi", b"ceid 3\r\nch", b"> "])   # exact packet boundaries
+```
+
+Test a parser with the reply in pieces as well as whole: a real port delivers
+USB packets, and the bugs that reached hardware (a prompt cut at `>`, a stale
+reply accepted as the answer) were all boundary bugs. Load `_buf` directly only
+when calling a reader (`get_serial_return`, `get_binary_return`, ...) on its own.
+
 ## Releasing
 
 1. Bump `version` in `tsapython/pyproject.toml`, `CITATION.cff` and `zenodo.json`

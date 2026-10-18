@@ -111,9 +111,9 @@ Several usage examples are provided in the [Example Implementations](#example-im
 ### PyPI Install
 
 
-The `tsapython` package (from PyPI at [https://pypi.org/project/tsapython/3.0.0/](https://pypi.org/project/tsapython/3.0.0/))  can be installed with:
+The `tsapython` package (from PyPI at [https://pypi.org/project/tsapython/](https://pypi.org/project/tsapython/))  can be installed with:
 
-```python
+```bash
 
 pip install tsapython
 
@@ -131,7 +131,7 @@ Developing a project, or running something custom? You can pull the code from Gi
 This is a summarized version of the instructions at [https://www.sarahglasmacher.com/how-to-build-python-package-uv/](https://www.sarahglasmacher.com/how-to-build-python-package-uv/):
 
 
-```python
+```bash
 # install UV
 pip install uv
 
@@ -148,17 +148,17 @@ pip install dist/tsapython-3.0.0-py3-none-any.whl
 ```
 
 ## Requirements
-The library itself depends only on `pyserial` and `numpy`. The examples in this
+The library itself depends only on `pyserial`. The examples in this
 README additionally use `matplotlib` (and `pyQt5` on Linux, where it provides the
 GUI backend for the figures; it is not needed on all Windows machines).
 
 All dependencies are declared in `pyproject.toml`, with the example dependencies
 available as the `plotting` extra:
-```python
-# library only (numpy + pyserial)
+```bash
+# library only (pyserial is its one dependency)
 pip install tsapython
 
-# library + plotting dependencies for the examples
+# library + numpy and matplotlib for the examples/ scripts
 pip install "tsapython[plotting]"
 
 # development / running the test suite
@@ -167,7 +167,7 @@ pip install -e ".[test]"
 
 If you prefer installing the libraries manually (we recommend a Python virtual
 environment):
-```python
+```bash
 pip install pyserial numpy matplotlib pyQt5
 ```
 
@@ -333,7 +333,7 @@ different directory will produce an `Unknown pytest.mark.hardware` warning.
 This is a configured [uv](https://docs.astral.sh/uv/) project with a committed
 `uv.lock`, so the recommended workflow is:
 ```bash
-uv sync          # installs pyserial + numpy + the dev group, editable-installs tsapython
+uv sync          # installs pyserial + the dev group, editable-installs tsapython
 uv run pytest    # hardware tests self-skip when no device is connected
 ```
 
@@ -373,7 +373,7 @@ uv run mypy
 ### Probing a device's firmware
 
 `tests/probe_firmware_returns.py` is a manual helper that asks a connected tinySA what its firmware accepts: it harvests every command's usage line, sends old and new argument forms, calls the library functions, and writes `probe_results.json` and `probe_results.md`. Nothing in the default run touches the RF output or writes to the device. Use it before and after a firmware update, or to report a board the library has not been verified on:
-```python
+```bash
 uv run python tests/probe_firmware_returns.py --backup --capture --out probe_results/my_unit
 uv run python tests/probe_firmware_returns.py --help
 ```
@@ -386,7 +386,7 @@ device, sends a set of read-only commands, and writes their responses to
 `tests/fixtures/captured_responses.py`. The `test_captured_hardware.py` tests then run the
 library's parsing logic against those real captures (these run without a device, since the
 bytes are frozen in the fixture). Run it with a tinySA connected:
-```python
+```bash
 # auto-detect the serial port
 uv run python tests/collect_samples.py
 
@@ -398,7 +398,7 @@ uv run python tests/collect_samples.py --port /dev/ttyACM0    # Linux/Mac
 ### Example scripts
 The files in `examples/` are runnable demonstrations (not part of the automated test
 suite) and require a connected device plus the plotting dependencies:
-```python
+```bash
 pip install "tsapython[plotting]"
 python examples/complete_workflow.py
 python examples/hardware_walkthrough.py
@@ -789,7 +789,7 @@ for port, desc, hwid in ports:
 
 Example output for this method (on Windows) is as follows:
 
-```python
+```text
 
 Port: COM4, Description: Standard Serial over Bluetooth link (COM4), Hardware ID: BTHENUM\{00001101-0000-1000-8000-00805F9B34FB}_LOCALMFG&0000\7&D0D1EE&0&000000000000_00000000
 Port: COM3, Description: Standard Serial over Bluetooth link (COM3), Hardware ID: BTHENUM\{00001101-0000-1000-8000-00805F9B34FB}_LOCALMFG&0002\7&D0D1EE&0&B8B3DC31CBA8_C00000000
@@ -813,7 +813,7 @@ for port, desc, hwid in ports:
 
 ```
 
-```python
+```text
 
 Port: /dev/ttyS0, Description: n/a, Hardware ID: n/a
 Port: /dev/ttyS3, Description: n/a, Hardware ID: n/a
@@ -841,13 +841,13 @@ This library returns strings as cleaned byte arrays. The command and first `\r\n
 
 The original message format:
 
-```python
+```text
 bytearray(b'deviceid\r\ndeviceid 0\r\nch>')
 ```
 
 Cleaned version:
 
-```python
+```text
 bytearray(b'deviceid 0\r')
 ```
 
@@ -882,7 +882,7 @@ else:
 
 Example output for this method is as follows:
 
-```python
+```text
 
 bytearray(b'tinySA ULTRA\r\n2019-2024 Copyright @Erik Kaashoek\r\n2016-2020 Copyright @edy555\r\nSW licensed under GPL. See: https://github.com/erikkaashoek/tinySA\r\nVersion: tinySA4_v1.4-143-g864bb27\r\nBuild Time: Jan 10 2024 - 11:14:08\r\nKernel: 4.0.0\r\nCompiler: GCC 7.2.1 20170904 (release) [ARM/embedded-7-branch revision 255204]\r\nArchitecture: ARMv7E-M Core Variant: Cortex-M4F\r\nPort Info: Advanced kernel mode\r\nPlatform: STM32F303xC Analog & DSP\r')
 
@@ -2458,7 +2458,7 @@ Quick Link Table:
 * **Description:** Measures the input level at each of the indicated frequencies. This is a measurement over a range (ends inclusive), with a specified number of samples.
 * **Original Usage:** `hop {start(Hz)} {stop(Hz)} {step(Hz) | points}  [outmask]`
 * **Direct Library Function Call:** `hop(start=Int, stop=Int, inc=Int, outmask=None|1|2|3)`
-* **Example Return:** e
+* **Example Return:** the measured levels as text. Bad arguments return the error value (4.0.0; they used to return `None`, which is what a timeout returns)
 * **Alias Functions:**
     * `get_sample_pts(start=Int, stop=Int, pts=Int)`
 * **Notes:**  _Ultra only_. From [tinysa-org](https://tinysa-org.translate.goog/wiki/pmwiki.php?n=Main.USBInterface&_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en-US): if the 3rd parameter is below 450 it is assumed to be points, otherwise as step frequency Outmask selects if the frequency (1) or level (2) is output. 
@@ -2763,10 +2763,10 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Description:** Resets the tinySA
 * **Original Usage:** `reset`
 * **Direct Library Function Call:** `reset()`
-* **Example Return:** empty bytearray, serial error message. depends on the system.
+* **Example Return:** `None`. The device reboots and the USB port disappears before any reply, so there is nothing to read; since 4.0.0 the resulting `SerialException` is caught and `None` returned instead of being raised.
 * **Alias Functions:**
     * `reset_device()`
-* **Notes:**  Disconnects the serial too.
+* **Notes:**  Disconnects the serial too. Call `disconnect()` (or let the object go) and `connect()`/`autoconnect()` again once the device has re-enumerated.
 
 
 ### **restart**
@@ -3047,8 +3047,8 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 ### **trigger**
 * **Description:** sets the trigger type or level
 * **Original Usage:** `trigger auto|normal|single|{level(dBm)}` or `trigger {value}\r\ntrigger {auto|normal|single}\r`
-* **Direct Library Function Call:** `trigger(val="auto"|"normal"|"single"|None, freq=None|Int|Float)`
-* **Example Return:** empty bytearray
+* **Direct Library Function Call:** `trigger(val="auto"|"normal"|"single"|None, freq=None|Int|Float|"-52.5")`
+* **Example Return:** empty bytearray. The level may be a number or a numeric string (4.0.0; `trigger_level("-52.5")` used to be refused).
 * **Alias Functions:**
     * `trigger_auto()`
     * `trigger_normal()`
@@ -3117,8 +3117,8 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 ### **wait**
 * **Description:** wait for a single sweep to finish and pauses sweep or waits for specified number of seconds
 * **Original Usage:** `wait [{seconds}]`
-* **Direct Library Function Call:** `wait(val=None|Int)`
-* **Example Return:** empty bytearray
+* **Direct Library Function Call:** `wait(val=None|Int|"Int")`
+* **Example Return:** empty bytearray. A numeric string (`"5"`) is accepted; anything that is not a positive whole number returns the error value (4.0.0; it used to raise `TypeError`).
 * **Alias Functions:**
     * None
 * **Notes:** Without an argument, this puts device in the WAIT state and it needs to manually RESUME. `wait()` now sends the bare command; in earlier versions the default argument was rejected and `wait(None)` was needed.
