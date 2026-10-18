@@ -80,6 +80,7 @@ class tinySA(
         self._log_reason = ""
         self._serial_busy = False      # True while tinySA_serial() is running
         self._serial_timed_out = False # set by the read helpers, read by tinySA_serial()
+        self._timed_out_partial = bytes() # what HAD arrived when a text read timed out (for the log)
 
 
         # VARS BELOW HERE will be largely replaced with device class config calls
@@ -523,6 +524,7 @@ class tinySA(
         started = time.monotonic()
         self._serial_busy = True
         self._serial_timed_out = False
+        self._timed_out_partial = bytes()
         binary = False
         msgbytes: bytearray | None
         try:
@@ -554,6 +556,10 @@ class tinySA(
 
         if self._serial_timed_out:
             status, reason = STATUS_TIMEOUT, "no prompt from the device within the timeout"
+            if self._timed_out_partial:
+                # keep what did arrive: it says whether the device echoed the
+                # command, printed 'usage:', or said nothing at all
+                reason += "; received: " + repr(self._timed_out_partial[-120:])
         elif binary:
             status, reason = classify_reply("", msgbytes)   # binary data is never 'usage'
         else:
@@ -605,7 +611,15 @@ class tinySA(
                         continue
                     if at > 0:
                         buffer = buffer[at:]
-                        echo_bytes = None          # found; stop checking
+                    echo_bytes = None              # found; stop checking
+                # Firmware >= v1.4-222: when the sweep thread does not pick up a
+                # command within 20 s the shell prints 'Command timeout' and
+                # NO prompt. Treat that line as the end of the reply, so the
+                # caller gets an error after ~20 s instead of waiting out the
+                # library timeout (120 s by default) for a prompt that never comes.
+                if buffer.rstrip().endswith(b'Command timeout'):
+                    complete = buffer.rstrip()
+                    break
                 try:
                     # The reply ends with the prompt 'ch> '. Earlier versions
                     # stopped at the FIRST '>' byte, which cut short any reply
@@ -631,8 +645,9 @@ class tinySA(
             elif (self.serialTimeout is not None) and ((time.monotonic() - start_time) > self.serialTimeout):
                 # only reachable when the user has set a timeout; the default waits forever
                 self._serial_timed_out = True
-                self.print_message("WARNING: no prompt from the device after %.1f s (have %d bytes)"
-                                   % (self.serialTimeout, len(buffer)))
+                self._timed_out_partial = buffer
+                self.print_message("WARNING: no prompt from the device after %.1f s (have %d bytes: %r)"
+                                   % (self.serialTimeout, len(buffer), buffer[-80:]))
                 return None
             else:
                 # nothing waiting: yield instead of spinning a CPU core

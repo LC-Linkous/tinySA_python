@@ -23,6 +23,19 @@ pytestmark = pytest.mark.hardware_output
 LEVEL_MIN = -76          # bottom of every model's low output range
 
 
+def _restore(dev):
+    # Put the device back the way the input-mode tests expect it, whatever
+    # happened: output muted, no modulation, low input mode, sweeping.
+    dev.set_serial_timeout(25)              # a wedged device must not cost 120 s per step
+    for step in (lambda: dev.output("off"), lambda: dev.modulation("off"),
+                 lambda: dev.pause(), lambda: dev.mode("low", "input"), lambda: dev.resume()):
+        try:
+            step()
+        except Exception:                   # a dead port must not hide the real failure
+            pass
+    dev.disconnect()
+
+
 @pytest.fixture
 def gen():
     if os.environ.get("TSAPYTHON_OUTPUT_OK") != "1":
@@ -32,14 +45,24 @@ def gen():
     dev.set_error_byte_return(True)
     found, connected = dev.autoconnect()
     if not connected:
-        pytest.skip("no tinySA device connected")
+        pytest.skip("no tinySA device connected (or its port is held by another program)")
+    log_path = os.environ.get("TSAPYTHON_LOG")       # e.g. TSAPYTHON_LOG=gen.jsonl
+    if log_path:
+        dev.set_log_file(log_path)
     dev.set_output_allowed(True)
-    assert dev.setup_generator(10e6, LEVEL_MIN) is True
+    try:
+        started = time.monotonic()
+        if dev.setup_generator(10e6, LEVEL_MIN) is not True:
+            pytest.fail("setup_generator(10 MHz, %d dBm) failed after %.0f s; run with "
+                        "TSAPYTHON_LOG=gen.jsonl to see which command the device did not answer"
+                        % (LEVEL_MIN, time.monotonic() - started))
+    except BaseException:
+        # the port MUST be released, or every later test in this process skips
+        # with 'no tinySA device connected' because autoconnect cannot open it
+        _restore(dev)
+        raise
     yield dev
-    dev.output("off")
-    dev.modulation("off")
-    dev.mode("low", "input")
-    dev.disconnect()
+    _restore(dev)
 
 
 def ok(reply):

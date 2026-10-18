@@ -579,6 +579,8 @@ Everything here was read from the [tinySA firmware source](https://github.com/er
 
 Firmware versions are a commit count after the `v1.4` tag, so `v1.4-143` is older than `v1.4-244`. The `version` command prints it, and the log file records it as `build`.
 
+**The firmware has a timeout of its own.** From v1.4-222 the device prints `Command timeout` (and no prompt) when a command that runs between sweeps is not picked up within 20 s. The library treats that line as the end of the reply, so the call returns the error value after about 20 s rather than waiting out the read timeout; in the log the record has `status: device-refused` and its reason names `Command timeout`. A record for a read that timed out keeps whatever bytes did arrive in its `reason` field, which is the first thing to look at when a command goes unanswered.
+
 ### Supported Devices
 
 | Device | Profile name | `version` reply | `profile.verified` |

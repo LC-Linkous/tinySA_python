@@ -135,3 +135,57 @@ def test_echo_split_across_reads_still_works(parsing_tsa):
             pass
     parsing_tsa.ser = Chunked([b"devi", b"ceid\r\ndevi", b"ceid 7\r\nch> "])
     assert parsing_tsa.command("deviceid") == bytearray(b"deviceid 7\r")
+
+
+# --- the firmware's own 'Command timeout' (v1.4-222+) ends a reply --------------------
+
+def test_command_timeout_line_ends_the_reply(parsing_tsa):
+    # The sweep thread did not pick the command up within 20 s: the shell
+    # prints 'Command timeout' and NO prompt. The reader must not wait out the
+    # library timeout for a prompt that will never come.
+    parsing_tsa.set_serial_timeout(5)
+    parsing_tsa.set_error_byte_return(True)
+    port = parsing_tsa.ser
+    port.reset_input_buffer = lambda: None
+    port._buf = b"level -76\r\nCommand timeout\r\n"
+    started = time.monotonic()
+    out = parsing_tsa.level(-76)
+    assert (time.monotonic() - started) < 1.0
+    assert out == bytearray(b"ERROR")               # classified as device-refused
+
+
+def test_command_timeout_is_logged_as_refused(parsing_tsa, tmp_path):
+    import json
+    log = tmp_path / "t.jsonl"
+    parsing_tsa.set_serial_timeout(0.1)          # the session record's version/info reads hit a silent port
+    parsing_tsa.set_log_file(str(log))
+    parsing_tsa.set_serial_timeout(5)
+    parsing_tsa.set_error_byte_return(True)
+    port = parsing_tsa.ser
+    port.reset_input_buffer = lambda: None
+    port._buf = b"sweep cw 10000000\r\nCommand timeout\r\n"
+    assert parsing_tsa.set_sweep_cw(10_000_000) == bytearray(b"ERROR")
+    parsing_tsa.close_log_file()
+    records = [json.loads(line) for line in log.read_text().splitlines()]
+    cmd = [r for r in records if r["type"] == "command" and r["sent"].startswith("sweep cw")][0]
+    assert cmd["status"] == "device-refused"
+    assert "Command timeout" in cmd["reason"]
+
+
+def test_timeout_log_keeps_what_arrived(parsing_tsa, tmp_path):
+    # a partial reply (echo but no prompt) is kept in the log record's reason,
+    # so a hardware log says what the device DID send before going quiet
+    import json
+    log = tmp_path / "t.jsonl"
+    parsing_tsa.set_serial_timeout(0.1)
+    parsing_tsa.set_log_file(str(log))
+    parsing_tsa.set_serial_timeout(0.2)
+    port = parsing_tsa.ser
+    port.reset_input_buffer = lambda: None
+    port._buf = b"level -76\r\n"
+    assert parsing_tsa.level(-76) is None
+    parsing_tsa.close_log_file()
+    records = [json.loads(line) for line in log.read_text().splitlines()]
+    cmd = [r for r in records if r["type"] == "command" and r["sent"] == "level -76"][0]
+    assert cmd["status"] == "timeout"
+    assert "level -76" in cmd["reason"]

@@ -184,3 +184,7 @@ Icon?
 ._*
 .Spotlight-V100
 .Trashes
+# local hardware-session output (never committed)
+*.jsonl
+probe_results/
+bench_results/
