@@ -6,7 +6,7 @@ name: Build release assets
 # Two ways to run it:
 #   1. Push a tag `vX.Y.Z`. A DRAFT release is created for the tag with the
 #      built files attached. Edit the notes on the release page, then publish.
-#      Publishing fires release.yml, which rebuilds and uploads to PyPI.
+#      Publishing fires release.yml, which uploads THESE files to PyPI.
 #   2. Actions tab -> "Build release assets" -> Run workflow, and type the tag.
 #      Use this to (re)attach files to a release that already exists.
 #
@@ -25,7 +25,7 @@ on:
         type: string
 
 permissions:
-  contents: write           # create the draft release and upload its assets
+  contents: read            # only the 'attach' job below gets write
 
 defaults:
   run:
@@ -57,7 +57,7 @@ jobs:
           python-version: "3.12"
 
       - name: Sync environment
-        run: uv sync
+        run: uv sync --locked
 
       - name: Test suite, lint, type check
         run: |
@@ -89,18 +89,34 @@ jobs:
           name: dist-${{ env.TAG }}
           path: tsapython/dist/
 
+  attach:
+    # Separate job so the write token is never in scope while tests and
+    # third-party actions run above.
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write         # create the draft release and upload its assets
+    env:
+      TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - name: Fetch the built files
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-${{ env.TAG }}
+          path: dist/
+
       - name: Create the draft release if the tag has none
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "release $TAG exists; attaching files to it"
           else
-            notes="Draft created by the build-release workflow. Paste the release notes here, then publish; publishing runs release.yml and uploads to PyPI."
+            notes="Draft created by the build-release workflow. Paste the release notes here, then publish; publishing runs release.yml, which uploads these files to PyPI."
             gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft --title "$TAG" --notes "$notes"
           fi
 
       - name: Attach files to the release
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: gh release upload "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --clobber

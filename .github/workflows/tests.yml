@@ -2,13 +2,16 @@ name: Tests
 
 on:
   push:
-    branches: [main]
+    branches: [main, "v*"]      # release branches (v4.0.0, ...) get CI before a PR exists
   pull_request:
   workflow_dispatch:
   schedule:
     # Weekly, so a dependency or interpreter change that breaks the suite is
     # noticed between releases rather than at the next one.
     - cron: "41 6 * * 1"
+
+permissions:
+  contents: read
 
 # Cancel superseded runs on the same ref (saves CI minutes on rapid pushes).
 concurrency:
@@ -31,7 +34,7 @@ jobs:
         # The library is pyserial-based and developed on Windows, lightly
         # tested on Linux -- so both matter; macOS is cheap to include.
         os: [windows-latest, ubuntu-latest, macos-latest]
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
       - uses: actions/checkout@v4
@@ -43,7 +46,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Sync environment (deps + dev group, editable install)
-        run: uv sync
+        # --locked: fail if uv.lock is stale instead of silently re-resolving
+        run: uv sync --locked
 
       - name: Run test suite (hardware tests deselected)
         run: uv run pytest -m "not hardware" --cov=tsapython --cov-report=xml --cov-report=term-missing --cov-fail-under=85
@@ -71,7 +75,7 @@ jobs:
           python-version: "3.12"
 
       - name: Sync environment
-        run: uv sync
+        run: uv sync --locked
 
       - name: Ruff lint
         # Blocking ruleset is E9 + F only (see [tool.ruff.lint] in
@@ -105,7 +109,7 @@ jobs:
         run: |
           uv venv /tmp/wheelcheck
           uv pip install --python /tmp/wheelcheck/bin/python dist/*.whl
-          /tmp/wheelcheck/bin/python -c "import tsapython; from tsapython import tinySA; from tsapython._profiles import BASIC; print('tsapython', tsapython.__version__)"
+          /tmp/wheelcheck/bin/python -c "import tsapython; from tsapython import tinySA; from tsapython import DeviceProfile, PROFILES; print('tsapython', tsapython.__version__)"
 
   metadata:
     name: version metadata agrees

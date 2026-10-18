@@ -4,7 +4,7 @@ name: CodeQL
 # once a week, so a new query that matches old code is still reported.
 on:
   push:
-    branches: [main]
+    branches: [main, "v*"]
   pull_request:
     branches: [main]
   schedule:
