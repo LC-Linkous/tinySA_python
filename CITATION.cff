@@ -12,7 +12,7 @@ authors:
     given-names: "Lauren"
     orcid: "https://orcid.org/0000-0001-9945-5125"
 version: "4.0.0"
-date-released: "2026-10-17"
+date-released: "2026-10-18"
 license: GPL-2.0-only
 repository-code: "https://github.com/LC-Linkous/tinySA_python"
 url: "https://github.com/LC-Linkous/tinySA_python"
