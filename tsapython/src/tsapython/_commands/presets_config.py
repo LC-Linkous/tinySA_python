@@ -38,7 +38,7 @@ class PresetsConfigMixin(MixinHost):
             elif val == "off":
                 self.print_message("ABORT option DISABLED")
                 self.abortEnabled = False
-        elif val == None: #action
+        elif val is None: #action
             if self.abortEnabled == True:
                 writebyte = 'abort\r\n'
                 msgbytes = self.tinySA_serial(writebyte, printBool=False)
@@ -94,7 +94,7 @@ class PresetsConfigMixin(MixinHost):
         # usage: deviceid [{number}]
         # example return: bytearray(b'deviceid 12\r')
 
-        if ID == None:
+        if ID is None:
             #get the device ID
             writebyte = 'deviceid\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
@@ -372,7 +372,7 @@ class PresetsConfigMixin(MixinHost):
         # without passing None explicitly.)
         # example return:
 
-        if val == None:
+        if val is None:
             writebyte = 'wait\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("device in wait() state. manually resume")

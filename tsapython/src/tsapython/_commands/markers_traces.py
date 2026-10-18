@@ -56,7 +56,7 @@ class MarkersTracesMixin(MixinHost):
         #explicitly allowed vals
         accepted_vals =  ["on", "off", "peak"]
         #check input
-        if ID == None:
+        if ID is None:
             self.print_message("ERROR: marker() takes ID=Int|0..4")
             msgbytes = self.error_byte_return()
             return msgbytes

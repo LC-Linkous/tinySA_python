@@ -344,13 +344,13 @@ class OutputSignalMixin(MixinHost):
             lambda: self.output("off"),
             lambda: self.mode("high" if high else "low", "output"),
             lambda: self.output("off"),           # the mode change already muted; be explicit
-            lambda: self.pause(),
+            self.pause,
             lambda: self.level(level_dbm),
             lambda: self.set_sweep_cw(int(freq_hz)),
             lambda: self.modulation(modulation_type)]
         if modulation_rate_hz is not None and str(modulation_type) != "off":
             steps.append(lambda: self.modulation_freq(modulation_rate_hz))
-        steps.append(lambda: self.resume())
+        steps.append(self.resume)
         return self._run_steps(steps, "setup_generator()")
 
     def _run_steps(self, steps: "list[typing.Callable[[], object]]", name: str) -> bool:
@@ -376,7 +376,7 @@ class OutputSignalMixin(MixinHost):
         # 'level' and 'sweep cw' return at once in output mode (see
         # setup_generator); the resume lets the next generator sweep apply them.
         # Only the arguments given are sent. Returns True if every step was accepted.
-        steps: list[typing.Callable[[], object]] = [lambda: self.pause()]
+        steps: list[typing.Callable[[], object]] = [self.pause]
         if level_dbm is not None:
             steps.append(lambda: self.level(level_dbm))
         if freq_hz is not None:
@@ -389,7 +389,7 @@ class OutputSignalMixin(MixinHost):
             steps.append(lambda: self.modulation_depth(depth_percent))
         if deviation_hz is not None:
             steps.append(lambda: self.modulation_deviation(deviation_hz))
-        steps.append(lambda: self.resume())
+        steps.append(self.resume)
         return self._run_steps(steps, "set_generator()")
 
     def ultra(self, val: int | float | str = "off", freq: int | float | str | None = None) -> bytearray | None:

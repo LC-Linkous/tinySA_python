@@ -21,7 +21,7 @@ class CalibrationMixin(MixinHost):
         # usage: actual_freq [{frequency}]
         # example return: bytearray(b'3000000000\r')
 
-        if val == None:
+        if val is None:
             #get the dac
             writebyte = 'actual_freq\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
@@ -58,7 +58,7 @@ class CalibrationMixin(MixinHost):
 
         if argName in accepted_table_args and not self._check_word("correction", argName, self.profile.correction_words):
             return self.error_byte_return()
-        if (argName in accepted_table_args) and (slot==None):
+        if (argName in accepted_table_args) and (slot is None):
             # prints out the table as it currently is
             writebyte = 'correction ' + str(argName)+ '\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
@@ -302,7 +302,7 @@ class CalibrationMixin(MixinHost):
         # usage: vbat_offset [{0..4095}]
         # example return: bytearray(b'300\r')
 
-        if val == None:
+        if val is None:
             #get the offset
             writebyte = 'vbat_offset\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
@@ -329,7 +329,7 @@ class CalibrationMixin(MixinHost):
         # usage: zero {level}\r\n174dBm
         # example return:
 
-        if val == None:
+        if val is None:
             writebyte = 'zero\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("returning zero offset")

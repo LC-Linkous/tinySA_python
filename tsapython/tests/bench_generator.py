@@ -200,8 +200,8 @@ def main():
             bench_log.close()
             try:
                 tsa.disconnect()
-            except Exception:
-                pass
+            except Exception as err:
+                print("note: disconnect raised", err)
     print("readings: %s" % os.path.join(out_dir, "readings.jsonl"))
     print("commands: %s" % log_path)
 

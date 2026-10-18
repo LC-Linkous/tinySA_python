@@ -91,7 +91,7 @@ class AcquisitionMixin(MixinHost):
             if (isinstance(outmask, int)) and (not isinstance(outmask, bool)) and (1 <= outmask <= 3):
                 writebyte = 'hop ' + str(start) + ' ' + str(stop)  + ' ' + str(inc) + ' ' + str(outmask) + '\r\n'
 
-            elif outmask ==None:
+            elif outmask is None:
                 writebyte = 'hop ' + str(start) + ' ' + str(stop) + ' ' + str(inc) + '\r\n'
 
             else:
@@ -146,7 +146,7 @@ class AcquisitionMixin(MixinHost):
             # start == stop is allowed: the firmware treats it as a zero-span scan
 
         if (0<=start) and (start <= stop) and (pts <= self.maxPoints):
-            if outmask == None:
+            if outmask is None:
                 writebyte = 'scan '+str(start)+' '+str(stop)+' '+str(pts)+'\r\n'
             else:
                  writebyte = 'scan '+str(start)+' '+str(stop)+' '+str(pts)+ ' '+str(outmask)+'\r\n'
@@ -299,13 +299,13 @@ class AcquisitionMixin(MixinHost):
         accepted_table_args = ["start", "stop", "center",
                                "span", "cw"]
 
-        if (argName==None) and (val==None):
+        if (argName is None) and (val is None):
             # do sweep
             writebyte = 'sweep\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
 
         elif (argName in accepted_table_args):
-            if val == None:
+            if val is None:
                 #error
                 self.print_message("ERROR: sweep " + str(argName) + " needs a value")
                 msgbytes = self.error_byte_return()
@@ -368,7 +368,7 @@ class AcquisitionMixin(MixinHost):
             #   ({start(Hz)} {stop(Hz)} [0..290])]
             # # example return:
         msgbytes: bytearray | None
-        if (startVal==None) or (stopVal==None):
+        if (startVal is None) or (stopVal is None):
             self.print_message("ERROR: sweep start and stop need non-empty values")
             msgbytes = self.error_byte_return()
         elif (int(startVal) >= int(stopVal)):
@@ -409,7 +409,7 @@ class AcquisitionMixin(MixinHost):
             writebyte = 'trigger ' + str(val) +'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("setting trigger to " + str(val))
-        elif val==None and _is_number(freq):
+        elif val is None and _is_number(freq):
             # the level is a float in the firmware (e.g. -52.5); a numeric string is fine too
             writebyte = 'trigger ' + str(freq) +'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)

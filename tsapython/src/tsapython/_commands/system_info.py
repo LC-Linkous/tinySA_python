@@ -30,7 +30,7 @@ class SystemInfoMixin(MixinHost):
         # usage: dac [0..4095]
         # example return: bytearray(b'usage: dac {value(0-4095)}\r\ncurrent value: 1922\r')
 
-        if val == None:
+        if val is None:
             #get the dac
             writebyte = 'dac\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)

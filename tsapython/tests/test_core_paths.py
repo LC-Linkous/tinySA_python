@@ -421,6 +421,7 @@ def test_scan_raw_stream_bad_range_and_idle():
             return len(data)
     d.ser = OneFrame()
     frames = list(d.scan_raw_stream(1e8, 2e8, 4, count=1))
+    assert len(frames) == 1
     assert len(frames) == 1 and d.ser.sent[-1] == "pause"
     del acq
 

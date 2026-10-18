@@ -517,7 +517,7 @@ class tinySA(
             pid = port_info.pid
 
             # check if it's a tinySA or nanoVNA:
-            if (vid==None):
+            if (vid is None):
                 pass
             elif (hex(vid) == '0x483') and (hex(pid)=='0x5740'):
                 self.print_message(f"tinySA device identified at port: {port}")
@@ -554,8 +554,8 @@ class tinySA(
             self.print_message(err)
             try:
                 self.ser.close()
-            except Exception:
-                pass
+            except Exception as close_err:
+                self.print_message("WARNING: closing the port after the failed connect raised: " + str(close_err))
             self.ser = None
             return False
 

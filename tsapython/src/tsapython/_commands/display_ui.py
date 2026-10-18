@@ -56,7 +56,7 @@ class DisplayUIMixin(MixinHost):
         # explicitly allowed vals
         accepted_ID = range(0, 32) # max exclusive, so 0..31 (the firmware palette has 32 entries)
 
-        if ID == None:
+        if ID is None:
             # get the color
             writebyte = 'color\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
