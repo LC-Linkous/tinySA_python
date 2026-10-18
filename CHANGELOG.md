@@ -10,10 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Work on the current development branch. Entries move to a versioned section on
 release.
 
-## [4.0.0] - unreleased
+## [4.0.0] - 2026-10-18
 
-API changes. See the README section "Upgrading to 4.0.0". Developed on top of
-3.1.0; to be verified on current tinySA firmware before release.
+API changes. See the README section "Upgrading to 4.0.0". Verified on a tinySA
+Ultra ZS405 running tinySA4_v1.4-252 (identification, the gates, `scan_raw_stream()`,
+and the signal-generator sequence with the output on into a load); the Basic and
+Ultra+ boards are from the firmware source.
 
 ### Changed (breaking)
 - A command the device rejects (`usage:` line, `name?`, or a refusal such as
@@ -48,7 +50,26 @@ API changes. See the README section "Upgrading to 4.0.0". Developed on top of
   so a late reply from a timed-out command is discarded instead of being
   returned as the answer to the next command.
 - `scan_raw_stream()`: the device-side continuous scanraw (firmware v1.4-177 or
-  later), experimental until run on hardware.
+  later), verified on hardware.
+- `get_last_status()`: how the last command ended (`ok`, `blocked`, `usage`,
+  `unknown-command`, `device-refused`, `timeout`, `read-failed`), independent of
+  the return value. In the default error mode an accepted setter and a rejected
+  one both return `b''`; this tells them apart.
+- `tinySA.MAX_COMMAND_LENGTH` (47): commands longer than the firmware's command
+  line are refused before sending instead of running truncated on the device
+  and timing out in the library.
+- `DeviceProfile` and `PROFILES` are exported from the package.
+- The deprecated aliases `set_mod_AM_1khz()`, `set_mod_AM_10Hz()` and
+  `trace_clear()` emit a `DeprecationWarning`.
+- `tests/test_hardware_output.py` (`hardware_output` marker, output on into a
+  load), `tests/bench_generator.py` (receiver bench script, run by hand),
+  `TSAPYTHON_LOG=<path>` for the hardware fixtures.
+- CI: Dependabot, CodeQL, weekly scheduled run, wheel install smoke test,
+  version-metadata and changelog checks, Python 3.14 in the matrix,
+  `uv sync --locked`; `build-release.yml` builds a tag's files onto a draft
+  release and `release.yml` publishes those same files to PyPI.
+- Issue and PR templates updated for 4.0.0 (log file, firmware build, board,
+  device mode; profile gating and hardware runs in the PR checklist).
 - README sections: Upgrading to 4.0.0, Device Profiles, RF Output Setting; web
   UI link (https://lc-linkous.github.io/tinysa-web/).
 - Hardware tests for identification, the gates and the output setting.
@@ -59,7 +80,28 @@ API changes. See the README section "Upgrading to 4.0.0". Developed on top of
   `leveloffset` was dropped by the firmware and answered with `Command timeout`
   20 s later (ZS405, v1.4-252). The library now waits
   `SETTLE_AFTER_IMMEDIATE_SETTER_S` (0.4 s) after those four commands and
-  resends a command once when the device replies `Command timeout`.
+  resends a command once when the device replies `Command timeout`. Only
+  idempotent setters are resent (`_RETRY_AFTER_COMMAND_TIMEOUT`); `menu`,
+  `touchcal`, `restart`, `save` and the like are reported as refused instead.
+- `setup_generator()` and `set_generator()` now detect a refused step in the
+  default error mode (they compared return values, and `b''` is also what an
+  accepted setter returns). They stop at the first refused step, resume the
+  sweep, and return False.
+- `direct()`, `ultra()`, `restart()`, `sd_delete()`, `sd_read()` and
+  `freq_corr()` are refused before sending on a Basic, like the other
+  Ultra-only commands.
+- `sd_read()` on a firmware without the command (or with a bad argument) read
+  the text reply as a 4-byte file length and waited the whole timeout; the
+  text is now returned and classified.
+- `connect()` closes the port and clears `ser` when the device cannot be read
+  after the port opened; `disconnect()` clears `ser`, so the next command raises
+  the library's `RuntimeError` rather than pyserial's `PortNotOpenError`.
+- A timed-out or short `scanraw` frame is a failure (`None`, log status
+  `timeout`) instead of being returned as data and logged `ok`. The binary
+  read's time limit follows the serial read timeout instead of a fixed 10 s.
+- `tests/test_hardware_output.py` also carries the `hardware` marker, so
+  `-m "not hardware"` (CI, README) deselects it; a command-line `-m` replaces
+  the one in `addopts`.
 - `Command timeout` (firmware v1.4-222+) is recognised as the end of a reply,
   so a dropped command costs about 20 s instead of the full read timeout.
 - A log record for a read that timed out now keeps the bytes that did arrive.

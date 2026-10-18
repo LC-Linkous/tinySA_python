@@ -40,6 +40,8 @@ Web UI built on this library: [https://lc-linkous.github.io/tinysa-web/](https:/
 * [Running Tests](#running-tests)
 * [Error Handling](#error-handling)
 * [Logging](#logging)
+    * [Serial read timeout](#serial-read-timeout)
+    * [Did the device accept it?](#did-the-device-accept-it)
 * [Upgrading to 4.0.0](#upgrading-to-400)
 * [Device Profiles](#device-profiles)
 * [RF Output Setting](#rf-output-setting)
@@ -554,7 +556,7 @@ Example (level `commands`):
 {"t":"2026-10-09T19:22:04.650Z","type":"command","seq":3,"function":"attenuate","sent":"","status":"blocked","elapsed_ms":0,"reply":"","reply_len":0,"truncated":false,"reason":"ERROR: attenuate() takes vals [0 - 31]|\"auto\""}
 ```
 
-The log is the way to find out why a call returned `b''` or `b'ERROR'`. In the example, `mode("high", "input")` still returns the device's usage text to the caller, as it always has; the log additionally records that the device rejected it.
+The log is the way to find out why a call returned `b''` or `b'ERROR'`. In the example, `mode("high", "input")` returns the error value (`b''`, or `b'ERROR'` with `set_error_byte_return(True)`) and `get_last_status()` says `"usage"`; the log records the device's text and the reason. (Before 4.0.0 the usage text itself was returned.)
 
 A bare command, or one with `?`, is a query. The device answers a query with a usage line that includes the current value, so those are logged as `ok`.
 
@@ -575,18 +577,31 @@ On a timeout the call returns `None`, which is the value a failed serial read al
 
 The tinySA firmware has changed its serial commands over time, and the Basic and the Ultra family do not accept the same words. This section records what the library knows about those differences.
 
-Everything here was read from the [tinySA firmware source](https://github.com/erikkaashoek/tinySA) (v1.4-244, September 2026). It was checked on hardware on 2026-10-17 against one device: a tinySA Ultra ZS405 running `tinySA4_v1.4-143`. Every firmware behaviour the probe script could test matched the source reading (36 of 36). The Basic and the Ultra+ boards are still from the source only.
+Everything here was read from the [tinySA firmware source](https://github.com/erikkaashoek/tinySA) (v1.4-244, September 2026). It was checked on hardware against one device, a tinySA Ultra ZS405, twice: on 2026-10-17 running `tinySA4_v1.4-143` (36 of 36 probe results matched the source reading) and on 2026-10-18 running `tinySA4_v1.4-252` (every build-dependent prediction confirmed, and the signal-generator sequence verified with the `hardware_output` tests). The Basic and the Ultra+ boards are still from the source only.
 
 Firmware versions are a commit count after the `v1.4` tag, so `v1.4-143` is older than `v1.4-244`. The `version` command prints it, and the log file records it as `build`.
 
 **The firmware has a timeout of its own.** From v1.4-222 the device prints `Command timeout` (and no prompt) when a command that runs between sweeps is not picked up within 20 s. The library treats that line as the end of the reply, so the call returns the error value after about 20 s rather than waiting out the read timeout; in the log the record has `status: device-refused` and its reason names `Command timeout`. A record for a read that timed out keeps whatever bytes did arrive in its `reason` field, which is the first thing to look at when a command goes unanswered.
+
+### Did the device accept it?
+
+```python
+tsa.rbw(30)
+tsa.get_last_status()      # 'ok'
+tsa.level(50)              # out of range for the model: refused by the library, nothing sent
+tsa.get_last_status()      # 'blocked'
+tsa.command("nosuch")
+tsa.get_last_status()      # 'unknown-command'
+```
+
+With the default error mode, an accepted setter and a rejected one both return `b''`. `get_last_status()` returns the same word the log file records for the command: `ok`, `blocked` (a library check refused it before sending), `usage` (the device rejected the argument), `unknown-command` (this firmware lacks it), `device-refused` (`usb disk mode active`, `Command timeout`), `timeout` (no prompt within the serial read timeout) or `read-failed`. `set_error_byte_return(True)` remains the other way: refusals return `b'ERROR'`.
 
 ### Supported Devices
 
 | Device | Profile name | `version` reply | `profile.verified` |
 | --- | --- | --- | --- |
 | tinySA Basic (ZS304) | `BASIC` | `tinySA_...`, no `HW Version` line | `source` |
-| tinySA Ultra (ZS405) | `ZS405` | `tinySA4_...`, `HW Version:V0.4.5.1` or `V0.4.5.1.1` | `hardware` (v1.4-143, 2026-10-17) |
+| tinySA Ultra (ZS405) | `ZS405` | `tinySA4_...`, `HW Version:V0.4.5.1` or `V0.4.5.1.1` | `hardware` (v1.4-143 and v1.4-252, 2026-10-18) |
 | tinySA Ultra+ (ZS406) | `ZS406` | `tinySA4_...`, `HW Version:V0.4.6` | `source` |
 | tinySA Ultra+ (ZS407) | `ZS407` | `tinySA4_...`, `HW Version:V0.5.4` (`V0.5.2`, `V0.5.3`, `V0.5.3.2` on older firmware) | `source` |
 
@@ -669,7 +684,7 @@ Since 4.0.0 the [device profile](#device-profiles) applies these differences: a 
 
 ### 3.1.0 (non-breaking)
 
-Calls that worked before behave the same. These are fixes for calls that failed or were ignored by the device, and additions. Verified on a tinySA Ultra ZS405 (firmware v1.4-143); other boards from firmware source.
+Calls that worked before behave the same. These are fixes for calls that failed or were ignored by the device, and additions. Verified on a tinySA Ultra ZS405 (firmware v1.4-143, and v1.4-252 for 4.0.0); other boards from firmware source.
 
 * **Fixed:** `hop()` with `outmask=3` raised an exception. `wait()` could not send the bare command. `attenuate(31)` and `color(31, ...)` were refused. `trace_freeze()` sent a command the firmware ignores. `capture()` could return a short image. `tsapython.__version__` reported `2.0.0`.
 * **Signal generator:** `modulation()` takes the words current firmware accepts, with new `modulation_freq()`, `modulation_depth()` and `modulation_deviation()`. `level()` and `level_change()` take decimals, and `level_change()` goes to ±90. `output()` takes `normal` and `mixer`.
@@ -688,13 +703,15 @@ See [Upgrading to 4.0.0](#upgrading-to-400) for what to change in a script.
 * **Device rejections return the error value.** A `usage:` line, `name?` or a device refusal is no longer returned as data. `command()` keeps returning the raw text.
 * **RF output setting.** `set_output_allowed(True)` is required before `output("on")`, `set_output_on()` or `cal_output()` will send anything. `setup_generator()` applies generator settings in the safe order with the output off.
 * **Device profiles.** The library identifies the device at connect (`version`, `info`, `help`), selects a profile (`BASIC`, `ZS405`, `ZS406`, `ZS407`), and refuses commands and words the connected device does not have. `select_existing_device()` now works. `identify()`, `identifyOnConnect`, `profile`, `deviceCommands`, `firmwareBuild` are new.
-* **`scan_raw()`** accepts `unbuf` 0 or 1 only. `scan_raw_stream()` drives the device-side continuous scan (firmware v1.4-177 or later; experimental until run on hardware).
+* **`scan_raw()`** accepts `unbuf` 0 or 1 only. `scan_raw_stream()` drives the device-side continuous scan (firmware v1.4-177 or later; verified on hardware). A short or timed-out `scanraw` frame returns `None` instead of partial data.
+* **`get_last_status()`** says how the last command ended (`ok`, `blocked`, `usage`, `unknown-command`, `device-refused`, `timeout`, `read-failed`) whatever it returned, so a script in the default error mode can tell an accepted setter from a rejected one. `setup_generator()` and `set_generator()` use it.
+* **Command length.** Commands longer than 47 bytes (`tinySA.MAX_COMMAND_LENGTH`, the firmware's command line) are refused before sending.
 * **Serial read timeout** defaults to 120 s (`tinySA.DEFAULT_SERIAL_TIMEOUT`, `tinySA(serial_timeout=...)`, `set_serial_timeout()`); `None` restores the 3.x behaviour.
 * **Firmware floor** v1.4-182; older firmware connects with a warning.
 
 ## Deprecated Functions
 
-These functions name commands that no supported tinySA firmware accepts. They are still in the library and still callable, and their entries in the command list below are kept. They will be removed in a later major version.
+These functions name commands that no supported tinySA firmware accepts. They are still in the library and still callable, and their entries in the command list below are kept; since 4.0.0 each call also emits a `DeprecationWarning` (silent by default outside tests; `python -W error::DeprecationWarning` turns it into an error). They will be removed in a later major version.
 
 | Function | Firmware stopped accepting it | What it does now | Use instead |
 | --- | --- | --- | --- |
