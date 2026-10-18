@@ -14,7 +14,7 @@ import pytest
 
 
 # ---------------------------------------------------------------------------
-# agc : accepts "auto" or ints 0..7  (np.arange(0, 8))
+# agc : accepts "auto" or ints 0..7
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("val,expected", [
@@ -82,23 +82,31 @@ def test_lna_invalid(tsa, val):
 
 
 # ---------------------------------------------------------------------------
-# level : accepts ints -76..13  (np.arange(-76, 14))
+# level : the device's output range. ZS405 profile: -76..-6 (low output only);
+#         BASIC profile: -76..13 (low and high output)
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("val,expected", [
     (-76, "level -76\r\n"),
-    (0, "level 0\r\n"),
-    (13, "level 13\r\n"),
+    (-30, "level -30\r\n"),
+    (-6, "level -6\r\n"),
 ])
 def test_level_valid(tsa, val, expected):
     tsa.level(val)
     assert tsa._recorder.last == expected
 
 
-@pytest.mark.parametrize("val", [-77, 14, 100])
-def test_level_out_of_range(tsa, val):
+@pytest.mark.parametrize("val", [-77, -5, 13, 100])
+def test_level_out_of_range_ultra(tsa, val):
     tsa.level(val)
     assert tsa._recorder.count == 0
+
+
+@pytest.mark.parametrize("val,sent", [(13, True), (0, True), (14, False)])
+def test_level_basic_high_output_range(tsa, val, sent):
+    tsa.select_existing_device("BASIC")
+    tsa.level(val)
+    assert (tsa._recorder.count == 1) is sent
 
 
 # ---------------------------------------------------------------------------
@@ -228,8 +236,8 @@ def test_set_ext_gain_alias(tsa):
 
 
 def test_set_level_alias(tsa):
-    tsa.set_level(0)
-    assert tsa._recorder.last == "level 0\r\n"
+    tsa.set_level(-20)
+    assert tsa._recorder.last == "level -20\r\n"
 
 
 # --- level: decimals are valid (the firmware reads a float) ----------------
@@ -237,14 +245,14 @@ def test_set_level_alias(tsa):
 @pytest.mark.parametrize("val,expected", [
     (-30.5, "level -30.5\r\n"),
     (-76, "level -76\r\n"),
-    (13, "level 13\r\n"),
+    (-6, "level -6\r\n"),
 ])
 def test_level_decimal_and_limits(tsa, val, expected):
     tsa.level(val)
     assert tsa._recorder.last == expected
 
 
-@pytest.mark.parametrize("val", [-76.5, 13.1, "low", True, None])
+@pytest.mark.parametrize("val", [-76.5, -5.9, "low", True, None])
 def test_level_out_of_range_or_wrong_type(tsa, val):
     tsa.level(val)
     assert tsa._recorder.count == 0

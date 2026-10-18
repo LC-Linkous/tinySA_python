@@ -11,6 +11,8 @@
 #   Author(s): Lauren Linkous
 ##--------------------------------------------------------------------------------------------------\
 
+import warnings
+
 from .._host import MixinHost
 
 class MarkersTracesMixin(MixinHost):
@@ -54,10 +56,14 @@ class MarkersTracesMixin(MixinHost):
         #explicitly allowed vals
         accepted_vals =  ["on", "off", "peak"]
         #check input
-        if ID == None:
+        if ID is None:
             self.print_message("ERROR: marker() takes ID=Int|0..4")
             msgbytes = self.error_byte_return()
             return msgbytes
+
+        if isinstance(ID, int) and not (1 <= ID <= self.profile.markers):
+            self.print_message("ERROR: the %s has markers 1..%d" % (self.profile.name, self.profile.markers))
+            return self.error_byte_return()
 
         if (str(val) in accepted_vals):
             writebyte = 'marker ' + str(ID) + ' ' +str(val)+'\r\n'
@@ -145,6 +151,9 @@ class MarkersTracesMixin(MixinHost):
         accepted_vals =  ["dBm", "dBmV", "dBuV", "V", "W", "Vpp", "RAW", "dBV"]
 
         if (isinstance(ID, int)) and (ID >= 1) and (str(val) in accepted_vals):
+            if ID > self.profile.traces:
+                self.print_message("ERROR: the %s has %d traces" % (self.profile.name, self.profile.traces))
+                return self.error_byte_return()
             writebyte = 'trace '+ str(ID) + ' ' + str(val) +'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("setting trace " + str(ID) + " units to " + str(val))
@@ -265,6 +274,8 @@ class MarkersTracesMixin(MixinHost):
         # reflevel) auto|{level}
         # example return:
 
+        warnings.warn("trace_clear() is deprecated: current firmware ignores 'trace ... clear'",
+                      DeprecationWarning, stacklevel=2)
         writebyte = 'trace ' + str(val) + ' clear\r\n'
         msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("clearing trace(s)")

@@ -17,8 +17,10 @@ class SystemInfoMixin(MixinHost):
     def command(self, val: int | float | str) -> bytearray | None:
         # if the command isn't already a function,
         #  use existing func setup to send command
+        # 4.0.0: command() returns whatever the device printed, including usage
+        # lines and 'name?'. It is the raw escape hatch and is not gated.
         writebyte = str(val) + '\r\n'
-        msgbytes = self.tinySA_serial(writebyte, printBool=False)
+        msgbytes = self.tinySA_serial(writebyte, printBool=False, _raw=True)
         self.print_message("command() called with ::" + str(val))
         return msgbytes
 
@@ -28,7 +30,7 @@ class SystemInfoMixin(MixinHost):
         # usage: dac [0..4095]
         # example return: bytearray(b'usage: dac {value(0-4095)}\r\ncurrent value: 1922\r')
 
-        if val == None:
+        if val is None:
             #get the dac
             writebyte = 'dac\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
@@ -68,6 +70,8 @@ class SystemInfoMixin(MixinHost):
         # usage: channel [1-3]
         # Needs tinySA firmware v1.4-223 (Mar 2026) or later; older firmware answers 'channel?'
         # example return: bytearray(b'channel[1] : -90.0\r\nchannel[2] : ...')
+        if not self._check_command("channel"):
+            return self.error_byte_return()
         if val is None:
             writebyte = 'channel\r\n'
         elif val in (1, 2, 3):
@@ -85,6 +89,8 @@ class SystemInfoMixin(MixinHost):
         #        time y|m|d|h|min|sec {0-99}
         # example return: bytearray(b'usage: time ...\r\n2026/10/17 13:40:29\r')
         accepted = ["y", "m", "d", "h", "min", "sec"]
+        if not self._check_command("time"):
+            return self.error_byte_return()
         if field is None:
             writebyte = 'time\r\n'
         elif (field in accepted) and isinstance(val, int) and (0 <= val <= 99):
@@ -100,6 +106,8 @@ class SystemInfoMixin(MixinHost):
         # WHILE IT IS ON, most other serial commands answer 'usb disk mode active'.
         # usage: usbdisk [off|on]
         # Needs tinySA firmware v1.4-244 (Sep 2026) or later, Ultra family.
+        if not self._check_command("usbdisk"):
+            return self.error_byte_return()
         if val is None:
             writebyte = 'usbdisk\r\n'
         elif str(val) in ("on", "off"):
@@ -116,6 +124,8 @@ class SystemInfoMixin(MixinHost):
         # but that might bypass a measurement process. UNKNOWN right now.
         # usage: nf {value}\r\n
         # example return: ''
+        if not self._check_command("nf"):
+            return self.error_byte_return()
         writebyte = 'nf\r\n'
         msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("getting saved noise floor value")

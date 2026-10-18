@@ -178,3 +178,31 @@ def test_clear_and_reset_sends_both_and_survives(tsa):
     assert tsa._recorder.calls[1] == "reset\r\n"
     # return value is intentionally not asserted: it is None or msgbytes
     # depending on whether the port dropped before a response arrived.
+
+
+# --- 4.0.0 review fixes --------------------------------------------------------------------
+
+def test_wait_accepts_a_numeric_string(tsa):
+    tsa.wait("5")
+    assert tsa._recorder.last == "wait 5\r\n"
+
+
+def test_wait_refuses_junk_without_raising(tsa):
+    tsa.set_error_byte_return(True)
+    assert tsa.wait("five") == bytearray(b"ERROR")
+    assert tsa.wait(-1) == bytearray(b"ERROR")
+
+
+def test_reset_returns_none_when_the_port_drops(parsing_tsa):
+    import serial as pyserial
+
+    class Dropping:
+        in_waiting = 0
+        def write(self, d):
+            raise pyserial.SerialException("port gone")
+        def reset_input_buffer(self):
+            pass
+        def reset_output_buffer(self):
+            pass
+    parsing_tsa.ser = Dropping()
+    assert parsing_tsa.reset() is None              # expected on reset; no exception for the caller

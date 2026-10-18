@@ -2,16 +2,9 @@
 """
 Command-construction tests for the OutputSignalMixin.
 
-Mocked-serial `tsa` fixture; no hardware.
-
-This module has several KNOWN BUGS that are pinned below with the actual
-(broken) behavior, so a fix will surface as a failing assertion:
-  * the set_cal_output_* aliases call self.caloutput(...) which doesn't exist
-    (the method is cal_output) -> AttributeError
-  * set_direct_on/off call direct() with one arg, but direct() requires freq
-    -> TypeError
-  * mode() has a stray '+ +' producing a unary-plus on a str -> TypeError
-  * modulation() builds an 'output ...' command instead of 'modulation ...'
+Mocked-serial `tsa` fixture; no hardware. The aliases, mode(), modulation()
+and the RF output gate are covered here; the generator helpers' step logic is
+in test_v4_profiles.py and test_status.py.
 """
 
 import pytest
@@ -72,16 +65,29 @@ def test_direct_on_off_aliases(tsa, method, expected):
     assert tsa._recorder.last == expected
 
 
-# --- mode: stray '+ +' makes every call raise -----------------------------
+# --- mode: 'high' is a Basic word; the Ultra family profile refuses it -----
 
 @pytest.mark.parametrize("method,expected", [
     ("set_low_input_mode", "mode low input\r\n"),
     ("set_low_output_mode", "mode low output\r\n"),
+])
+def test_mode_aliases(tsa, method, expected):
+    getattr(tsa, method)()
+    assert tsa._recorder.last == expected
+
+
+@pytest.mark.parametrize("method", ["set_high_input_mode", "set_high_output_mode"])
+def test_mode_high_refused_on_ultra(tsa, method):
+    getattr(tsa, method)()
+    assert tsa._recorder.count == 0
+
+
+@pytest.mark.parametrize("method,expected", [
     ("set_high_input_mode", "mode high input\r\n"),
     ("set_high_output_mode", "mode high output\r\n"),
 ])
-def test_mode_aliases(tsa, method, expected):
-    # FIXED: removed the stray '+ +' in mode().
+def test_mode_aliases_basic(tsa, method, expected):
+    tsa.select_existing_device("BASIC")
     getattr(tsa, method)()
     assert tsa._recorder.last == expected
 
@@ -91,25 +97,45 @@ def test_mode_aliases(tsa, method, expected):
 # (Basic). The pre-2020 keywords AM_1kHz, AM_10Hz, NFM, WFM are still accepted
 # by the library and translated, because current firmware rejects them.
 
-@pytest.mark.parametrize("method,expected", [
-    ("set_mod_off", ["modulation off\r\n"]),
-    ("set_mod_AM", ["modulation am\r\n"]),
-    ("set_mod_FM", ["modulation fm\r\n"]),
-    ("set_mod_AM_1khz", ["modulation am\r\n", "modulation freq 1000\r\n"]),   # deprecated alias
-    ("set_mod_AM_10Hz", ["modulation am\r\n", "modulation freq 10\r\n"]),     # deprecated alias
-    ("set_mod_NFM", ["modulation nfm\r\n"]),
-    ("set_mod_WFM", ["modulation wfm\r\n"]),
-    ("set_mod_extern", ["modulation extern\r\n"]),
+@pytest.mark.parametrize("board,method,expected", [
+    ("ZS405", "set_mod_off", ["modulation off\r\n"]),
+    ("ZS405", "set_mod_AM", ["modulation am\r\n"]),
+    ("ZS405", "set_mod_FM", ["modulation fm\r\n"]),
+    ("ZS405", "set_mod_AM_1khz", ["modulation am\r\n", "modulation freq 1000\r\n"]),   # deprecated alias
+    ("ZS405", "set_mod_AM_10Hz", ["modulation am\r\n", "modulation freq 10\r\n"]),     # deprecated alias
+    ("BASIC", "set_mod_NFM", ["modulation nfm\r\n"]),
+    ("BASIC", "set_mod_WFM", ["modulation wfm\r\n"]),
+    ("BASIC", "set_mod_extern", ["modulation extern\r\n"]),
+    ("BASIC", "set_mod_AM_1khz", ["modulation am\r\n", "modulation freq 1000\r\n"]),
 ])
-def test_modulation_aliases(tsa, method, expected):
-    getattr(tsa, method)()
+def test_modulation_aliases(tsa, board, method, expected):
+    import warnings
+    tsa.select_existing_device(board)
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        getattr(tsa, method)()
     assert tsa._recorder.calls == expected
+    deprecated = method in ("set_mod_AM_1khz", "set_mod_AM_10Hz")
+    assert any(issubclass(w.category, DeprecationWarning) for w in caught) is deprecated
 
 
-@pytest.mark.parametrize("val", ["am", "fm", "nfm", "wfm", "extern", "off"])
-def test_modulation_current_keywords(tsa, val):
+@pytest.mark.parametrize("board,val", [
+    ("ZS405", "am"), ("ZS405", "fm"), ("ZS405", "off"),
+    ("BASIC", "am"), ("BASIC", "nfm"), ("BASIC", "wfm"), ("BASIC", "extern"), ("BASIC", "off"),
+])
+def test_modulation_current_keywords(tsa, board, val):
+    tsa.select_existing_device(board)
     tsa.modulation(val)
     assert tsa._recorder.calls == [f"modulation {val}\r\n"]
+
+
+@pytest.mark.parametrize("board,val", [
+    ("ZS405", "nfm"), ("ZS405", "wfm"), ("ZS405", "extern"), ("ZS405", "NFM"), ("BASIC", "fm"),
+])
+def test_modulation_word_wrong_family_refused(tsa, board, val):
+    tsa.select_existing_device(board)
+    tsa.modulation(val)
+    assert tsa._recorder.count == 0
 
 
 @pytest.mark.parametrize("method,val,expected", [

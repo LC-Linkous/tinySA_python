@@ -11,7 +11,6 @@
 #   Author(s): Lauren Linkous
 ##--------------------------------------------------------------------------------------------------\
 
-import numpy as np
 
 from .._host import MixinHost
 
@@ -22,7 +21,7 @@ class CalibrationMixin(MixinHost):
         # usage: actual_freq [{frequency}]
         # example return: bytearray(b'3000000000\r')
 
-        if val == None:
+        if val is None:
             #get the dac
             writebyte = 'actual_freq\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
@@ -55,9 +54,11 @@ class CalibrationMixin(MixinHost):
                                "harm_lna", "out", "out_direct",
                                "out_adf", "out_ultra", "off", "on"]
 
-        accepted_slots = np.arange(0, 20, 1) # max exclusive.
+        accepted_slots = range(0, 20) # max exclusive.
 
-        if (argName in accepted_table_args) and (slot==None):
+        if argName in accepted_table_args and not self._check_word("correction", argName, self.profile.correction_words):
+            return self.error_byte_return()
+        if (argName in accepted_table_args) and (slot is None):
             # prints out the table as it currently is
             writebyte = 'correction ' + str(argName)+ '\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
@@ -110,6 +111,9 @@ class CalibrationMixin(MixinHost):
         # usage: freq_corr
         # example return: bytearray(b'0 ppb\r')
 
+        if not self._check_command("freq_corr"):
+            return self.error_byte_return()
+
         writebyte = 'freq_corr\r\n'
         msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("getting frequency correction")
@@ -129,18 +133,18 @@ class CalibrationMixin(MixinHost):
         # that is outside the range of its own board.
         # example return: ''
 
-        #check input
+        #check input: the range is per board (profile.if_hz)
+        lo, hi = self.profile.if_hz
         if (val == 0) or (val=='auto'):
             writebyte = 'if '+str(0)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("setIF() set to auto")
-        elif isinstance(val, (int, float)) and (
-                (433e6 <= val <= 435e6) or (975e6 <= val <= 979e6) or (1067e6 <= val <= 1073e6)):
+        elif isinstance(val, (int, float)) and (lo <= val <= hi):
             writebyte = 'if '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("setIF() set to "  + str(val))
         else:
-            self.print_message("ERROR: if() takes vals ['auto'|0|433M..435M|975M..979M|1067M..1073M] in Hz")
+            self.print_message("ERROR: if() takes 'auto', 0, or %g..%g Hz on the %s" % (lo, hi, self.profile.name))
             msgbytes = self.error_byte_return()
         return msgbytes
 
@@ -148,6 +152,8 @@ class CalibrationMixin(MixinHost):
         # usage: if1 {975M..979M}\r\n977.555902MHz
         # example return: ''
 
+        if not self._check_command("if1"):
+            return self.error_byte_return()
         #check input
         if (val == 0) or (val=='auto'):
             writebyte = 'if1 '+str(0)+'\r\n'
@@ -193,6 +199,8 @@ class CalibrationMixin(MixinHost):
                           "direct_output","low_output"]
         #check input
         if (val in accepted_vals):
+            if not self._check_word("leveloffset", val, self.profile.leveloffset_words):
+                return self.error_byte_return()
             if (-20.0<=offset<=20.0):
                 if isOutput == True:
                     # success message
@@ -239,6 +247,8 @@ class CalibrationMixin(MixinHost):
         accepted_vals =  ["on", "off", "auto"]
         #check input
         if (str(val) in accepted_vals):
+            if not self._check_word("spur", val, self.profile.spur_words):
+                return self.error_byte_return()
             writebyte = 'spur '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("spur() set to " + str(val))
@@ -263,6 +273,8 @@ class CalibrationMixin(MixinHost):
         # spur avoidance table control. Ultra family only
         # usage: avoid auto|off|on|dump
         # Needs tinySA firmware v1.4-194 (Jan 2025) or later; older firmware answers 'avoid?'
+        if not self._check_command("avoid"):
+            return self.error_byte_return()
         if str(val) in ("auto", "off", "on", "dump"):
             writebyte = 'avoid ' + str(val) + '\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
@@ -290,7 +302,7 @@ class CalibrationMixin(MixinHost):
         # usage: vbat_offset [{0..4095}]
         # example return: bytearray(b'300\r')
 
-        if val == None:
+        if val is None:
             #get the offset
             writebyte = 'vbat_offset\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
@@ -317,7 +329,7 @@ class CalibrationMixin(MixinHost):
         # usage: zero {level}\r\n174dBm
         # example return:
 
-        if val == None:
+        if val is None:
             writebyte = 'zero\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("returning zero offset")

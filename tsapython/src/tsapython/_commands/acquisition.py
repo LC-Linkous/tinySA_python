@@ -15,6 +15,19 @@ from collections.abc import Iterator
 
 from .._host import MixinHost
 
+def _is_number(value: object) -> bool:
+    # an int/float (not a bool) or a string that parses as one, e.g. "-52.5"
+    if isinstance(value, bool):
+        return False
+    if isinstance(value, (int, float)):
+        return True
+    try:
+        float(str(value))
+        return True
+    except ValueError:
+        return False
+
+
 class AcquisitionMixin(MixinHost):
     def data(self, val: int = 0) -> bytearray | None:
         # dumps the trace data.
@@ -72,11 +85,13 @@ class AcquisitionMixin(MixinHost):
         # Ultra family only: the Basic firmware has no hop command.
         # example return: ''
 
+        if not self._check_command("hop"):
+            return self.error_byte_return()
         if (isinstance(start, (int, float))) and (isinstance(stop, (int, float))) and (isinstance(inc, (int, float))):
             if (isinstance(outmask, int)) and (not isinstance(outmask, bool)) and (1 <= outmask <= 3):
                 writebyte = 'hop ' + str(start) + ' ' + str(stop)  + ' ' + str(inc) + ' ' + str(outmask) + '\r\n'
 
-            elif outmask ==None:
+            elif outmask is None:
                 writebyte = 'hop ' + str(start) + ' ' + str(stop) + ' ' + str(inc) + '\r\n'
 
             else:
@@ -89,9 +104,8 @@ class AcquisitionMixin(MixinHost):
             return msgbytes
 
         else:
-            self.print_message("hop() takes arguments start=Int, stop=Int, inc=Int, outmask=None|Int")
-
-        return None
+            self.print_message("ERROR: hop() takes arguments start=Int, stop=Int, inc=Int, outmask=None|Int")
+            return self.error_byte_return()
 
     def get_sample_pts(self, start: int, stop: int, pts: int) -> bytearray | None:
         # alias for hop()
@@ -132,7 +146,7 @@ class AcquisitionMixin(MixinHost):
             # start == stop is allowed: the firmware treats it as a zero-span scan
 
         if (0<=start) and (start <= stop) and (pts <= self.maxPoints):
-            if outmask == None:
+            if outmask is None:
                 writebyte = 'scan '+str(start)+' '+str(stop)+' '+str(pts)+'\r\n'
             else:
                  writebyte = 'scan '+str(start)+' '+str(stop)+' '+str(pts)+ ' '+str(outmask)+'\r\n'
@@ -153,14 +167,14 @@ class AcquisitionMixin(MixinHost):
             # the README has examples for processing
             #
             # unbuf: 0 = buffered, 1 = unbuffered (sent point by point).
-            # FIRMWARE NOTE: from tinySA firmware v1.4-177 (Aug 2024) this argument
-            # is a bit field, and 2 or 3 mean "repeat the sweep until interrupted".
-            # This function reads ONE frame, so on that firmware 2 and 3 leave the
-            # device still sending. They are still accepted here because they
-            # were before; prefer 0 or 1.
+            # 4.0.0: ONLY 0 and 1. From firmware v1.4-177 the argument is a bit
+            # field and 2 or 3 make the device repeat sweeps until interrupted,
+            # which this one-frame reader cannot consume. Use
+            # continuous_scanraw() (one frame per call, any firmware) or
+            # scan_raw_stream() (the device-side repeat, v1.4-177 or later).
 
         if (0<=start) and (start <= stop) and (pts <= self.maxPoints):
-            if unbuf in (0, 1, 2, 3):
+            if unbuf in (0, 1):
                 writebyte = 'scanraw '+str(start)+' '+str(stop)+' '+str(pts)+ ' '+str(unbuf)+'\r\n'
 
                 # write out to serial, get message back, clean up, return
@@ -203,7 +217,7 @@ class AcquisitionMixin(MixinHost):
         if not ((0 <= start) and (start < stop) and (pts <= self.maxPoints)):
             self.print_message("ERROR: continuous_scanraw takes START STOP PTS UNBUF; check limits")
             return
-        if unbuf not in (0, 1, 2, 3):
+        if unbuf not in (0, 1):
             self.print_message("ERROR: unrecognized UNBUF for continuous_scanraw")
             return
 
@@ -212,6 +226,56 @@ class AcquisitionMixin(MixinHost):
             frame = self.scan_raw(start, stop, pts, unbuf)
             yield frame
             emitted += 1
+
+    def scan_raw_stream(self, start: int, stop: int, pts: int = 250, count: int | None = None,
+                        unbuffered: bool = True) -> "Iterator[bytearray | None]":
+        # Device-side continuous SCANRAW: one 'scanraw ... {pts} {options}' with
+        # bit 2 set makes the firmware repeat the sweep and stream frame after
+        # frame until another command arrives. Needs firmware v1.4-177 (Aug 2024)
+        # or later; on older firmware this returns without yielding.
+        #
+        # Yields one raw frame ('{' + 3*pts bytes) per iteration. Stop by
+        # breaking out of the loop (or passing count); the generator then sends
+        # 'pause' to interrupt the device and discards what is left in the
+        # buffer. UNTESTED ON HARDWARE at the time of writing: marked
+        # experimental, see the README.
+        from .._profiles import SCANRAW_STREAM_BUILD
+        if self.firmwareBuild is not None and self.firmwareBuild < SCANRAW_STREAM_BUILD:
+            self.print_message("ERROR: scan_raw_stream() needs firmware v%d.%d-%d or later" % SCANRAW_STREAM_BUILD)
+            return
+        if not ((0 <= start) and (start <= stop) and (pts <= self.maxPoints)):
+            self.print_message("ERROR: scan_raw_stream takes START STOP PTS; check limits")
+            return
+        import time as _time
+        ser = self._require_serial()
+        options = 2 | (1 if unbuffered else 0)
+        frame_len = 1 + 3 * pts + 1              # '{' + 3 bytes per point + '}'
+        idle_limit = 5.0
+        ser.reset_input_buffer()
+        ser.write(bytes('scanraw %d %d %d %d\r\n' % (start, stop, pts, options), 'utf-8'))
+        emitted = 0
+        buffer = bytes()
+        last_data = _time.monotonic()
+        try:
+            while (count is None) or (emitted < count):
+                if ser.in_waiting > 0:
+                    buffer += ser.read(ser.in_waiting)
+                    last_data = _time.monotonic()
+                start_idx = buffer.find(b'{')
+                if start_idx != -1 and len(buffer) - start_idx >= frame_len:
+                    frame = buffer[start_idx:start_idx + frame_len]
+                    buffer = buffer[start_idx + frame_len:]
+                    yield bytearray(frame[:-1])   # same shape as scan_raw(): '{' + data
+                    emitted += 1
+                    continue
+                if (_time.monotonic() - last_data) > idle_limit:
+                    self.print_message("WARNING: scan_raw_stream: no frame for %.0f s" % idle_limit)
+                    return
+                _time.sleep(0.001)
+        finally:
+            ser.write(b'pause\r\n')          # any command interrupts the device-side loop
+            _time.sleep(0.2)
+            ser.reset_input_buffer()
 
     def config_sweep(self, argName: int | float | str | None = None, val: int | float | str | None = None) -> bytearray | None:
             # split call for SWEEP
@@ -235,13 +299,13 @@ class AcquisitionMixin(MixinHost):
         accepted_table_args = ["start", "stop", "center",
                                "span", "cw"]
 
-        if (argName==None) and (val==None):
+        if (argName is None) and (val is None):
             # do sweep
             writebyte = 'sweep\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
 
         elif (argName in accepted_table_args):
-            if val == None:
+            if val is None:
                 #error
                 self.print_message("ERROR: sweep " + str(argName) + " needs a value")
                 msgbytes = self.error_byte_return()
@@ -304,7 +368,7 @@ class AcquisitionMixin(MixinHost):
             #   ({start(Hz)} {stop(Hz)} [0..290])]
             # # example return:
         msgbytes: bytearray | None
-        if (startVal==None) or (stopVal==None):
+        if (startVal is None) or (stopVal is None):
             self.print_message("ERROR: sweep start and stop need non-empty values")
             msgbytes = self.error_byte_return()
         elif (int(startVal) >= int(stopVal)):
@@ -345,8 +409,8 @@ class AcquisitionMixin(MixinHost):
             writebyte = 'trigger ' + str(val) +'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("setting trigger to " + str(val))
-        elif val==None and isinstance(freq, (int, float)) and not isinstance(freq, bool):
-            # the level is a float in the firmware (e.g. -52.5)
+        elif val is None and _is_number(freq):
+            # the level is a float in the firmware (e.g. -52.5); a numeric string is fine too
             writebyte = 'trigger ' + str(freq) +'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("setting trigger level (dBm) to " + str(freq))

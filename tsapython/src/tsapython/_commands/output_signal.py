@@ -11,7 +11,11 @@
 #   Author(s): Lauren Linkous
 ##--------------------------------------------------------------------------------------------------\
 
+import typing
+import warnings
+
 from .._host import MixinHost
+from .._identify import STATUS_OK
 
 class OutputSignalMixin(MixinHost):
     def cal_output(self, val: int | float | str = "off") -> bytearray | None:
@@ -23,6 +27,8 @@ class OutputSignalMixin(MixinHost):
         accepted_vals =  ["off", 'off', 1,2,3,4,10,15,30]
         #check input
         if (val in accepted_vals):
+            if str(val) != "off" and not self._check_output_allowed("caloutput " + str(val)):
+                return self.error_byte_return()
             writebyte = 'caloutput '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("caloutput() set with " + str(val))
@@ -67,6 +73,9 @@ class OutputSignalMixin(MixinHost):
         # Output mode for generating a square wave signal between 830MHz and 1130MHz
         # usage: direct {start|stop|on|off} {freq(Hz)}
         # example return: ''
+
+        if not self._check_command("direct"):
+            return self.error_byte_return()
 
         #check input
         if (str(val)=="on") or (str(val) =="off"):
@@ -118,6 +127,8 @@ class OutputSignalMixin(MixinHost):
         accepted_val2= ["input", "output"]
         #check input
         if (val1 in accepted_val1) and (val2 in accepted_val2):
+            if not self._check_word("mode", val1, self.profile.mode_words):
+                return self.error_byte_return()
             writebyte = 'mode '+str(val1)+ ' ' +str(val2)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
         else:
@@ -166,10 +177,14 @@ class OutputSignalMixin(MixinHost):
             "NFM": ("nfm", None), "WFM": ("wfm", None)}
         #check input
         if (str(val) in accepted_vals):
+            if not self._check_word("modulation", val, self.profile.modulation_words):
+                return self.error_byte_return()
             writebyte = 'modulation '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
         elif (str(val) in legacy_vals):
             keyword, rate = legacy_vals[str(val)]
+            if not self._check_word("modulation", keyword, self.profile.modulation_words):
+                return self.error_byte_return()
             writebyte = 'modulation '+keyword+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             if rate is not None:
@@ -199,6 +214,9 @@ class OutputSignalMixin(MixinHost):
         # usage: modulation depth {percent}
         # example return: ''
 
+        if "fm" not in self.profile.modulation_words:     # depth exists only where fm does (Ultra family)
+            self.print_message("ERROR: 'modulation depth' is not available on the %s" % self.profile.name)
+            return self.error_byte_return()
         if isinstance(val, (int, float)) and (not isinstance(val, bool)) and (0 <= val <= 100):
             writebyte = 'modulation depth '+str(int(val))+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
@@ -213,6 +231,9 @@ class OutputSignalMixin(MixinHost):
         # The device stores the deviation in steps of 100 Hz.
         # example return: ''
 
+        if "fm" not in self.profile.modulation_words:     # deviation exists only where fm does (Ultra family)
+            self.print_message("ERROR: 'modulation deviation' is not available on the %s" % self.profile.name)
+            return self.error_byte_return()
         if isinstance(val, (int, float)) and (not isinstance(val, bool)) and (100 <= val <= 300000):
             writebyte = 'modulation deviation '+str(int(val))+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
@@ -237,12 +258,16 @@ class OutputSignalMixin(MixinHost):
         # DEPRECATED: the 'AM_1kHz' keyword left the tinySA firmware in Nov 2020.
         # Still callable: sends 'modulation am' then 'modulation freq 1000'.
         # Use modulation("am") and modulation_freq(1000) instead.
+        warnings.warn("set_mod_AM_1khz() is deprecated; use modulation('am') and modulation_freq(1000)",
+                      DeprecationWarning, stacklevel=2)
         return self.modulation("AM_1kHz")
 
     def set_mod_AM_10Hz(self) -> bytearray | None:
         # DEPRECATED: the 'AM_10Hz' keyword left the tinySA firmware in Nov 2020.
         # Still callable: sends 'modulation am' then 'modulation freq 10'.
         # Use modulation("am") and modulation_freq(10) instead.
+        warnings.warn("set_mod_AM_10Hz() is deprecated; use modulation('am') and modulation_freq(10)",
+                      DeprecationWarning, stacklevel=2)
         return self.modulation("AM_10Hz")
 
     def set_mod_NFM(self) -> bytearray | None:
@@ -268,6 +293,10 @@ class OutputSignalMixin(MixinHost):
         accepted_vals =  ["on", "off", "normal", "mixer"]
         #check input
         if (str(val) in accepted_vals):
+            if not self._check_word("output", val, self.profile.output_words):
+                return self.error_byte_return()
+            if str(val) == "on" and not self._check_output_allowed("output on"):
+                return self.error_byte_return()
             writebyte = 'output '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
         else:
@@ -291,10 +320,85 @@ class OutputSignalMixin(MixinHost):
         #alias for output(). Ultra family only
         return self.output("mixer")
 
+    def setup_generator(self, freq_hz: int | float, level_dbm: int | float,
+                        modulation_type: str = "off", modulation_rate_hz: int | float | None = None,
+                        high: bool = False) -> bool:
+        # Puts the device into signal generator mode in the order the firmware
+        # needs, and leaves the output OFF:
+        #   output off -> mode low|high output -> pause -> level -> sweep cw
+        #   -> modulation -> resume
+        # The level is set after the mode because the firmware resets the level
+        # to maximum whenever the mode changes. Switching the output on is a
+        # separate, explicit call: set_output_allowed(True) then output("on").
+        # high=True selects the Basic's high output mode (refused on the Ultra family).
+        # Returns True if every step was accepted.
+        #
+        # WHY THE PAUSE (seen on hardware, ZS405 v1.4-252): in output mode,
+        # 'level', 'sweep', 'rbw', 'attenuate', 'mode' and other settings run in
+        # the firmware's sweep thread BETWEEN sweeps, and a generator sweep is
+        # seconds long, so each of them waited about 20 s for its prompt. While
+        # the sweep is paused the firmware runs them immediately. 'output' and
+        # 'modulation' do not go through the sweep thread and return at once.
+        # Use the same pattern in your own scripts: pause(), settings, resume().
+        steps: list[typing.Callable[[], object]] = [
+            lambda: self.output("off"),
+            lambda: self.mode("high" if high else "low", "output"),
+            lambda: self.output("off"),           # the mode change already muted; be explicit
+            self.pause,
+            lambda: self.level(level_dbm),
+            lambda: self.set_sweep_cw(int(freq_hz)),
+            lambda: self.modulation(modulation_type)]
+        if modulation_rate_hz is not None and str(modulation_type) != "off":
+            steps.append(lambda: self.modulation_freq(modulation_rate_hz))
+        steps.append(self.resume)
+        return self._run_steps(steps, "setup_generator()")
+
+    def _run_steps(self, steps: "list[typing.Callable[[], object]]", name: str) -> bool:
+        # Runs each step and checks HOW it ended (get_last_status), not what it
+        # returned: in the default error mode an accepted setter and a rejected
+        # one both return b''. Stops at the first step that was not accepted
+        # and resumes the sweep so the device is not left paused.
+        for step in steps:
+            step()
+            status = self.get_last_status()
+            if status != STATUS_OK:
+                self.print_message("ERROR: %s stopped at a refused step (%s); output is off" % (name, status))
+                self.resume()
+                self._last_status = status      # report the failure, not the resume
+                return False
+        return True
+
+    def set_generator(self, level_dbm: int | float | None = None, freq_hz: int | float | None = None,
+                      modulation_type: str | None = None, modulation_rate_hz: int | float | None = None,
+                      depth_percent: int | float | None = None, deviation_hz: int | float | None = None) -> bool:
+        # Changes generator settings while already in output mode (output on or
+        # off): pause -> the given settings -> resume. The pause is what makes
+        # 'level' and 'sweep cw' return at once in output mode (see
+        # setup_generator); the resume lets the next generator sweep apply them.
+        # Only the arguments given are sent. Returns True if every step was accepted.
+        steps: list[typing.Callable[[], object]] = [self.pause]
+        if level_dbm is not None:
+            steps.append(lambda: self.level(level_dbm))
+        if freq_hz is not None:
+            steps.append(lambda: self.set_sweep_cw(int(freq_hz)))
+        if modulation_type is not None:
+            steps.append(lambda: self.modulation(modulation_type))
+        if modulation_rate_hz is not None:
+            steps.append(lambda: self.modulation_freq(modulation_rate_hz))
+        if depth_percent is not None:
+            steps.append(lambda: self.modulation_depth(depth_percent))
+        if deviation_hz is not None:
+            steps.append(lambda: self.modulation_deviation(deviation_hz))
+        steps.append(self.resume)
+        return self._run_steps(steps, "set_generator()")
+
     def ultra(self, val: int | float | str = "off", freq: int | float | str | None = None) -> bytearray | None:
         # turn on/config tiny SA ultra mode
         # usage: ultra off|on|auto|start|harm {freq}
         # example return: bytearray(b'')
+
+        if not self._check_command("ultra"):
+            return self.error_byte_return()
 
         if str(val) in ["off", "on", "auto"]:
             writebyte = 'ultra ' + str(val) +'\r\n'

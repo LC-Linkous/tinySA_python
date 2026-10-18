@@ -28,7 +28,7 @@ This repository uses official resources and documentation but is **NOT** endorse
 pip install tsapython
 ```
 
-The library itself depends only on `numpy` and `pyserial`. The plotting examples need an optional extra:
+The library itself depends only on `pyserial`. The plotting examples need `numpy` and `matplotlib`, installed with an optional extra:
 
 ```bash
 pip install "tsapython[plotting]"
@@ -40,11 +40,17 @@ pip install "tsapython[plotting]"
 from tsapython import tinySA
 
 tsa = tinySA()
-found, connected = tsa.autoconnect()
+found, connected = tsa.autoconnect()     # identifies the board and firmware, selects a profile
 if connected:
+    print(tsa.profile.name, tsa.firmwareBuild)
     print(tsa.device_id())
+    tsa.rbw(30)
+    print(tsa.get_last_status())         # 'ok', or why the device or the library refused it
     tsa.disconnect()
 ```
+
+Since 4.0.0 the library refuses commands the connected model does not have, returns an error value (not the device's text) when the firmware rejects a setting, and will not switch the RF output on until `set_output_allowed(True)` has been called. Scripts written for 3.x: see "Upgrading to 4.0.0" in the repository README.
+
 
 ## Examples
 
@@ -87,6 +93,8 @@ The [main GitHub repository](https://github.com/LC-Linkous/tinySA_python) provid
 For comprehensive documentation, advanced examples, and troubleshooting:
 
 - **Library GitHub repository**: [https://github.com/LC-Linkous/tinySA_python/](https://github.com/LC-Linkous/tinySA_python/)
+- **Changelog**: [CHANGELOG.md](https://github.com/LC-Linkous/tinySA_python/blob/main/CHANGELOG.md)
+- **Web UI**: [https://lc-linkous.github.io/tinysa-web/](https://lc-linkous.github.io/tinysa-web/)
 - **Official tinySA documentation**: [https://tinysa.org/wiki/](https://tinysa.org/wiki/) (not associated with this library)
 
 ## Contributing

@@ -206,6 +206,8 @@ def test_new_wrappers_block_bad_input(tsa, call):
     assert tsa._recorder.count == 0
 
 
-def test_unknown_command_reply_comes_back_as_text(dev):
-    # on firmware before v1.4-216 the device answers 'waitscan?'; 3.1.0 still returns that text
-    assert dev.waitscan(1) == bytearray(b"waitscan?\r")
+def test_unknown_command_reply_is_the_error_value(dev):
+    # on firmware before v1.4-216 the device answers 'waitscan?'; 4.0.0 returns the error value
+    assert dev.waitscan(1) == bytearray(b"ERROR")
+    # the raw escape hatch still shows the device's text
+    assert dev.command("waitscan 1") == bytearray(b"waitscan?\r")

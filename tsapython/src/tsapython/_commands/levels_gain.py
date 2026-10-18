@@ -11,7 +11,6 @@
 #   Author(s): Lauren Linkous
 ##--------------------------------------------------------------------------------------------------\
 
-import numpy as np
 
 from .._host import MixinHost
 
@@ -22,8 +21,10 @@ class LevelsGainMixin(MixinHost):
         # example return: bytearray(b'')
 
         #explicitly allowed vals
-        accepted_vals =  np.arange(0, 8, 1) # max exclusive
+        accepted_vals = range(0, 8) # max exclusive
         #check input
+        if not self._check_command("agc"):
+            return self.error_byte_return()
         if (str(val) == "auto") or (val in accepted_vals):
             writebyte = 'agc '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
@@ -43,7 +44,7 @@ class LevelsGainMixin(MixinHost):
         # example return: bytearray(b'')
 
         #explicitly allowed vals
-        accepted_vals =  np.arange(0, 32, 1) # max exclusive, so 0..31
+        accepted_vals = range(0, 32) # max exclusive, so 0..31
         #check input
         if (str(val) == "auto") or (val in accepted_vals):
             writebyte = 'attenuate '+str(val)+'\r\n'
@@ -77,6 +78,8 @@ class LevelsGainMixin(MixinHost):
         if (str(val) in accepted_vals):
             if str(val) == "quasip":
                 val = "quasi"
+            if not self._check_word("calc", val, self.profile.calc_words):
+                return self.error_byte_return()
             writebyte = 'calc '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("calc() set with " + str(val))
@@ -142,13 +145,16 @@ class LevelsGainMixin(MixinHost):
         # device to the nearest limit; it is not rejected.
         # example return: b''
 
-        #check input
-        if isinstance(val, (int, float)) and (not isinstance(val, bool)) and (-76 <= val <= 13):
+        #check input: the union of this device's output ranges (the current
+        # output mode is not known to the library; the device clamps within it)
+        lo = self.profile.level_low_output[0]
+        hi = self.profile.level_high_output[1] if self.profile.level_high_output else self.profile.level_low_output[1]
+        if isinstance(val, (int, float)) and (not isinstance(val, bool)) and (lo <= val <= hi):
             writebyte = 'level '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("level() set to " + str(val))
         else:
-            self.print_message("ERROR: level() takes vals [-76 to 13]")
+            self.print_message("ERROR: level() takes vals [%g to %g] on the %s" % (lo, hi, self.profile.name))
             self.print_message("ERROR: value given: " + str(val))
             msgbytes =  self.error_byte_return()
         return msgbytes
@@ -164,12 +170,13 @@ class LevelsGainMixin(MixinHost):
         # example return: ''
 
         #check input
-        if isinstance(val, (int, float)) and (not isinstance(val, bool)) and (-90 <= val <= 90):
+        lo, hi = self.profile.levelchange_db
+        if isinstance(val, (int, float)) and (not isinstance(val, bool)) and (lo <= val <= hi):
             writebyte = 'levelchange '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("levelchange() set to " + str(val))
         else:
-            self.print_message("ERROR: levelchange() takes vals [-90 - 90]")
+            self.print_message("ERROR: levelchange() takes vals [%g - %g] on the %s" % (lo, hi, self.profile.name))
             self.print_message("ERROR: value set to" + str(val))
             msgbytes =  self.error_byte_return()
         return msgbytes
@@ -186,6 +193,8 @@ class LevelsGainMixin(MixinHost):
         #explicitly allowed vals
         accepted_vals =  ["on", "off"]
         #check input
+        if not self._check_command("lna"):
+            return self.error_byte_return()
         if (str(val) in accepted_vals):
             writebyte = 'lna '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
@@ -212,6 +221,8 @@ class LevelsGainMixin(MixinHost):
         #explicitly allowed vals
         accepted_vals =  [0,1,2,3,4,5,6,7]
         #check input
+        if not self._check_command("lna2"):
+            return self.error_byte_return()
         if (val == "auto") or (val in accepted_vals):
             writebyte = 'lna2 '+str(val)+'\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)

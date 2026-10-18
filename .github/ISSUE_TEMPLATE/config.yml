@@ -6,3 +6,9 @@ contact_links:
   - name: tinySA community (groups.io)
     url: https://groups.io/g/tinysa
     about: Device-usage questions belong here. Note they do NOT support this library — library issues stay on this repo.
+  - name: tinySA firmware source
+    url: https://github.com/erikkaashoek/tinySA
+    about: The device firmware. Bugs in the device itself (not in how this library drives it) belong there.
+  - name: tinySA web UI
+    url: https://lc-linkous.github.io/tinysa-web/
+    about: Browser-based control of the device by the same author. Issues with the web UI go to its own repository, not here.

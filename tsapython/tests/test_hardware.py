@@ -137,3 +137,43 @@ def test_sd_list_parses(device):
     assert isinstance(files, list)
     for name, size in files:
         assert isinstance(name, str) and size >= 0
+
+
+# ---------------------------------------------------------------------------
+# 4.0.0: identification, gates and the output setting on a real unit
+# ---------------------------------------------------------------------------
+
+def test_identified_at_connect(device):
+    assert device.profileDetected is True
+    assert device.profile.board in ("ZS304", "ZS405", "ZS406", "ZS407")
+    assert device.firmwareBuild is not None
+    assert device.deviceCommands and "version" in device.deviceCommands
+
+
+def test_profile_matches_device_limits(device):
+    offset = device.get_scanraw_offset()
+    assert offset == device.profile.scanraw_offset
+    data = device.capture()
+    assert len(data) == device.profile.screen_width * device.profile.screen_height * 2
+
+
+def test_missing_command_is_refused_without_sending(device):
+    device.set_error_byte_return(True)
+    if "waitscan" in device.deviceCommands:
+        pytest.skip("this firmware has waitscan")
+    assert device.waitscan(1) == bytearray(b"ERROR")
+
+
+def test_device_rejection_returns_error_value(device):
+    device.set_error_byte_return(True)
+    # 'marker 99 on' is refused by every firmware; send it raw to bypass the library's own check
+    assert device.command("marker 99 on").startswith(b"marker [n]")
+    # the gated path: a marker number above the profile's count is refused before sending
+    assert device.marker_on(99) == bytearray(b"ERROR")
+
+
+def test_output_on_is_refused_by_default(device):
+    device.set_error_byte_return(True)
+    assert device.get_output_allowed() is False
+    assert device.output("on") == bytearray(b"ERROR")      # nothing was sent
+    assert device.output("off") == bytearray(b"")

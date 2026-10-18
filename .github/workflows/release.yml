@@ -1,24 +1,43 @@
 name: Publish to PyPI
 
+# Publishes the files that are ATTACHED TO THE GITHUB RELEASE (put there by
+# build-release.yml when the tag was pushed), so what PyPI serves is byte for
+# byte what the release page shows. Nothing is rebuilt here.
+#
+# Runs when a release is published. It can also be run from the Actions tab
+# for a release that already exists (e.g. after a failed publish), by tag; it
+# refuses anything that is not an existing, non-draft release.
+
 on:
   release:
     types: [published]
-  workflow_dispatch:        # allows manual runs from the Actions tab
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag of an existing, published release to (re)publish, e.g. v4.0.0"
+        required: true
+        type: string
+
+permissions:
+  contents: read
 
 jobs:
   test:
-    # A release cannot ship with a red suite: the build/publish jobs below
-    # depend on this passing. Single-platform here for speed; the full
-    # cross-platform matrix runs on every push via tests.yml.
+    # A release cannot ship with a red suite. Single platform for speed; the
+    # full matrix runs on every push via tests.yml.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
 
       - name: Sync environment
-        run: uv sync
+        run: uv sync --locked
         working-directory: tsapython
 
       - name: Run test suite
@@ -29,36 +48,59 @@ jobs:
         run: uv run ruff check . && uv run mypy
         working-directory: tsapython
 
-  build:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-
-      - name: Build package
-        run: uv build tsapython          # project lives in the tsapython/ subdirectory
-
-      - name: Store distributions
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: tsapython/dist/          # uv writes dist/ inside the project dir
-
   publish:
-    needs: build
+    needs: test
     runs-on: ubuntu-latest
     environment: pypi          # must match the environment in your PyPI publisher config
     permissions:
       id-token: write          # REQUIRED for trusted publishing (OIDC)
+      contents: read           # to download the release assets
+    env:
+      TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Download distributions
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
+      - name: Check the release exists and is published
+        run: |
+          draft="$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft -q '.isDraft')" || {
+            echo "::error::no release for tag $TAG. Push the tag (build-release.yml creates a draft with the files), publish it, and this workflow runs by itself."
+            exit 1
+          }
+          if [ "$draft" = "true" ]; then
+            echo "::error::release $TAG is still a draft; publish it on the release page first."
+            exit 1
+          fi
+
+      - name: Download the release assets
+        run: |
+          mkdir -p dist
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir dist --pattern '*.whl' --pattern '*.tar.gz' --pattern 'SHA256SUMS.txt'
+          ls -l dist
+          if ! ls dist/*.whl dist/*.tar.gz >/dev/null 2>&1; then
+            echo "::error::release $TAG has no wheel/sdist attached. Run 'Build release assets' for this tag, then re-run this workflow."
+            exit 1
+          fi
+
+      - name: Verify checksums
+        run: |
+          cd dist
+          if [ -f SHA256SUMS.txt ]; then
+            sha256sum -c SHA256SUMS.txt
+            rm SHA256SUMS.txt
+          else
+            echo "::warning::no SHA256SUMS.txt attached; publishing unverified files"
+          fi
+
+      - name: Check the version in the files matches the tag
+        run: |
+          expected="${TAG#v}"
+          for f in dist/*; do
+            case "$f" in
+              *"-$expected-"*|*"-$expected.tar.gz") ;;
+              *) echo "::error::$f does not carry version $expected"; exit 1 ;;
+            esac
+          done
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/

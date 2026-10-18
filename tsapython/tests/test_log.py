@@ -112,9 +112,10 @@ def test_accepted_command(logged):
 
 def test_rejected_argument_is_logged_as_usage(logged):
     dev, path = logged
+    dev.select_existing_device("BASIC")          # so the word check lets 'high' through to the device
     reply = dev.mode("high", "input")
-    assert reply.startswith(b"usage:")           # the return value is unchanged
-    rec = records(path)[-1]
+    assert reply == bytearray(b"")               # 4.0.0: device rejection -> error value (flag off)
+    rec = [r for r in records(path) if r["type"] == "command"][-1]
     assert rec["status"] == "usage"
     assert rec["reason"] == "device rejected the argument"
     assert "mode [low] input|output" in rec["reply"]

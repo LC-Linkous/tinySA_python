@@ -11,6 +11,8 @@
 #   Author(s): Lauren Linkous
 ##--------------------------------------------------------------------------------------------------\
 
+import serial
+
 from .._host import MixinHost
 
 class PresetsConfigMixin(MixinHost):
@@ -36,7 +38,7 @@ class PresetsConfigMixin(MixinHost):
             elif val == "off":
                 self.print_message("ABORT option DISABLED")
                 self.abortEnabled = False
-        elif val == None: #action
+        elif val is None: #action
             if self.abortEnabled == True:
                 writebyte = 'abort\r\n'
                 msgbytes = self.tinySA_serial(writebyte, printBool=False)
@@ -92,7 +94,7 @@ class PresetsConfigMixin(MixinHost):
         # usage: deviceid [{number}]
         # example return: bytearray(b'deviceid 12\r')
 
-        if ID == None:
+        if ID is None:
             #get the device ID
             writebyte = 'deviceid\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
@@ -180,7 +182,13 @@ class PresetsConfigMixin(MixinHost):
 
         writebyte = 'reset\r\n'
         self.print_message("sending reset signal. Serial will disconnect...")
-        msgbytes = self.tinySA_serial(writebyte, printBool=False)
+        try:
+            msgbytes = self.tinySA_serial(writebyte, printBool=False)
+        except serial.SerialException as err:
+            # expected: the device reboots and the USB port goes away mid-reply.
+            # The reply is never read. Reconnect with connect()/autoconnect().
+            self.print_message("device reset; the serial port dropped as expected (" + str(err) + ")")
+            msgbytes = None
         return msgbytes
 
     def reset_device(self) -> bytearray | None:
@@ -191,6 +199,9 @@ class PresetsConfigMixin(MixinHost):
         # restarts the  tinySA after the specified number of seconds
         # usage: restart {seconds}
         # example return: ''
+
+        if not self._check_command("restart"):
+            return self.error_byte_return()
         val = int(val)
         if val == 0:
             writebyte = 'restart ' + str(val) + '\r\n'
@@ -246,6 +257,9 @@ class PresetsConfigMixin(MixinHost):
         # usage: sd_delete {filename}
         # example return:
 
+        if not self._check_command("sd_delete"):
+            return self.error_byte_return()
+
         writebyte = 'sd_delete ' + str(val)+ '\r\n'
         msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("deleting file from sd card")
@@ -257,6 +271,8 @@ class PresetsConfigMixin(MixinHost):
         # example return: bytearray(b'-0.bmp 307322\r')
         # Ultra family only (the Basic has no SD card).
 
+        if not self._check_command("sd_list"):
+            return self.error_byte_return()
         if pattern:
             writebyte = 'sd_list ' + str(pattern) + '\r\n'
         else:
@@ -322,6 +338,9 @@ class PresetsConfigMixin(MixinHost):
         # usage: sd_read {filename}
         # example return:
 
+        if not self._check_command("sd_read"):
+            return self.error_byte_return()
+
         writebyte = 'sd_read ' + str(val)+ '\r\n'
         msgbytes = self.tinySA_serial(writebyte, printBool=False)
         self.print_message("reading file from sd card")
@@ -333,6 +352,8 @@ class PresetsConfigMixin(MixinHost):
         # Needs tinySA firmware v1.4-216 (Nov 2025) or later; older firmware
         # answers 'waitscan?'.
         # example return: bytearray(b'')
+        if not self._check_command("waitscan"):
+            return self.error_byte_return()
         if isinstance(count, int) and not isinstance(count, bool) and count >= 1:
             writebyte = 'waitscan ' + str(count) + '\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
@@ -342,7 +363,7 @@ class PresetsConfigMixin(MixinHost):
             msgbytes = self.error_byte_return()
         return msgbytes
 
-    def wait(self, val: int | None = None) -> bytearray | None:
+    def wait(self, val: int | str | None = None) -> bytearray | None:
         # wait for a single sweep to finish and pauses
         #  sweep or waits for specified number of seconds
         # usage: wait [{seconds}]
@@ -351,15 +372,20 @@ class PresetsConfigMixin(MixinHost):
         # without passing None explicitly.)
         # example return:
 
-        if val == None:
+        if val is None:
             writebyte = 'wait\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
             self.print_message("device in wait() state. manually resume")
-        elif val>0:
-            writebyte = 'wait ' + str(val) + '\r\n'
+            return msgbytes
+        try:
+            seconds = int(str(val))
+        except ValueError:
+            seconds = 0                      # not a whole number: refused below
+        if seconds > 0:
+            writebyte = 'wait ' + str(seconds) + '\r\n'
             msgbytes = self.tinySA_serial(writebyte, printBool=False)
-            self.print_message("device wait() trigged for " + str(val) + " seconds.")
+            self.print_message("device wait() trigged for " + str(seconds) + " seconds.")
         else:
-            self.print_message("ERROR: wait() takes None or positive ints")
+            self.print_message("ERROR: wait() takes None or a positive whole number of seconds")
             msgbytes = self.error_byte_return()
         return msgbytes

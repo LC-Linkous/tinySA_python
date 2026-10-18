@@ -70,24 +70,39 @@ def test_spur_auto(tsa):
 
 # --- if: each board has its own range ----------------------------------------
 
-@pytest.mark.parametrize("val", [434_000_000, 977_000_000, 1_070_000_000])
-def test_set_IF_ranges_per_board(tsa, val):
+@pytest.mark.parametrize("board,val", [
+    ("BASIC", 434_000_000), ("ZS405", 977_000_000), ("ZS406", 1_070_000_000), ("ZS407", 1_070_000_000),
+])
+def test_set_IF_ranges_per_board(tsa, board, val):
+    tsa.select_existing_device(board)
     tsa.set_IF(val)
     assert tsa._recorder.last == f"if {val}\r\n"
 
 
-@pytest.mark.parametrize("val", [500_000_000, 980_000_000, 1_080_000_000, "977M"])
-def test_set_IF_between_ranges_rejected(tsa, val):
+@pytest.mark.parametrize("board,val", [
+    ("ZS405", 434_000_000), ("ZS405", 1_070_000_000), ("ZS406", 977_000_000), ("BASIC", 977_000_000),
+    ("ZS405", 980_000_000), ("ZS405", "977M"),
+])
+def test_set_IF_wrong_board_rejected(tsa, board, val):
+    tsa.select_existing_device(board)
     tsa.set_IF(val)
     assert tsa._recorder.count == 0
 
 
 # --- leveloffset names added in firmware v1.4-193 ----------------------------
 
-@pytest.mark.parametrize("name", ["shift4", "direct_output", "low_output", "high"])
+@pytest.mark.parametrize("name", ["shift4", "direct_output", "low_output"])
 def test_level_offset_newer_names(tsa, name):
     tsa.level_offset(name, 1.5)
     assert tsa._recorder.last == f"leveloffset {name} 1.5\r\n"
+
+
+def test_level_offset_high_is_basic_only(tsa):
+    tsa.level_offset("high", 1.5)
+    assert tsa._recorder.count == 0
+    tsa.select_existing_device("BASIC")
+    tsa.level_offset("high", 1.5)
+    assert tsa._recorder.last == "leveloffset high 1.5\r\n"
 
 
 # --- package version ----------------------------------------------------------

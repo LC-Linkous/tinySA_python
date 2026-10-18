@@ -13,7 +13,7 @@
 #
 #   Both are derived from the tinySA firmware source (github.com/erikkaashoek/tinySA).
 #   At the time of writing they are verified against captured replies from one device only:
-#   a tinySA Ultra ZS405 on tinySA4_v1.4-143. The other boards are from the source.
+#   a tinySA Ultra ZS405 on tinySA4_v1.4-143 and v1.4-252. The other boards are from the source.
 #
 #   Author(s): Lauren Linkous
 ##--------------------------------------------------------------------------------------------------\

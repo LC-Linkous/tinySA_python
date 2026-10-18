@@ -28,6 +28,8 @@ The PyPI page: [https://pypi.org/project/tsapython/](https://pypi.org/project/ts
 
 Zenodo archive with DOI: [https://doi.org/10.5281/zenodo.20546764](https://doi.org/10.5281/zenodo.20546764)
 
+Web UI built on this library: [https://lc-linkous.github.io/tinysa-web/](https://lc-linkous.github.io/tinysa-web/) (source: [LC-Linkous/tinysa-web](https://github.com/LC-Linkous/tinysa-web)). The web UI tracks the latest stable library release; its 4.0.0 update follows this release.
+
 ## Table of Contents
 * [The tinySA Series of Devices](#the-tinysa-series-of-devices)
 * [Library Usage](#library-usage)
@@ -38,6 +40,11 @@ Zenodo archive with DOI: [https://doi.org/10.5281/zenodo.20546764](https://doi.o
 * [Running Tests](#running-tests)
 * [Error Handling](#error-handling)
 * [Logging](#logging)
+    * [Serial read timeout](#serial-read-timeout)
+    * [Did the device accept it?](#did-the-device-accept-it)
+* [Upgrading to 4.0.0](#upgrading-to-400)
+* [Device Profiles](#device-profiles)
+* [RF Output Setting](#rf-output-setting)
 * [Firmware Compatibility](#firmware-compatibility)
     * [Supported Devices](#supported-devices)
     * [Firmware Changes That Affect This Library](#firmware-changes-that-affect-this-library)
@@ -104,9 +111,9 @@ Several usage examples are provided in the [Example Implementations](#example-im
 ### PyPI Install
 
 
-The `tsapython` package (from PyPI at [https://pypi.org/project/tsapython/3.0.0/](https://pypi.org/project/tsapython/3.0.0/))  can be installed with:
+The `tsapython` package (from PyPI at [https://pypi.org/project/tsapython/](https://pypi.org/project/tsapython/))  can be installed with:
 
-```python
+```bash
 
 pip install tsapython
 
@@ -124,7 +131,7 @@ Developing a project, or running something custom? You can pull the code from Gi
 This is a summarized version of the instructions at [https://www.sarahglasmacher.com/how-to-build-python-package-uv/](https://www.sarahglasmacher.com/how-to-build-python-package-uv/):
 
 
-```python
+```bash
 # install UV
 pip install uv
 
@@ -141,17 +148,17 @@ pip install dist/tsapython-3.0.0-py3-none-any.whl
 ```
 
 ## Requirements
-The library itself depends only on `pyserial` and `numpy`. The examples in this
+The library itself depends only on `pyserial`. The examples in this
 README additionally use `matplotlib` (and `pyQt5` on Linux, where it provides the
 GUI backend for the figures; it is not needed on all Windows machines).
 
 All dependencies are declared in `pyproject.toml`, with the example dependencies
 available as the `plotting` extra:
-```python
-# library only (numpy + pyserial)
+```bash
+# library only (pyserial is its one dependency)
 pip install tsapython
 
-# library + plotting dependencies for the examples
+# library + numpy and matplotlib for the examples/ scripts
 pip install "tsapython[plotting]"
 
 # development / running the test suite
@@ -160,7 +167,7 @@ pip install -e ".[test]"
 
 If you prefer installing the libraries manually (we recommend a Python virtual
 environment):
-```python
+```bash
 pip install pyserial numpy matplotlib pyQt5
 ```
 
@@ -326,7 +333,7 @@ different directory will produce an `Unknown pytest.mark.hardware` warning.
 This is a configured [uv](https://docs.astral.sh/uv/) project with a committed
 `uv.lock`, so the recommended workflow is:
 ```bash
-uv sync          # installs pyserial + numpy + the dev group, editable-installs tsapython
+uv sync          # installs pyserial + the dev group, editable-installs tsapython
 uv run pytest    # hardware tests self-skip when no device is connected
 ```
 
@@ -366,7 +373,7 @@ uv run mypy
 ### Probing a device's firmware
 
 `tests/probe_firmware_returns.py` is a manual helper that asks a connected tinySA what its firmware accepts: it harvests every command's usage line, sends old and new argument forms, calls the library functions, and writes `probe_results.json` and `probe_results.md`. Nothing in the default run touches the RF output or writes to the device. Use it before and after a firmware update, or to report a board the library has not been verified on:
-```python
+```bash
 uv run python tests/probe_firmware_returns.py --backup --capture --out probe_results/my_unit
 uv run python tests/probe_firmware_returns.py --help
 ```
@@ -379,7 +386,7 @@ device, sends a set of read-only commands, and writes their responses to
 `tests/fixtures/captured_responses.py`. The `test_captured_hardware.py` tests then run the
 library's parsing logic against those real captures (these run without a device, since the
 bytes are frozen in the fixture). Run it with a tinySA connected:
-```python
+```bash
 # auto-detect the serial port
 uv run python tests/collect_samples.py
 
@@ -391,7 +398,7 @@ uv run python tests/collect_samples.py --port /dev/ttyACM0    # Linux/Mac
 ### Example scripts
 The files in `examples/` are runnable demonstrations (not part of the automated test
 suite) and require a connected device plus the plotting dependencies:
-```python
+```bash
 pip install "tsapython[plotting]"
 python examples/complete_workflow.py
 python examples/hardware_walkthrough.py
@@ -403,6 +410,8 @@ python examples/hardware_walkthrough.py
 Some error handling has been implemented for the individual functions in this library, but not for the device configuration. Most functions have a list of acceptable formats for input, which is included in the documentation and the `library_help` function. The `tinySA_help` function will get output from the current version of firmware running on the connected tinySA device.
 
 Detailed error messages can be returned by toggling 'verbose' on.
+
+**Since 4.0.0, a command the device rejects also returns the error value.** If the firmware answers a setter with a `usage:` line (bad argument), `name?` (a command this firmware does not have) or a refusal such as `usb disk mode active`, the call returns `b''` (or `b'ERROR'` with `set_error_byte_return(True)`) instead of the device's text. Where the library can tell in advance that the device will refuse (a word the model lacks, a command missing from its `help` list, a number above the model's marker count), nothing is sent at all. `command()` is the exception: it always returns exactly what the device printed. The reason for every refusal is printed when verbose is on and written to the [log file](#logging).
 
 From the [official wiki USB Interface page](https://tinysa-org.translate.goog/wiki/pmwiki.php?n=Main.USBInterface&_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en-US):
 
@@ -418,6 +427,74 @@ Some error checking includes:
  * Frequencies can be specified using an integer optionally postfixed with a the letter 'k' for kilo 'M' for Mega or 'G' for Giga. E.g. 0.1M (100kHz), 500k (0.5MHz) or 12000000 (12MHz)
  * Levels are specified in dB(m) and can be specified using a floating point notation. E.g. 10 or 2.5
  * Time is specified in seconds optionally postfixed with the letters 'm' for milli or 'u' for micro. E.g. 1 (1 second), 2.5 (2.5 seconds), 120m (120 milliseconds)
+
+## Upgrading to 4.0.0
+
+4.0.0 changes what some calls return. Working scripts need these checks:
+
+| If your script... | In 3.x | In 4.0.0 | What to do |
+| --- | --- | --- | --- |
+| switches the generator output on (`output("on")`, `set_output_on()`, `cal_output(30)` ...) | Sent immediately | Refused and nothing sent until `set_output_allowed(True)` has been called | Add `tsa.set_output_allowed(True)` once, before the first `output("on")`. See [RF Output Setting](#rf-output-setting) |
+| reads the return value of a setter to see the device's usage text | Device text came back | The error value comes back (`b''`, or `b'ERROR'` with the flag on) | Use `command()` for the raw text, or turn on the [log](#logging) to see the reason |
+| sends a command the connected device does not have, or a word its model lacks (`mode high` on an Ultra, `hop` on a Basic) | Sent; the device printed `usage:` or `name?` | Refused before sending; error value | Check `tsa.profile` and `tsa.deviceCommands`, or use `command()` |
+| calls `scan_raw(..., unbuf=2)` or `3` | Sent (and on firmware v1.4-177 or later left the device streaming) | Refused; error value | Use `unbuf=0` or `1`, `continuous_scanraw()`, or the new `scan_raw_stream()` |
+| relies on a call waiting forever for a slow device | Waited indefinitely | Returns `None` after 120 s | Pass `tinySA(serial_timeout=None)` or raise the value; see [Serial read timeout](#serial-read-timeout) |
+| calls `connect()` or `autoconnect()` on a device that is not a tinySA | Opened the port | Opens the port, sends `version`, `info`, `help`, keeps the default profile with a warning | Set `tsa.identifyOnConnect = False` to skip the three commands |
+| uses `select_existing_device()` | Did nothing | Selects the profile by name | Nothing; it now works |
+| uses `set_mod_AM_1khz()`, `set_mod_AM_10Hz()` or `trace_clear()` | Deprecated, callable | Deprecated, callable | Move to the replacements when convenient |
+
+Nothing was renamed or removed. The firmware floor is v1.4-182 (October 2024); older firmware connects with a warning in verbose mode and a `firmware-below-floor` event in the log.
+
+## Device Profiles
+
+Since 4.0.0 the library knows which tinySA it is talking to and uses that model's limits and command words.
+
+```python
+tsa = tinySA()
+tsa.autoconnect()                 # sends version, info, help and picks the profile
+print(tsa.profile.name)           # 'tinySA Ultra (ZS405)'
+print(tsa.profile.verified)       # 'hardware' or 'source'
+print(tsa.firmwareBuild)          # (1, 4, 143)
+print(sorted(tsa.deviceCommands)) # the device's own help list
+```
+
+| Function or attribute | Purpose |
+| --- | --- |
+| `identify()` | Re-run the three identification commands. Returns a dict with `family`, `board`, `build`, `commands`, `profile` |
+| `identifyOnConnect` | `True` by default. Set `False` before `connect()` to skip identification |
+| `select_existing_device("BASIC" \| "ZS304" \| "ULTRA" \| "ZS405" \| "ULTRA+" \| "ZS406" \| "ZS407")` | Choose the profile by name, for scripts that must not query the device or want to override detection |
+| `profile` / `get_profile()` | The active `DeviceProfile`: `max_points`, `markers`, `traces`, `screen_width`, `screen_height`, `rbw_khz`, `levelchange_db`, `level_low_output`, `level_high_output`, `if_hz`, `scanraw_offset`, the word lists, `commands` |
+| `profileDetected` | `True` if the profile came from the device, `False` if selected or default |
+| `deviceCommands` | The command set from the device's `help` reply, or `None` if not read. When present it decides which commands are sent |
+| `firmwareBuild` | `(major, minor, commits)` from the `version` reply, or `None` for self-built firmware |
+
+Before identification, or when the device is not recognised, the profile is `DEFAULT`: the Ultra family's words with the wide 3.x limits.
+
+What the profile gates:
+
+- commands the model does not have (`hop`, `lna`, `lna2`, `agc`, `if1`, `avoid`, `nf`, `time`, `usbdisk`, SD card commands on the Basic);
+- commands this firmware build does not list in `help` (`waitscan`, `channel`, `avoid`, `usbdisk` on older firmware);
+- words the model lacks: `mode high` on the Ultra family; `spur auto`, `output normal|mixer`, `calc log|lin`, `modulation fm` on the Basic; `modulation nfm|wfm|extern` on the Ultra family;
+- the `if` range per board, `level` and `levelchange` ranges per family, marker and trace counts.
+
+## RF Output Setting
+
+Since 4.0.0 the generator output cannot be switched on by accident. `output("on")`, `set_output_on()`, and `cal_output()` with any value other than `"off"` return the error value and send nothing until the setting is on:
+
+```python
+tsa.set_output_allowed(True)      # sends nothing to the device; only permits the next step
+tsa.setup_generator(10e6, -30, "am", 1000)   # output off -> mode -> level -> frequency -> modulation
+tsa.output("on")
+...
+tsa.output("off")                 # always allowed
+```
+
+- `set_output_allowed(allowed)` / `get_output_allowed()`: off by default on every new `tinySA()`.
+- `setup_generator(freq_hz, level_dbm, modulation_type="off", modulation_rate_hz=None, high=False)` applies the generator settings in the order the firmware needs and leaves the output off. The level is set after the mode because the firmware resets the level to maximum on every mode change. `high=True` selects the Basic's high output mode. Returns `True` if every step was accepted.
+- `set_generator(level_dbm=None, freq_hz=None, modulation_type=None, modulation_rate_hz=None, depth_percent=None, deviation_hz=None)` changes settings once in output mode, with the output on or off. Only the arguments given are sent.
+
+**Why those two helpers pause the sweep, and why the library waits briefly after `output` and `modulation`.** In output mode, `level`, `sweep`, `rbw`, `attenuate`, `pause`, `resume` and `mode` are run by the firmware's sweep thread between sweeps, and the generator loop only yields to them when it is asked to; while the sweep is paused the firmware runs them at once. `output`, `modulation`, `caloutput` and `leveloffset` run in the shell thread and return immediately, but each one leaves a redraw request that the sweep thread clears a few milliseconds later. A between-sweeps command queued inside that window loses its wake-up, the generator loop never looks at it, and the device answers `Command timeout` about 20 seconds later (seen on a ZS405 running v1.4-252; the dropped command is never executed). The library therefore waits `tinySA.SETTLE_AFTER_IMMEDIATE_SETTER_S` (0.4 s; on a ZS405 a command 150 ms after the setter is dropped, 230 ms after it is served) after those four commands, and if a command still comes back with `Command timeout` it is sent once more before the error value is returned. If you send raw commands yourself in output mode, keep the same habits: `pause()`, the settings, `resume()`, and a short gap after `output`/`modulation`.
+- The device cannot report whether its output is on, so the library does not track it either; keep `output("off")` at the end of your scripts.
 
 ## Logging
 
@@ -479,37 +556,58 @@ Example (level `commands`):
 {"t":"2026-10-09T19:22:04.650Z","type":"command","seq":3,"function":"attenuate","sent":"","status":"blocked","elapsed_ms":0,"reply":"","reply_len":0,"truncated":false,"reason":"ERROR: attenuate() takes vals [0 - 31]|\"auto\""}
 ```
 
-The log is the way to find out why a call returned `b''` or `b'ERROR'`. In the example, `mode("high", "input")` still returns the device's usage text to the caller, as it always has; the log additionally records that the device rejected it.
+The log is the way to find out why a call returned `b''` or `b'ERROR'`. In the example, `mode("high", "input")` returns the error value (`b''`, or `b'ERROR'` with `set_error_byte_return(True)`) and `get_last_status()` says `"usage"`; the log records the device's text and the reason. (Before 4.0.0 the usage text itself was returned.)
 
 A bare command, or one with `?`, is a query. The device answers a query with a usage line that includes the current value, so those are logged as `ok`.
 
 ### Serial read timeout
 
-By default the library waits for the device prompt for as long as it takes, because a scan with a narrow RBW or a long sweep time can legitimately run for minutes. To get control back from a device that has stopped answering:
+The library waits up to **120 seconds** for the device prompt (`tinySA.DEFAULT_SERIAL_TIMEOUT`). The firmware's longest sweep time is 60 s, so any single reply completes well inside that. Three ways to change it:
 
 ```python
-tsa.set_serial_timeout(30)      # seconds; None (the default) waits indefinitely
+tinySA.DEFAULT_SERIAL_TIMEOUT = 30        # every instance created afterwards
+tsa = tinySA(serial_timeout=30)           # one instance
+tsa.set_serial_timeout(30)                # at any time; None waits indefinitely (the 3.x behaviour)
 ```
 
-On a timeout the call returns `None`, which is the value a failed serial read already returned.
+On a timeout the call returns `None`, which is the value a failed serial read already returned, and the [log](#logging) records a `timeout` status.
 
 
 ## Firmware Compatibility
 
 The tinySA firmware has changed its serial commands over time, and the Basic and the Ultra family do not accept the same words. This section records what the library knows about those differences.
 
-Everything here was read from the [tinySA firmware source](https://github.com/erikkaashoek/tinySA) (v1.4-244, September 2026). It was checked on hardware on 2026-10-17 against one device: a tinySA Ultra ZS405 running `tinySA4_v1.4-143`. Every firmware behaviour the probe script could test matched the source reading (36 of 36). The Basic and the Ultra+ boards are still from the source only.
+Everything here was read from the [tinySA firmware source](https://github.com/erikkaashoek/tinySA) (v1.4-244, September 2026). It was checked on hardware against one device, a tinySA Ultra ZS405, twice: on 2026-10-17 running `tinySA4_v1.4-143` (36 of 36 probe results matched the source reading) and on 2026-10-18 running `tinySA4_v1.4-252` (every build-dependent prediction confirmed, and the signal-generator sequence verified with the `hardware_output` tests). The Basic and the Ultra+ boards are still from the source only.
 
 Firmware versions are a commit count after the `v1.4` tag, so `v1.4-143` is older than `v1.4-244`. The `version` command prints it, and the log file records it as `build`.
 
+**The firmware has a timeout of its own.** From v1.4-222 the device prints `Command timeout` (and no prompt) when a command that runs between sweeps is not picked up within 20 s. The library treats that line as the end of the reply, so the call returns the error value after about 20 s rather than waiting out the read timeout; in the log the record has `status: device-refused` and its reason names `Command timeout`. A record for a read that timed out keeps whatever bytes did arrive in its `reason` field, which is the first thing to look at when a command goes unanswered.
+
+### Did the device accept it?
+
+```python
+tsa.rbw(30)
+tsa.get_last_status()      # 'ok'
+tsa.level(50)              # out of range for the model: refused by the library, nothing sent
+tsa.get_last_status()      # 'blocked'
+tsa.command("nosuch")
+tsa.get_last_status()      # 'unknown-command'
+```
+
+With the default error mode, an accepted setter and a rejected one both return `b''`. `get_last_status()` returns the same word the log file records for the command: `ok`, `blocked` (a library check refused it before sending), `usage` (the device rejected the argument), `unknown-command` (this firmware lacks it), `device-refused` (`usb disk mode active`, `Command timeout`), `timeout` (no prompt within the serial read timeout) or `read-failed`. `set_error_byte_return(True)` remains the other way: refusals return `b'ERROR'`.
+
 ### Supported Devices
 
-| Device | Firmware build | `version` reply | Status |
+| Device | Profile name | `version` reply | `profile.verified` |
 | --- | --- | --- | --- |
-| tinySA Basic (ZS304) | `tinySA_...` | No `HW Version` line | From firmware source |
-| tinySA Ultra (ZS405) | `tinySA4_...` | `HW Version:V0.4.5.1` or `V0.4.5.1.1` | Verified on hardware, v1.4-143 |
-| tinySA Ultra+ (ZS406) | `tinySA4_...` | `HW Version:V0.4.6` | From firmware source |
-| tinySA Ultra+ (ZS407) | `tinySA4_...` | `HW Version:V0.5.4` (`V0.5.2`, `V0.5.3`, `V0.5.3.2` on older firmware) | From firmware source |
+| tinySA Basic (ZS304) | `BASIC` | `tinySA_...`, no `HW Version` line | `source` |
+| tinySA Ultra (ZS405) | `ZS405` | `tinySA4_...`, `HW Version:V0.4.5.1` or `V0.4.5.1.1` | `hardware` (v1.4-143 and v1.4-252, 2026-10-18) |
+| tinySA Ultra+ (ZS406) | `ZS406` | `tinySA4_...`, `HW Version:V0.4.6` | `source` |
+| tinySA Ultra+ (ZS407) | `ZS407` | `tinySA4_...`, `HW Version:V0.5.4` (`V0.5.2`, `V0.5.3`, `V0.5.3.2` on older firmware) | `source` |
+
+The oldest firmware the library is written for is **v1.4-182** (October 2024). The firmware's own `help` reply decides which commands are sent, so older firmware still works for the commands it has; the library warns once at connect.
+
+If you own a Basic or an Ultra+, running `tests/probe_firmware_returns.py` and attaching the result to an issue is the way to move its profile from `source` to `hardware`.
 
 The three Ultra boards run the same firmware and accept the same commands. Only values differ:
 
@@ -579,14 +677,14 @@ print(tsa.command("modulation ?"))
 | Points, markers, traces, screen | 290, 4, 3, 320x240 | 450, 8, 4, 480x320 |
 | `scanraw` offset | 128 | 174 |
 
-The library does not yet choose between these for you: it sends what you ask for, and a device that does not know a word answers with a usage line. Turn on a [log file](#logging) to see those rejections.
+Since 4.0.0 the [device profile](#device-profiles) applies these differences: a word the connected model lacks is refused before it is sent.
 
 
 ## Change Summary
 
 ### 3.1.0 (non-breaking)
 
-Calls that worked before behave the same. These are fixes for calls that failed or were ignored by the device, and additions. Verified on a tinySA Ultra ZS405 (firmware v1.4-143); other boards from firmware source.
+Calls that worked before behave the same. These are fixes for calls that failed or were ignored by the device, and additions. Verified on a tinySA Ultra ZS405 (firmware v1.4-143, and v1.4-252 for 4.0.0); other boards from firmware source.
 
 * **Fixed:** `hop()` with `outmask=3` raised an exception. `wait()` could not send the bare command. `attenuate(31)` and `color(31, ...)` were refused. `trace_freeze()` sent a command the firmware ignores. `capture()` could return a short image. `tsapython.__version__` reported `2.0.0`.
 * **Signal generator:** `modulation()` takes the words current firmware accepts, with new `modulation_freq()`, `modulation_depth()` and `modulation_deviation()`. `level()` and `level_change()` take decimals, and `level_change()` goes to ±90. `output()` takes `normal` and `mixer`.
@@ -598,20 +696,22 @@ Calls that worked before behave the same. These are fixes for calls that failed 
 * **Tests:** `tests/probe_firmware_returns.py`, a manual probe that asks a connected device what its firmware accepts and writes a JSON/markdown report; seven hardware set-and-read-back tests.
 * **Examples:** raw command strings no longer use e-notation, which the firmware reads incorrectly (`150e6` is read as 150 Hz).
 
-### Planned for 4.0.0 (API changes)
+### 4.0.0 (API changes)
 
-These change what existing code gets back, so they are held for a major version. None of them is in the library yet.
+See [Upgrading to 4.0.0](#upgrading-to-400) for what to change in a script.
 
-* A command the device rejects returns the library's error value (`b''`, or `b'ERROR'` with `set_error_byte_return(True)`) in place of the device's usage text.
-* The generator output must be enabled with a library setting before `output("on")`, `set_output_on()` or `cal_output()` will send anything.
-* The library selects limits and command words for the connected device, and refuses a command the device does not have.
-* `scan_raw()` accepts `unbuf` 0 or 1 only; continuous scanning becomes its own call.
-* The oldest supported firmware becomes v1.4-182 (October 2024).
-
+* **Device rejections return the error value.** A `usage:` line, `name?` or a device refusal is no longer returned as data. `command()` keeps returning the raw text.
+* **RF output setting.** `set_output_allowed(True)` is required before `output("on")`, `set_output_on()` or `cal_output()` will send anything. `setup_generator()` applies generator settings in the safe order with the output off.
+* **Device profiles.** The library identifies the device at connect (`version`, `info`, `help`), selects a profile (`BASIC`, `ZS405`, `ZS406`, `ZS407`), and refuses commands and words the connected device does not have. `select_existing_device()` now works. `identify()`, `identifyOnConnect`, `profile`, `deviceCommands`, `firmwareBuild` are new.
+* **`scan_raw()`** accepts `unbuf` 0 or 1 only. `scan_raw_stream()` drives the device-side continuous scan (firmware v1.4-177 or later; verified on hardware). A short or timed-out `scanraw` frame returns `None` instead of partial data.
+* **`get_last_status()`** says how the last command ended (`ok`, `blocked`, `usage`, `unknown-command`, `device-refused`, `timeout`, `read-failed`) whatever it returned, so a script in the default error mode can tell an accepted setter from a rejected one. `setup_generator()` and `set_generator()` use it.
+* **Command length.** Commands longer than 47 bytes (`tinySA.MAX_COMMAND_LENGTH`, the firmware's command line) are refused before sending.
+* **Serial read timeout** defaults to 120 s (`tinySA.DEFAULT_SERIAL_TIMEOUT`, `tinySA(serial_timeout=...)`, `set_serial_timeout()`); `None` restores the 3.x behaviour.
+* **Firmware floor** v1.4-182; older firmware connects with a warning.
 
 ## Deprecated Functions
 
-These functions name commands that no supported tinySA firmware accepts. They are still in the library and still callable, and their entries in the command list below are kept. They will be removed in a later major version.
+These functions name commands that no supported tinySA firmware accepts. They are still in the library and still callable, and their entries in the command list below are kept; since 4.0.0 each call also emits a `DeprecationWarning` (silent by default outside tests; `python -W error::DeprecationWarning` turns it into an error). They will be removed in a later major version.
 
 | Function | Firmware stopped accepting it | What it does now | Use instead |
 | --- | --- | --- | --- |
@@ -689,7 +789,7 @@ for port, desc, hwid in ports:
 
 Example output for this method (on Windows) is as follows:
 
-```python
+```text
 
 Port: COM4, Description: Standard Serial over Bluetooth link (COM4), Hardware ID: BTHENUM\{00001101-0000-1000-8000-00805F9B34FB}_LOCALMFG&0000\7&D0D1EE&0&000000000000_00000000
 Port: COM3, Description: Standard Serial over Bluetooth link (COM3), Hardware ID: BTHENUM\{00001101-0000-1000-8000-00805F9B34FB}_LOCALMFG&0002\7&D0D1EE&0&B8B3DC31CBA8_C00000000
@@ -713,7 +813,7 @@ for port, desc, hwid in ports:
 
 ```
 
-```python
+```text
 
 Port: /dev/ttyS0, Description: n/a, Hardware ID: n/a
 Port: /dev/ttyS3, Description: n/a, Hardware ID: n/a
@@ -741,13 +841,13 @@ This library returns strings as cleaned byte arrays. The command and first `\r\n
 
 The original message format:
 
-```python
+```text
 bytearray(b'deviceid\r\ndeviceid 0\r\nch>')
 ```
 
 Cleaned version:
 
-```python
+```text
 bytearray(b'deviceid 0\r')
 ```
 
@@ -782,7 +882,7 @@ else:
 
 Example output for this method is as follows:
 
-```python
+```text
 
 bytearray(b'tinySA ULTRA\r\n2019-2024 Copyright @Erik Kaashoek\r\n2016-2020 Copyright @edy555\r\nSW licensed under GPL. See: https://github.com/erikkaashoek/tinySA\r\nVersion: tinySA4_v1.4-143-g864bb27\r\nBuild Time: Jan 10 2024 - 11:14:08\r\nKernel: 4.0.0\r\nCompiler: GCC 7.2.1 20170904 (release) [ARM/embedded-7-branch revision 255204]\r\nArchitecture: ARMv7E-M Core Variant: Cortex-M4F\r\nPort Info: Advanced kernel mode\r\nPlatform: STM32F303xC Analog & DSP\r')
 
@@ -2358,7 +2458,7 @@ Quick Link Table:
 * **Description:** Measures the input level at each of the indicated frequencies. This is a measurement over a range (ends inclusive), with a specified number of samples.
 * **Original Usage:** `hop {start(Hz)} {stop(Hz)} {step(Hz) | points}  [outmask]`
 * **Direct Library Function Call:** `hop(start=Int, stop=Int, inc=Int, outmask=None|1|2|3)`
-* **Example Return:** e
+* **Example Return:** the measured levels as text. Bad arguments return the error value (4.0.0; they used to return `None`, which is what a timeout returns)
 * **Alias Functions:**
     * `get_sample_pts(start=Int, stop=Int, pts=Int)`
 * **Notes:**  _Ultra only_. From [tinysa-org](https://tinysa-org.translate.goog/wiki/pmwiki.php?n=Main.USBInterface&_x_tr_sl=auto&_x_tr_tl=en&_x_tr_hl=en-US): if the 3rd parameter is below 450 it is assumed to be points, otherwise as step frequency Outmask selects if the frequency (1) or level (2) is output. 
@@ -2663,10 +2763,10 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 * **Description:** Resets the tinySA
 * **Original Usage:** `reset`
 * **Direct Library Function Call:** `reset()`
-* **Example Return:** empty bytearray, serial error message. depends on the system.
+* **Example Return:** `None`. The device reboots and the USB port disappears before any reply, so there is nothing to read; since 4.0.0 the resulting `SerialException` is caught and `None` returned instead of being raised.
 * **Alias Functions:**
     * `reset_device()`
-* **Notes:**  Disconnects the serial too.
+* **Notes:**  Disconnects the serial too. Call `disconnect()` (or let the object go) and `connect()`/`autoconnect()` again once the device has re-enumerated.
 
 
 ### **restart**
@@ -2947,8 +3047,8 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 ### **trigger**
 * **Description:** sets the trigger type or level
 * **Original Usage:** `trigger auto|normal|single|{level(dBm)}` or `trigger {value}\r\ntrigger {auto|normal|single}\r`
-* **Direct Library Function Call:** `trigger(val="auto"|"normal"|"single"|None, freq=None|Int|Float)`
-* **Example Return:** empty bytearray
+* **Direct Library Function Call:** `trigger(val="auto"|"normal"|"single"|None, freq=None|Int|Float|"-52.5")`
+* **Example Return:** empty bytearray. The level may be a number or a numeric string (4.0.0; `trigger_level("-52.5")` used to be refused).
 * **Alias Functions:**
     * `trigger_auto()`
     * `trigger_normal()`
@@ -3017,8 +3117,8 @@ Marker levels will use the selected unit Marker peak will activate the marker (i
 ### **wait**
 * **Description:** wait for a single sweep to finish and pauses sweep or waits for specified number of seconds
 * **Original Usage:** `wait [{seconds}]`
-* **Direct Library Function Call:** `wait(val=None|Int)`
-* **Example Return:** empty bytearray
+* **Direct Library Function Call:** `wait(val=None|Int|"Int")`
+* **Example Return:** empty bytearray. A numeric string (`"5"`) is accepted; anything that is not a positive whole number returns the error value (4.0.0; it used to raise `TypeError`).
 * **Alias Functions:**
     * None
 * **Notes:** Without an argument, this puts device in the WAIT state and it needs to manually RESUME. `wait()` now sends the bare command; in earlier versions the default argument was rejected and `wait(None)` was needed.
@@ -3120,19 +3220,35 @@ This library (and the PyPI package) have been developed through experimental usa
 
 Collaboration on this repository is welcome. Development is active, but may be a little slow at times. Please submit issues and comments on GitHub, NOT the tinySA community page. This repository exists and operates separately of the official tinySA product. 
 
-If you are interested in creating a Pull Request, please reach out. Eventually there will be some Pull Request templates in the tinySA_python repository, but in the meantime, please include the following information in a Pull Request:
+[CONTRIBUTING.md](CONTRIBUTING.md) has the development setup, the checks a pull request must pass, how to add a command or a device profile, the hardware test layers, and the release steps. The short version:
 
-* A descriptive title of the change.
-* What the type of change is. For example, if it's an additional feature or bug fix.
-* The purpose of the pull request; that is, a brief description of the change.
-* What is the impact of this change; include details on what it fixes/updates/changes/adds/etc.
+```bash
+cd tsapython
+uv sync
+uv run pytest                      # hardware-free suite; hardware tests self-skip
+uv run ruff check . && uv run mypy
+```
 
-Please keep Pull Requests to a single, or very few, issue(s) to make the code easier to review. Also, please build and test your own pull request before submitting it to make sure it compiles and executes at least the basic tests without bugs.
+How the code is organised:
 
-A streamlined testing process will be coming in one of the following major version updates. For now, there is some information for using [UV to build the package](#local-install-using-uv) for local use and testing.
+| Where | What |
+| --- | --- |
+| `src/tsapython/core.py` | The `tinySA` class: serial port, `tinySA_serial()` (the one place bytes are written and read), the log file, identification and profiles, the getters |
+| `src/tsapython/_commands/*.py` | One mixin per command group; every device command is a method here |
+| `src/tsapython/_profiles.py` | What each model accepts (`BASIC`, `ZS405`, `ZS406`, `ZS407`), read from the firmware source |
+| `src/tsapython/_identify.py` | Pure text helpers: which device sent this `version`/`info`, and did the device accept or reject the command |
+| `src/tsapython/_log.py` | The JSON Lines log writer |
+| `tests/` | Hardware-free tests (CI), `hardware` and `hardware_output` tests, the probe script, the bench script, captured fixtures |
 
+Test layers and when each runs:
 
-
+| Command | Needs | Runs |
+| --- | --- | --- |
+| `uv run pytest` | Nothing | Every push (CI), 600+ tests, coverage gate 85% (currently about 97%) |
+| `uv run pytest -m hardware` | A tinySA on USB | Before a release; nothing switches the output on |
+| `TSAPYTHON_OUTPUT_OK=1 uv run pytest -m hardware_output` | A load or attenuator on the RF port | Before a release; proves generator settings are accepted |
+| `uv run python tests/bench_generator.py --path-loss <dB>` | Attenuator and a receiver | Once per release; the only proof of what the generator emits |
+| `uv run python tests/probe_firmware_returns.py` | A tinySA on USB | Before and after a firmware update, and for reporting an unverified board |
 
 ## Notes for Beginners
 

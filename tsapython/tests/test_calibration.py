@@ -53,19 +53,19 @@ def test_get_frequency_correction_alias(tsa):
     assert tsa._recorder.last == "freq_corr\r\n"
 
 
-# --- set_IF: 0/'auto' or 433M..435M ---------------------------------------
+# --- set_IF: 0/'auto' or the board's range (ZS405 profile: 975M..979M) -------
 
 @pytest.mark.parametrize("val,expected", [
     (0, "if 0\r\n"),
     ("auto", "if 0\r\n"),
-    (434e6, "if 434000000.0\r\n"),
+    (977e6, "if 977000000.0\r\n"),
 ])
 def test_set_IF_valid(tsa, val, expected):
     tsa.set_IF(val)
     assert tsa._recorder.last == expected
 
 
-@pytest.mark.parametrize("val", [100, 500e6])
+@pytest.mark.parametrize("val", [100, 500e6, 434e6])
 def test_set_IF_invalid(tsa, val):
     tsa.set_IF(val)
     assert tsa._recorder.count == 0

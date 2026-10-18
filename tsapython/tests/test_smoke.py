@@ -47,13 +47,21 @@ def test_required_method_exists(tsa, method_name):
         f"missing required method: {method_name}"
 
 
-def test_verbose_setting_does_not_raise(tsa):
-    """Verbose toggle is a pure library-side setting; must not raise."""
+def test_verbose_setting_round_trips(tsa):
+    """Verbose toggle is a pure library-side setting: no device traffic, readable back."""
     tsa.set_verbose(True)
+    assert tsa.get_verbose() is True
     tsa.set_verbose(False)
+    assert tsa.get_verbose() is False
+    assert tsa._recorder.count == 0
 
 
-def test_error_byte_setting_does_not_raise(tsa):
-    """Error-byte toggle is a pure library-side setting; must not raise."""
+def test_error_byte_setting_round_trips(tsa):
+    """Error-byte toggle decides what error_byte_return() hands back; no device traffic."""
     tsa.set_error_byte_return(True)
+    assert tsa.get_error_byte_return() is True
+    assert tsa.error_byte_return() == bytearray(b"ERROR")
     tsa.set_error_byte_return(False)
+    assert tsa.get_error_byte_return() is False
+    assert tsa.error_byte_return() == bytearray(b"")
+    assert tsa._recorder.count == 0
